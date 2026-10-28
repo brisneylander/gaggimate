@@ -145,6 +145,12 @@ void Settings::setHeaterHandoverMs(int handoverMs) {
     heaterHandoverMs.set(std::clamp(handoverMs, MIN_HEATER_HANDOVER_MS, MAX_HEATER_HANDOVER_MS));
 }
 
+void Settings::setDerivativeFilterS(float seconds) { derivativeFilterS.set(std::clamp(seconds, 0.0f, 60.0f)); }
+
+void Settings::setIntegralZone(float degrees) { integralZone.set(std::clamp(degrees, 0.0f, 20.0f)); }
+
+void Settings::setSensorDeadTimeS(float seconds) { sensorDeadTimeS.set(std::clamp(seconds, 0.0f, 120.0f)); }
+
 void Settings::setPumpModelCoeffs(const String &pumpModelCoeffs) { this->pumpModelCoeffs.set(pumpModelCoeffs); }
 
 void Settings::setPumpSlipCoeffs(const String &pumpSlipCoeffs) { this->pumpSlipCoeffs.set(pumpSlipCoeffs); }

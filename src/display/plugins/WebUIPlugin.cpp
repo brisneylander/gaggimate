@@ -363,6 +363,12 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
                 settings->setHeaterCoordinationEnabled(parseBoolArg(request->arg("heaterCoordinationEnabled")));
             if (request->hasArg("heaterHandoverMs"))
                 settings->setHeaterHandoverMs(request->arg("heaterHandoverMs").toInt());
+            if (request->hasArg("derivativeFilterS"))
+                settings->setDerivativeFilterS(request->arg("derivativeFilterS").toFloat());
+            if (request->hasArg("integralZone"))
+                settings->setIntegralZone(request->arg("integralZone").toFloat());
+            if (request->hasArg("sensorDeadTimeS"))
+                settings->setSensorDeadTimeS(request->arg("sensorDeadTimeS").toFloat());
             if (request->hasArg("pid"))
                 settings->setPid(request->arg("pid"));
             if (request->hasArg("pumpModelCoeffs"))
@@ -560,6 +566,9 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
     doc["haTopic"] = settings.getHomeAssistantTopic();
     doc["heaterCoordinationEnabled"] = settings.isHeaterCoordinationEnabled();
     doc["heaterHandoverMs"] = settings.getHeaterHandoverMs();
+    doc["derivativeFilterS"] = settings.getDerivativeFilterS();
+    doc["integralZone"] = settings.getIntegralZone();
+    doc["sensorDeadTimeS"] = settings.getSensorDeadTimeS();
     doc["pid"] = settings.getPid();
     doc["pumpModelCoeffs"] = settings.getPumpModelCoeffs();
     doc["pumpSlipCoeffs"] = settings.getPumpSlipCoeffs();

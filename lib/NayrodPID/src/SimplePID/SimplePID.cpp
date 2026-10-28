@@ -57,14 +57,23 @@ bool SimplePID::update() {
 
     float Pout = gainKp * error;
 
-    feedback_integralState += error * deltaTime;
+    // Integrate only inside the error band and while no disturbance hold is active; outside it the
+    // integral keeps its value, so the steady-state heat-loss share survives a flush.
+    const bool integrate = !integralHold && (integralZone <= 0.0f || std::fabs(error) < integralZone);
+    if (integrate)
+        feedback_integralState += error * deltaTime;
     float Iout = gainKi * feedback_integralState;
 
-    // Derivative on measurement: identical to the error derivative while the setpoint holds, but a setpoint change
-    // (or the first sample after a reset, when prevError is 0) no longer kicks the output.
+    // Derivative on measurement (no kick on setpoint changes), optionally low-pass filtered so the
+    // 0.25 °C steps of the thermocouple don't turn the D term into full-scale noise.
     const float inputRate = (*sensorOutput - prevInput) / deltaTime;
     prevInput = *sensorOutput;
-    float Dout = -gainKd * inputRate;
+    if (derivFilterTau > 0.0f) {
+        derivFiltered += (inputRate - derivFiltered) * deltaTime / (derivFilterTau + deltaTime);
+    } else {
+        derivFiltered = inputRate;
+    }
+    float Dout = -gainKd * derivFiltered;
 
     // Calculate the output before antiwindup clamping
     float sumPID = Pout + Iout + Dout + FFOut + DistFFOut;
@@ -75,7 +84,7 @@ bool SimplePID::update() {
     bool isSameSign =
         ((error > 0 && sumPID > 0) || (error < 0 && sumPID < 0)); // Check if the error and output have the same sign
     // Serial.printf("OutputPID: %.2f, Integ out: %.2f\n", sumPIDsat, Iout);
-    if (isSaturated && isSameSign) {
+    if (integrate && isSaturated && isSameSign) {
         // Serial.printf("Antiwindup clamping: %.2f\n", feedback_integralState);
         feedback_integralState -=
             error * deltaTime; // Forbide the integration to happen when the output is saturated and the error is in the same
@@ -125,6 +134,7 @@ void SimplePID::resetFeedbackController() {
     feedback_integralState = 0.0f; // Reset the integral state
     prevError = 0.0f;              // Reset the previous error for derivative calculation
     prevOutput = 0.0f;             // Reset the previous output for derivative calculation
+    derivFiltered = 0.0f;          // Reset the filtered measurement rate
 }
 
 void SimplePID::reset() {

@@ -33,6 +33,13 @@ on 2026-10-28 left open. See [FORK.md](FORK.md) for building and releasing.
 | On, single 20 s delay (5) | +1.75, +1.89, +1.50, +1.79, +1.47 — avg +1.68 °C | avg 174 s |
 | **On, 12 s water delay (2), simon006** | **+0.75, +0.50 — avg +0.63 °C** | **avg 126 s** |
 
+**Full-power reheat (simon007) does not help on the Silvia.** Flush pairs on 2026-10-29: with reheat the sensor took
+124–129 s back to 93 °C (overshoot +0.40–0.45 °C) against 62–100 s without (+0.49–1.25 °C). Energy is delivered in
+~12 s, but heat then needs ~2 min to reach the thermocouple; the simulated plant moves heat far faster, so it
+promised 51 s. Reaching 93 °C sooner means over-delivering heat. Next idea: reheat with a deliberate surplus, then
+"flush to target" to take it off. (One "off" run showed a reheat-like burst; most likely the PID's own D term, but
+switching reheat on → off should be re-checked with a single flush.)
+
 With the 12 s water delay the heater puts back about what the flush took (net −0.8 to +0.3 kJ), so an explicit heat
 budget for flushes looks unnecessary; recovery to 93 °C is a little slower (69–81 s vs 56–62 s). Next: try 10 and
 15 s, then shots, where the planned-heat idea (pre-heat before a shot) still applies.

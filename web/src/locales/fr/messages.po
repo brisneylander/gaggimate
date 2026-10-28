@@ -561,6 +561,10 @@ msgstr "Appareils Bluetooth"
 msgid "Boiler at {temperature} °C"
 msgstr "Chaudière à {temperature} °C"
 
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "Boiler Lag Compensation"
+msgstr ""
+
 #: src/pages/Settings/PluginCard.jsx
 msgid "Boiler Refill Plugin"
 msgstr "Plugin de remplissage de la chaudière"
@@ -1213,6 +1217,10 @@ msgstr "Définissez le comportement des boutons physiques lorsqu'ils sont press�
 msgid "degrees Celsius"
 msgstr "degrés Celsius"
 
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "Delay from heater on to the temperature starting to rise."
+msgstr ""
+
 #: src/pages/ProfileList/index.jsx
 #: src/pages/ShotAnalyzer/components/library/LibraryRow.jsx
 #: src/pages/ShotHistory/HistoryCard.jsx
@@ -1266,6 +1274,10 @@ msgstr "Supprimer cette programmation"
 #: src/pages/Settings/PluginCard.jsx
 msgid "Deleted profile"
 msgstr "Profil supprimé"
+
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "Derivative filter"
+msgstr ""
 
 #: src/pages/Settings/tabs/CleaningSection.jsx
 msgid "Descaling"
@@ -1485,6 +1497,10 @@ msgstr "Modifier le filtre de plage de dates"
 #: src/pages/ProfileList/index.jsx
 msgid "Edit profile"
 msgstr "Modifier le profil"
+
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "Element power, e.g. 1100 W for a 230 V Rancilio Silvia."
+msgstr ""
 
 #: src/pages/Statistics/utils/statisticsSearchDsl.js
 msgid "Empty date expression."
@@ -1867,6 +1883,10 @@ msgstr "Rinçage recommandé"
 msgid "Flush water"
 msgstr "Rincer"
 
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "For boilers where the temperature sensor reacts long after the heater. Heater power, heat-up rate and dead time together enable a heat-balance predictor, so the PID backs off before the overshoot shows. Leave a field at 0 to disable it."
+msgstr ""
+
 #: src/pages/Settings/tabs/BluetoothTab.jsx
 msgid "Forget"
 msgstr "Oublier"
@@ -1902,6 +1922,10 @@ msgstr "Du"
 msgctxt "panel view"
 msgid "Full"
 msgstr "Complet"
+
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "Full-power heat-up rate"
+msgstr ""
 
 #: src/pages/ShotAnalyzer/components/EmptyState.jsx
 msgid "GaggiMate (GM)"
@@ -2009,6 +2033,10 @@ msgstr "Coordination des chauffes"
 #: src/pages/Settings/tabs/HeaterCoordinationSection.jsx
 msgid "Heater handover pause (ms)"
 msgstr "Pause de transfert de chauffe (ms)"
+
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "Heater power"
+msgstr ""
 
 #: src/utils/metricDefinitions.js
 msgid "Heater Power"
@@ -2191,6 +2219,14 @@ msgstr "Instantané"
 #: src/pages/Settings/PluginCard.jsx
 msgid "Integral Gain"
 msgstr "Gain intégral"
+
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "Integral only runs within this distance of the target, and pauses while water flows and for the dead time after. Try 1.5 °C."
+msgstr ""
+
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "Integral zone"
+msgstr ""
 
 #: src/components/PumpFlowCalibration/usePumpFlowCalibration.js
 msgid "Internal error: ApiService unavailable."
@@ -4151,6 +4187,10 @@ msgstr "Sélectionner..."
 msgid "Selecting calibration profile..."
 msgstr "Sélection du profil d'étalonnage..."
 
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "Sensor dead time"
+msgstr ""
+
 #: src/services/VisualizerService.js
 msgid "Server error - the API may not support this data format or account type"
 msgstr "Erreur serveur - l'API ne prend peut-être pas en charge ce format de données ou ce type de compte"
@@ -4448,6 +4488,10 @@ msgstr "ÉCHANTILLONNAGE LENT"
 msgid "Smart Grind Plugin"
 msgstr "Plugin Smart Grind"
 
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "Smooths the D term so thermocouple steps don't switch the heater. Try 2 s; long filters delay its braking."
+msgstr ""
+
 #: src/components/PumpFlowCalibration/usePumpFlowCalibration.js
 msgid "Snapshotting shot history..."
 msgstr "Capture de l'historique des shots..."
@@ -4601,6 +4645,10 @@ msgstr "DSL de recherche des statistiques"
 #: src/pages/Statistics/components/MetricsTable.jsx
 msgid "Std Dev"
 msgstr "Écart type"
+
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "Steady rise at full power, measured mid-warm-up (autotune logs it as k')."
+msgstr ""
 
 #: src/app/machineStatus.js
 #: src/pages/Home/utils.js

@@ -113,7 +113,9 @@ message HeaterSettings {
     // Lag compensation (brew boiler). 0 = off, so older displays that never send these keep the legacy loop.
     float derivative_filter_s = 7; // low-pass time constant on the D term (s)
     float integral_zone = 8;       // integrate only while |error| < this (degC); also pauses I during water flow
-    float sensor_dead_time_s = 9;  // heater-to-sensor dead time (s): length of the post-flow I pause
+    float sensor_dead_time_s = 9;  // heater-to-sensor dead time (s): length of the post-flow I pause, predictor delay
+    float model_heater_w = 10;     // heat-balance predictor: heater power (W)
+    float model_heat_rate = 11;    // heat-balance predictor: full-power heat-up rate (degC/s)
 }
 
 message PumpSettings {

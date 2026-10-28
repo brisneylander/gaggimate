@@ -26,7 +26,7 @@ bool SimplePID::update() {
     if (!isInitialized) {
         initSetPointFilter(*this->sensorOutput);
         resetFeedbackController();
-        prevInput = *this->sensorOutput; // first derivative sample is 0 rather than a kick
+        prevInput = derivativeInput != nullptr ? *derivativeInput : *this->sensorOutput; // first D sample is 0, no kick
         if (gainFF != 0.0f)
             isFeedForwardActive = true; // Activate the feedforward control if gainFF is not zero
         isInitialized = true;
@@ -66,8 +66,9 @@ bool SimplePID::update() {
 
     // Derivative on measurement (no kick on setpoint changes), optionally low-pass filtered so the
     // 0.25 °C steps of the thermocouple don't turn the D term into full-scale noise.
-    const float inputRate = (*sensorOutput - prevInput) / deltaTime;
-    prevInput = *sensorOutput;
+    const float dInput = derivativeInput != nullptr ? *derivativeInput : *sensorOutput;
+    const float inputRate = (dInput - prevInput) / deltaTime;
+    prevInput = dInput;
     if (derivFilterTau > 0.0f) {
         derivFiltered += (inputRate - derivFiltered) * deltaTime / (derivFilterTau + deltaTime);
     } else {

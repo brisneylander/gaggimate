@@ -369,6 +369,10 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
                 settings->setIntegralZone(request->arg("integralZone").toFloat());
             if (request->hasArg("sensorDeadTimeS"))
                 settings->setSensorDeadTimeS(request->arg("sensorDeadTimeS").toFloat());
+            if (request->hasArg("modelHeaterW"))
+                settings->setModelHeaterW(request->arg("modelHeaterW").toFloat());
+            if (request->hasArg("modelHeatRate"))
+                settings->setModelHeatRate(request->arg("modelHeatRate").toFloat());
             if (request->hasArg("pid"))
                 settings->setPid(request->arg("pid"));
             if (request->hasArg("pumpModelCoeffs"))
@@ -569,6 +573,8 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
     doc["derivativeFilterS"] = settings.getDerivativeFilterS();
     doc["integralZone"] = settings.getIntegralZone();
     doc["sensorDeadTimeS"] = settings.getSensorDeadTimeS();
+    doc["modelHeaterW"] = settings.getModelHeaterW();
+    doc["modelHeatRate"] = settings.getModelHeatRate();
     doc["pid"] = settings.getPid();
     doc["pumpModelCoeffs"] = settings.getPumpModelCoeffs();
     doc["pumpSlipCoeffs"] = settings.getPumpSlipCoeffs();

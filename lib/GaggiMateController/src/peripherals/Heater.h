@@ -1,6 +1,7 @@
 #ifndef HEATER_H
 #define HEATER_H
 #include "Autotune/Autotune.h"
+#include "HeatBalancePredictor.h"
 #include "Max31855Thermocouple.h"
 #include "TemperatureSensor.h"
 #include <SimplePID/SimplePID.h>
@@ -48,7 +49,11 @@ class Heater {
     //   integralZoneC: integrate only within this |error| band, and pause the integral while water flows
     //                  and for sensorDeadTimeS afterwards
     //   sensorDeadTimeS: delay from heater power to the sensor reacting
-    void setLagCompensation(float derivativeFilterS, float integralZoneC, float sensorDeadTimeS);
+    //   modelHeaterW / modelHeatRate (°C/s at full power), with sensorDeadTimeS: heat-balance predictor;
+    //                  the PID then runs on measured + not-yet-seen temperature change
+    void setLagCompensation(float derivativeFilterS, float integralZoneC, float sensorDeadTimeS, float modelHeaterW,
+                            float modelHeatRate);
+    float getControlTemperature() const { return controlTemperature; }
 
   private:
     void setupPid();
@@ -73,7 +78,8 @@ class Heater {
     heater_autotune_fail_callback_t autotune_fail_callback;
     HeaterCoordinator *coordinator = nullptr;
 
-    float temperature = 0.0f;
+    float temperature = 0.0f;        // measured (what safety checks and telemetry use)
+    float controlTemperature = 0.0f; // PID input: measured + predictor correction
     float output = 0.0f;
     float setpoint = 0.0f;
     int plotCount = 0;
@@ -98,10 +104,13 @@ class Heater {
 
     // Lag compensation state (written from the comms task, read on the heater task)
     std::mutex lagMutex;
+    HeatBalancePredictor predictor;
     bool integralZoneActive = false;
     uint32_t integralHoldTailMs = 0;
     uint32_t lastFlowMs = 0;
     bool flowSeen = false;
+    uint32_t lastPredictorMs = 0;
+    bool predictorPrimed = false;
 
     // Thermal model constants
     static constexpr float WATER_DENSITY = 1.0f;        // g/ml

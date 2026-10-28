@@ -88,6 +88,8 @@ gm::Payload GaggiMateClient::buildHeaterSettings(float kp, float ki, float kd, f
     p.content.heater.derivative_filter_s = lag.derivativeFilterS;
     p.content.heater.integral_zone = lag.integralZone;
     p.content.heater.sensor_dead_time_s = lag.sensorDeadTimeS;
+    p.content.heater.model_heater_w = lag.modelHeaterW;
+    p.content.heater.model_heat_rate = lag.modelHeatRate;
     return p;
 }
 

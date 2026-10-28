@@ -9,7 +9,8 @@ Heater::Heater(TemperatureSensor *sensor, uint8_t heaterPin, const heater_error_
     : sensor(sensor), heaterPin(heaterPin), taskHandle(nullptr), error_callback(error_callback), pid_callback(pid_callback),
       autotune_fail_callback(autotune_fail_callback) {
 
-    simplePid = new SimplePID(&output, &temperature, &setpoint);
+    simplePid = new SimplePID(&output, &controlTemperature, &setpoint);
+    simplePid->setDerivativeInput(&temperature); // D damps the measured temperature, P/I act on the prediction
     autotuner = new Autotune();
 }
 
@@ -48,6 +49,10 @@ void Heater::loop() {
         simplePid->setMode(SimplePID::Control::manual);
         requestOutput(false);
         temperature = sensor->read();
+        controlTemperature = temperature;
+        std::lock_guard<std::mutex> lock(lagMutex);
+        predictor.reset(); // heat in flight is no longer tracked while off; start clean on re-enable
+        predictorPrimed = false;
         return;
     }
     simplePid->setMode(SimplePID::Control::automatic);
@@ -92,7 +97,8 @@ void Heater::setFeedforwardScale(float combinedKff) {
     ESP_LOGI(LOG_TAG, "Combined feedforward gain (Kff) set to: %.3f output units per watt", combinedKff);
 }
 
-void Heater::setLagCompensation(float derivativeFilterS, float integralZoneC, float sensorDeadTimeS) {
+void Heater::setLagCompensation(float derivativeFilterS, float integralZoneC, float sensorDeadTimeS, float modelHeaterW,
+                                float modelHeatRate) {
     std::lock_guard<std::mutex> lock(lagMutex);
     simplePid->setDerivativeFilterTime(derivativeFilterS);
     simplePid->setIntegralZone(integralZoneC);
@@ -100,8 +106,10 @@ void Heater::setLagCompensation(float derivativeFilterS, float integralZoneC, fl
     integralHoldTailMs = sensorDeadTimeS > 0.0f ? static_cast<uint32_t>(sensorDeadTimeS * 1000.0f) : 0;
     if (!integralZoneActive)
         simplePid->setIntegralHold(false);
-    ESP_LOGI(LOG_TAG, "Lag compensation: D filter %.1fs, I zone %.2f°C, dead time %.1fs", derivativeFilterS, integralZoneC,
-             sensorDeadTimeS);
+    predictor.configure(modelHeaterW, modelHeatRate, sensorDeadTimeS, incomingWaterTemp);
+    ESP_LOGI(LOG_TAG, "Lag compensation: D filter %.1fs, I zone %.2f°C, dead time %.1fs, predictor %s (%.0fW, %.3f°C/s)",
+             derivativeFilterS, integralZoneC, sensorDeadTimeS, predictor.isEnabled() ? "on" : "off", modelHeaterW,
+             modelHeatRate);
 }
 
 void Heater::updateLagCompensation() {
@@ -119,6 +127,21 @@ void Heater::updateLagCompensation() {
         // that window is the (stale) flush, not a steady-state offset the integral should learn.
         simplePid->setIntegralHold(flowing || (flowSeen && now - lastFlowMs < integralHoldTailMs));
     }
+
+    if (!predictor.isEnabled()) {
+        controlTemperature = temperature;
+        return;
+    }
+    if (!predictorPrimed) {
+        predictorPrimed = true;
+        lastPredictorMs = now;
+    } else if (now - lastPredictorMs >= static_cast<uint32_t>(TUNER_OUTPUT_SPAN)) {
+        // One step per PWM window; `output` is the duty that was applied over it.
+        const float dt = static_cast<float>(now - lastPredictorMs) / 1000.0f;
+        lastPredictorMs = now;
+        predictor.update(dt, output / TUNER_OUTPUT_SPAN, flowing ? flow : 0.0f, temperature, setpoint);
+    }
+    controlTemperature = temperature + predictor.getCorrection();
 }
 
 void Heater::autotune(int testTimeSec, int windowSize, int heaterWattage) {

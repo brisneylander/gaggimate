@@ -281,11 +281,12 @@ void GaggiMateController::setup() {
         }
         heater->setFeedforwardScale(settings.kf);
         heater->setTunings(settings.kp, settings.ki, settings.kd);
-        heater->setLagCompensation(settings.derivative_filter_s, settings.integral_zone, settings.sensor_dead_time_s);
+        heater->setLagCompensation(settings.derivative_filter_s, settings.integral_zone, settings.sensor_dead_time_s,
+                                   settings.model_heater_w, settings.model_heat_rate);
         if (heater2 != nullptr) {
             heater2->setTunings(settings.kp, settings.ki, settings.kd);
-            // The steam boiler has no flow input, so there is no post-flow integral pause to time.
-            heater2->setLagCompensation(settings.derivative_filter_s, settings.integral_zone, 0.0f);
+            // The heat-balance model describes the brew boiler only; the steam boiler keeps the plain loop.
+            heater2->setLagCompensation(settings.derivative_filter_s, settings.integral_zone, 0.0f, 0.0f, 0.0f);
         }
     });
     _comms.onPumpSettings([this](gm::PumpSettings settings) {

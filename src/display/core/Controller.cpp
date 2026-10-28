@@ -1039,6 +1039,13 @@ void Controller::updateControl() {
     if (targetTemp > .0f) {
         targetTemp = targetTemp + static_cast<float>(settings.getTemperatureOffset());
     }
+    // Heater off while a flush to target and its tail run (see flushToTarget()).
+    if (flushToTargetHoldUntil != 0) {
+        if (static_cast<long>(millis() - flushToTargetHoldUntil) < 0)
+            targetTemp = 0.0f;
+        else
+            flushToTargetHoldUntil = 0;
+    }
 
     bool altRelayActive = false;
     if (active && proc->isAltRelayActive()) {
@@ -1157,6 +1164,7 @@ void Controller::updateControl() {
 }
 
 void Controller::activate(bool ignoreWarnings) {
+    flushToTargetHoldUntil = 0; // a shot wants the heater back straight away
     // Never create a process while startup is incomplete or the controller is
     // absent. The UI can be reached by tapping through the startup screen, and
     // previously its Start action ran against a half-initialized BLE session.
@@ -1584,6 +1592,12 @@ flush_to_target::Plan Controller::flushToTarget() {
     }
     ESP_LOGI(LOG_TAG, "Flush to target: %.1f°C over, %.0f ml in %.1f s", getCurrentTemp() - getTargetTemp(), plan.ml,
              plan.seconds);
+    // The flush is sized so the boiler lands on target with only its standing loss after it. Left alone, the predictor
+    // sees the cold water and the PID heats at full power (17.7 kJ, ~10 °C of rebound, on the first bench run), so the
+    // heater stays off for the flush and until its effect has reached the sensor.
+    flushToTargetHoldUntil = millis() + static_cast<unsigned long>((plan.seconds + FLUSH_TO_TARGET_HOLD_S) * 1000.0f);
+    if (flushToTargetHoldUntil == 0)
+        flushToTargetHoldUntil = 1;
     startFlush(plan.seconds);
     return plan;
 }

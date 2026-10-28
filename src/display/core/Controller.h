@@ -296,6 +296,9 @@ class Controller {
     // meaningful changes, at most this often. The first save waits this long after boot, past any warm-up.
     static const unsigned long LOSS_SAVE_INTERVAL_MS = 10UL * 60UL * 1000UL;
     unsigned long lastLossSaveMs = 0;
+    // Heater held off until this millis() after a flush to target; 0 = no hold.
+    static constexpr float FLUSH_TO_TARGET_HOLD_S = 30.0f;
+    unsigned long flushToTargetHoldUntil = 0;
     bool processCompleted = false;
     bool steamReady = false;
     bool steamSwitchOn = false;

@@ -116,6 +116,7 @@ message HeaterSettings {
     float sensor_dead_time_s = 9;  // heater-to-sensor dead time (s): length of the post-flow I pause, predictor delay
     float model_heater_w = 10;     // heat-balance predictor: heater power (W)
     float model_heat_rate = 11;    // heat-balance predictor: full-power heat-up rate (degC/s)
+    float model_loss_w = 12;       // heat-balance predictor: saved standing loss to start from (W), 0 = default guess
 }
 
 message PumpSettings {
@@ -205,6 +206,7 @@ message BoilerReading {
     float temperature = 2;
     float pressure = 3;
     float power = 4; // heater power 0..100 %
+    float standing_loss_w = 5; // heat-balance predictor's learned standing loss (W), 0 = predictor off
 }
 
 message SensorData {

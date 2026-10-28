@@ -90,6 +90,7 @@ gm::Payload GaggiMateClient::buildHeaterSettings(float kp, float ki, float kd, f
     p.content.heater.sensor_dead_time_s = lag.sensorDeadTimeS;
     p.content.heater.model_heater_w = lag.modelHeaterW;
     p.content.heater.model_heat_rate = lag.modelHeatRate;
+    p.content.heater.model_loss_w = lag.modelLossW;
     return p;
 }
 
@@ -218,6 +219,8 @@ void GaggiMateClient::registerHandlers() {
         }
         _sensorCb(temperature, temp2, pressure, p.content.sensor.puck_flow, p.content.sensor.pump_flow,
                   p.content.sensor.puck_resistance, p.content.sensor.pump_power, heater_power, p.content.sensor.water_pumped);
+        if (_heaterLossCb && p.content.sensor.boilers_count > 0 && p.content.sensor.boilers[0].standing_loss_w > 0.0f)
+            _heaterLossCb(p.content.sensor.boilers[0].standing_loss_w);
     });
     _endpoint.on(gaggimate_Payload_button_tag, [this](const gm::Payload &p) {
         if (_buttonCb)

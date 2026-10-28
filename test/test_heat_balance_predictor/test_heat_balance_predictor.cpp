@@ -90,7 +90,8 @@ void test_correction_is_bounded() {
     TEST_ASSERT_EQUAL_FLOAT(HeatBalancePredictor::MAX_CORRECTION, p.getCorrection());
 }
 
-// Re-sending identical settings (the display does this after every reconnect) must not drop learned state.
+// Re-sending settings (the display does this after every reconnect) must not drop the learned loss, and neither
+// may a parameter change: the loss belongs to the boiler, not to the model parameters.
 void test_identical_reconfigure_keeps_state() {
     HeatBalancePredictor p;
     p.configure(1100.0f, 0.6f, 20.0f);
@@ -100,7 +101,40 @@ void test_identical_reconfigure_keeps_state() {
     p.configure(1100.0f, 0.6f, 20.0f);
     TEST_ASSERT_EQUAL_FLOAT(loss, p.getLossWatts());
     p.configure(1100.0f, 0.5f, 20.0f);
+    TEST_ASSERT_EQUAL_FLOAT(loss, p.getLossWatts());
+}
+
+// With nothing saved, the predictor starts from a default fraction of the heater instead of zero.
+void test_first_seed_uses_default_fraction() {
+    HeatBalancePredictor p;
+    p.configure(1100.0f, 0.6f, 20.0f);
+    p.seedLoss(0.0f);
+    TEST_ASSERT_FLOAT_WITHIN(1e-3f, HeatBalancePredictor::DEFAULT_LOSS_FRACTION * 1100.0f, p.getLossWatts());
+}
+
+// A saved value seeds the loss once; later seeds (every settings re-send carries the saved value) are ignored so
+// they can't overwrite what has been learned since.
+void test_saved_seed_applies_once() {
+    HeatBalancePredictor p;
+    p.configure(1100.0f, 0.6f, 20.0f);
+    p.seedLoss(48.0f);
+    TEST_ASSERT_EQUAL_FLOAT(48.0f, p.getLossWatts());
+    for (int i = 0; i < 600; ++i)
+        p.update(1.0f, 0.06f, 0.0f, 98.0f, 98.0f); // learns towards 66 W
+    const float learned = p.getLossWatts();
+    TEST_ASSERT_TRUE(learned > 55.0f);
+    p.seedLoss(48.0f);
+    TEST_ASSERT_EQUAL_FLOAT(learned, p.getLossWatts());
+}
+
+// Seeding waits for a valid model, and a saved value can't exceed the heater itself.
+void test_seed_waits_for_enable_and_is_bounded() {
+    HeatBalancePredictor p;
+    p.seedLoss(48.0f);
     TEST_ASSERT_EQUAL_FLOAT(0.0f, p.getLossWatts());
+    p.configure(1100.0f, 0.6f, 20.0f);
+    p.seedLoss(5000.0f);
+    TEST_ASSERT_EQUAL_FLOAT(1100.0f, p.getLossWatts());
 }
 
 // ---------------------------------------------------------------------------
@@ -120,6 +154,8 @@ struct Tuning {
     float derivFilterS = 0.0f;
     float integralZone = 0.0f;
     float modelW = 0.0f, modelRate = 0.0f, modelDeadS = 0.0f;
+    float lossSeedW = 0.0f;       // as Heater: seedLoss(saved value, 0 = default guess); < 0 skips seeding (starts at 0)
+    float predictorStartS = 0.0f; // switch the predictor on this long into the run, once the PID has settled
 };
 
 struct Result {
@@ -128,6 +164,7 @@ struct Result {
     float settleErr; // |mean error| over the last 2 minutes
     float idleP2P;   // sensor peak-to-peak while idling before the flush
     float idleSwing; // mean |change in output| per second while idling (heater chatter), output units
+    float startSag;  // lowest (sensor - setpoint) in the 10 minutes after the predictor starts (predictorStartS > 0)
 };
 
 static Result simulate(const Tuning &tu) {
@@ -154,13 +191,21 @@ static Result simulate(const Tuning &tu) {
     pid.setMode(SimplePID::Control::automatic);
 
     HeatBalancePredictor predictor;
-    predictor.configure(tu.modelW, tu.modelRate, tu.modelDeadS, 20.0f);
+    bool predictorStarted = false;
+    const auto startPredictor = [&] {
+        predictor.configure(tu.modelW, tu.modelRate, tu.modelDeadS, 20.0f);
+        if (tu.lossSeedW >= 0.0f)
+            predictor.seedLoss(tu.lossSeedW);
+        predictorStarted = true;
+    };
+    if (tu.predictorStartS <= 0.0f)
+        startPredictor();
     const uint32_t holdTailMs = tu.modelDeadS > 0.0f ? static_cast<uint32_t>(tu.modelDeadS * 1000.0f) : 0;
     uint32_t lastFlowMs = 0;
     bool flowSeen = false;
 
     const float flushStart = 1800.0f, flushEnd = flushStart + 5.0f, end = flushStart + 600.0f;
-    Result r{1e9f, -1e9f, 0.0f, 0.0f, 0.0f};
+    Result r{1e9f, -1e9f, 0.0f, 0.0f, 0.0f, 0.0f};
     float swingSum = 0.0f, lastOutput = 0.0f;
     int swingN = 0;
     float idleMin = 1e9f, idleMax = -1e9f, errSum = 0.0f;
@@ -182,7 +227,10 @@ static Result simulate(const Tuning &tu) {
             }
             if (tu.integralZone > 0.0f)
                 pid.setIntegralHold(flow > 0.0f || (flowSeen && fakeNow - lastFlowMs < holdTailMs));
-            predictor.update(1.0f, output / 1000.0f, flow, measured, sp);
+            if (!predictorStarted && t >= tu.predictorStartS)
+                startPredictor();
+            if (predictorStarted)
+                predictor.update(1.0f, output / 1000.0f, flow, measured, sp);
             control = measured + predictor.getCorrection();
             pid.update();
             if (t > flushStart - 600.0f && t < flushStart) {
@@ -191,6 +239,8 @@ static Result simulate(const Tuning &tu) {
             }
             lastOutput = output;
 
+            if (tu.predictorStartS > 0.0f && t >= tu.predictorStartS && t < tu.predictorStartS + 600.0f)
+                r.startSag = std::min(r.startSag, measured - setpoint);
             if (t > flushStart - 600.0f && t < flushStart) {
                 idleMin = std::min(idleMin, measured);
                 idleMax = std::max(idleMax, measured);
@@ -283,7 +333,8 @@ void test_individual_features() {
     TEST_ASSERT_TRUE(rf.peak <= legacy.peak + 0.25f);
     TEST_ASSERT_TRUE(rf.idleSwing < 0.25f * legacy.idleSwing);
     TEST_ASSERT_TRUE(rz.peak - 98.0f < 0.5f * (legacy.peak - 98.0f));
-    TEST_ASSERT_TRUE(rp.peak - 98.0f < 0.6f * (legacy.peak - 98.0f));
+    // 75 %: the sensor's 0.25 degC steps make the simulated peak move in quarter-degree jumps.
+    TEST_ASSERT_TRUE(rp.peak - 98.0f < 0.75f * (legacy.peak - 98.0f));
     TEST_ASSERT_TRUE(rp.settleErr < 0.3f);
 }
 
@@ -308,6 +359,25 @@ void test_robust_to_model_mismatch() {
     }
 }
 
+// Switching the predictor on while the PID holds setpoint, as on the bench: from zero loss it reads the ~65 W holding
+// power as heat in flight and sags the boiler by about dead time x holding power / capacity (0.49 degC measured on a
+// Silvia) until the loss is learned. The default guess shrinks that and a saved value removes it.
+void test_seeded_start_avoids_sag() {
+    Tuning zero = compensated();
+    zero.lossSeedW = -1.0f;
+    zero.predictorStartS = 600.0f;
+    Tuning guess = compensated(); // default: 5 % of 1100 W = 55 W
+    guess.predictorStartS = 600.0f;
+    Tuning saved = compensated();
+    saved.lossSeedW = 65.0f;
+    saved.predictorStartS = 600.0f;
+    const Result rz = simulate(zero), rg = simulate(guess), rs = simulate(saved);
+    printf("start sag: from zero %.2f, default guess %.2f, saved value %.2f degC\n", rz.startSag, rg.startSag, rs.startSag);
+    TEST_ASSERT_TRUE(rz.startSag < -0.4f);
+    TEST_ASSERT_TRUE(rg.startSag > 0.5f * rz.startSag);
+    TEST_ASSERT_TRUE(rs.startSag > -0.3f); // within one 0.25 degC sensor step, i.e. idle noise
+}
+
 int main(int argc, char **argv) {
     UNITY_BEGIN();
     RUN_TEST(test_disabled_when_any_parameter_missing);
@@ -317,8 +387,12 @@ int main(int argc, char **argv) {
     RUN_TEST(test_steady_state_correction_converges_to_zero);
     RUN_TEST(test_correction_is_bounded);
     RUN_TEST(test_identical_reconfigure_keeps_state);
+    RUN_TEST(test_first_seed_uses_default_fraction);
+    RUN_TEST(test_saved_seed_applies_once);
+    RUN_TEST(test_seed_waits_for_enable_and_is_bounded);
     RUN_TEST(test_flush_overshoot_is_reduced);
     RUN_TEST(test_individual_features);
     RUN_TEST(test_robust_to_model_mismatch);
+    RUN_TEST(test_seeded_start_avoids_sag);
     return UNITY_END();
 }

@@ -288,6 +288,10 @@ class Controller {
     unsigned long lastConfigResend = 0;
     static const unsigned long CONFIG_RESEND_WINDOW_MS = 8000;
     static const unsigned long CONFIG_RESEND_INTERVAL_MS = 1000;
+    // The predictor's learned standing loss is saved to NVS (flash) so the next start begins from it; keep only
+    // meaningful changes, at most this often. The first save waits this long after boot, past any warm-up.
+    static const unsigned long LOSS_SAVE_INTERVAL_MS = 10UL * 60UL * 1000UL;
+    unsigned long lastLossSaveMs = 0;
     bool processCompleted = false;
     bool steamReady = false;
     bool steamSwitchOn = false;

@@ -9,13 +9,21 @@ void HeatBalancePredictor::configure(float heaterWatts, float fullPowerRate, flo
     const float capacity = valid ? heaterWatts / fullPowerRate : 0.0f;
     const float delay = valid ? deadTimeSeconds : 0.0f;
     if (capacity == heatCapacity && delay == deadTime && heaterWatts == this->heaterWatts && inletTemp == this->inletTemp)
-        return; // unchanged re-send: keep the learned losses and the in-flight window
+        return; // unchanged re-send: keep the in-flight window
     this->heaterWatts = valid ? heaterWatts : 0.0f;
     heatCapacity = capacity;
     deadTime = delay;
     this->inletTemp = inletTemp;
-    lossWatts = 0.0f;
+    // The standing loss is a property of the boiler, not of these parameters, so it survives a reconfigure.
     reset();
+}
+
+void HeatBalancePredictor::seedLoss(float savedWatts) {
+    if (!isEnabled() || lossSeeded)
+        return;
+    lossWatts =
+        std::isfinite(savedWatts) && savedWatts > 0.0f ? std::min(savedWatts, heaterWatts) : DEFAULT_LOSS_FRACTION * heaterWatts;
+    lossSeeded = true;
 }
 
 void HeatBalancePredictor::reset() {

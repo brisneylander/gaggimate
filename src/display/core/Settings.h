@@ -105,6 +105,7 @@ class Settings {
     float getSensorDeadTimeS() const { return sensorDeadTimeS.get(); }
     float getModelHeaterW() const { return modelHeaterW.get(); }
     float getModelHeatRate() const { return modelHeatRate.get(); }
+    float getModelLossW() const { return modelLossW.get(); } // learned by the controller, saved here
     String getPid() const { return pid.get(); }
     String getPumpModelCoeffs() const { return pumpModelCoeffs.get(); }
     String getPumpSlipCoeffs() const { return pumpSlipCoeffs.get(); }
@@ -225,6 +226,7 @@ class Settings {
     void setSensorDeadTimeS(float seconds);
     void setModelHeaterW(float watts);
     void setModelHeatRate(float degreesPerSecond);
+    void setModelLossW(float watts);
     void setPumpModelCoeffs(const String &pumpModelCoeffs);
     void setPumpSlipCoeffs(const String &pumpSlipCoeffs);
     void setWifiSsid(const String &wifiSsid);
@@ -379,6 +381,7 @@ class Settings {
     Property<float> sensorDeadTimeS{registry, "lc_dt", 0.0f};
     Property<float> modelHeaterW{registry, "lc_hw", 0.0f};
     Property<float> modelHeatRate{registry, "lc_hr", 0.0f};
+    Property<float> modelLossW{registry, "lc_lw", 0.0f};
 
     // Display settings
     Property<int> mainBrightness{registry, "main_b", 16};

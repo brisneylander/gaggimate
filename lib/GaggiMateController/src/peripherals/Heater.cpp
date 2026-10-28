@@ -98,7 +98,7 @@ void Heater::setFeedforwardScale(float combinedKff) {
 }
 
 void Heater::setLagCompensation(float derivativeFilterS, float integralZoneC, float sensorDeadTimeS, float modelHeaterW,
-                                float modelHeatRate) {
+                                float modelHeatRate, float modelLossW) {
     std::lock_guard<std::mutex> lock(lagMutex);
     simplePid->setDerivativeFilterTime(derivativeFilterS);
     simplePid->setIntegralZone(integralZoneC);
@@ -107,9 +107,15 @@ void Heater::setLagCompensation(float derivativeFilterS, float integralZoneC, fl
     if (!integralZoneActive)
         simplePid->setIntegralHold(false);
     predictor.configure(modelHeaterW, modelHeatRate, sensorDeadTimeS, incomingWaterTemp);
+    predictor.seedLoss(modelLossW);
     ESP_LOGI(LOG_TAG, "Lag compensation: D filter %.1fs, I zone %.2f°C, dead time %.1fs, predictor %s (%.0fW, %.3f°C/s)",
              derivativeFilterS, integralZoneC, sensorDeadTimeS, predictor.isEnabled() ? "on" : "off", modelHeaterW,
              modelHeatRate);
+}
+
+float Heater::getLearnedLossWatts() {
+    std::lock_guard<std::mutex> lock(lagMutex);
+    return predictor.isEnabled() ? predictor.getLossWatts() : 0.0f;
 }
 
 void Heater::updateLagCompensation() {

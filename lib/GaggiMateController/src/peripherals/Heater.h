@@ -51,9 +51,12 @@ class Heater {
     //   sensorDeadTimeS: delay from heater power to the sensor reacting
     //   modelHeaterW / modelHeatRate (°C/s at full power), with sensorDeadTimeS: heat-balance predictor;
     //                  the PID then runs on measured + not-yet-seen temperature change
+    //   modelLossW: standing loss saved from an earlier run to start the predictor from (<= 0: default guess)
     void setLagCompensation(float derivativeFilterS, float integralZoneC, float sensorDeadTimeS, float modelHeaterW,
-                            float modelHeatRate);
+                            float modelHeatRate, float modelLossW = 0.0f);
     float getControlTemperature() const { return controlTemperature; }
+    // Predictor's learned standing loss (W), 0 while the predictor is off.
+    float getLearnedLossWatts();
 
   private:
     void setupPid();

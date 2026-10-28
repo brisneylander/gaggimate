@@ -296,6 +296,14 @@ void Controller::setupBluetooth() {
     });
     pluginManager->on("ota:update:end", [this](Event const &) { applyConnectionPriority(true); });
     pluginManager->on("history:shot:recorded", [this](Event const &) { comms.tare(); });
+    comms.onHeaterLoss([this](float watts) {
+        const float saved = settings.getModelLossW();
+        const unsigned long now = millis();
+        if (std::fabs(watts - saved) >= std::max(2.0f, 0.05f * saved) && now - lastLossSaveMs >= LOSS_SAVE_INTERVAL_MS) {
+            settings.setModelLossW(watts);
+            lastLossSaveMs = now;
+        }
+    });
     comms.onSensorData([this](float temp, float temp2, float pressure, float puckFlow, float pumpFlow, float puckResistance,
                               float pumpPower, float heaterPower, float waterPumped) {
         onTempRead(temp);
@@ -917,6 +925,7 @@ void Controller::setHeaterSettings() {
     lag.sensorDeadTimeS = settings.getSensorDeadTimeS();
     lag.modelHeaterW = settings.getModelHeaterW();
     lag.modelHeatRate = settings.getModelHeatRate();
+    lag.modelLossW = settings.getModelLossW();
     comms.sendHeaterSettings(pid[0], pid[1], pid[2], pid[3], settings.isHeaterCoordinationEnabled(),
                              static_cast<uint32_t>(settings.getHeaterHandoverMs()), lag);
 }

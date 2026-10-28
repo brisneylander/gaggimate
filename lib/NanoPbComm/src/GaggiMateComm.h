@@ -25,6 +25,7 @@ struct HeaterLagCompensation {
     float sensorDeadTimeS = 0.0f;   // heater-to-sensor dead time (s): length of the post-flow I pause, predictor delay
     float modelHeaterW = 0.0f;      // heat-balance predictor: heater power (W)
     float modelHeatRate = 0.0f;     // heat-balance predictor: full-power heat-up rate (degC/s)
+    float modelLossW = 0.0f;        // heat-balance predictor: saved standing loss to start from (W), 0 = default guess
 };
 
 // Per-component commands: drive several components atomically in one frame, comparable so callers send only deltas.

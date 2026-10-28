@@ -282,7 +282,7 @@ void GaggiMateController::setup() {
         heater->setFeedforwardScale(settings.kf);
         heater->setTunings(settings.kp, settings.ki, settings.kd);
         heater->setLagCompensation(settings.derivative_filter_s, settings.integral_zone, settings.sensor_dead_time_s,
-                                   settings.model_heater_w, settings.model_heat_rate);
+                                   settings.model_heater_w, settings.model_heat_rate, settings.model_loss_w);
         if (heater2 != nullptr) {
             heater2->setTunings(settings.kp, settings.ki, settings.kd);
             // The heat-balance model describes the brew boiler only; the steam boiler keeps the plain loop.
@@ -508,6 +508,7 @@ void GaggiMateController::sendSensorData() {
     p.content.sensor.boilers[0].temperature = this->brewTemperature->read();
     p.content.sensor.boilers[0].pressure = pressure;
     p.content.sensor.boilers[0].power = heaterPower;
+    p.content.sensor.boilers[0].standing_loss_w = heater ? heater->getLearnedLossWatts() : 0.0f;
     if (_config.capabilites.dualBoiler) {
         p.content.sensor.boilers[1].index = 1;
         p.content.sensor.boilers[1].temperature = this->steamTemperature->read();

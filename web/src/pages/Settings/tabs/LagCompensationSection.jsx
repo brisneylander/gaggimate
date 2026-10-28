@@ -27,6 +27,7 @@ export function LagCompensationSection({ formData, onChange }) {
     modelHeaterW: t`Element power, e.g. 1100 W for a 230 V Rancilio Silvia.`,
     modelHeatRate: t`Steady rise at full power, measured mid-warm-up (autotune logs it as k').`,
   };
+  const learnedLoss = Math.round(Number(formData.modelLossW) || 0);
   return (
     <Section title={t`Boiler Lag Compensation`} className='h-full'>
       <p className='mb-4 text-sm opacity-70'>
@@ -61,6 +62,14 @@ export function LagCompensationSection({ formData, onChange }) {
           </InputGroupField>
         ))}
       </div>
+      {learnedLoss > 0 && (
+        <p className='mt-4 text-sm opacity-70'>
+          <Trans>
+            Learned standing heat loss: {learnedLoss} W. The predictor starts from this after a
+            restart.
+          </Trans>
+        </p>
+      )}
     </Section>
   );
 }

@@ -121,6 +121,8 @@ class GaggiMateClient {
     void onSendFailed(std::function<void()>) {} // the mocked link never drops a frame
     void onSystemInfo(SystemInfoCallback cb) { _systemInfoCb = std::move(cb); }
     void onSensorData(SensorCallback cb) { _sensorCb = std::move(cb); }
+    // Brew boiler's learned standing heat loss (W), reported while the heat-balance predictor runs.
+    void onHeaterLoss(std::function<void(float)> cb) { _heaterLossCb = std::move(cb); }
     void onButtonState(ButtonCallback cb) { _buttonCb = std::move(cb); }
     // Sim only: inject a physical button edge as if the controller board reported it.
     void simulateButton(uint8_t index, bool pressed) {
@@ -147,6 +149,7 @@ class GaggiMateClient {
     IncompatibleCallback _incompatibleCb;
     SystemInfoCallback _systemInfoCb;
     SensorCallback _sensorCb;
+    std::function<void(float)> _heaterLossCb;
     ButtonCallback _buttonCb;
     AutotuneResultCallback _autotuneResultCb;
     VolumetricCallback _volumetricCb;

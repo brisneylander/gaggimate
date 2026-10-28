@@ -155,6 +155,8 @@ void Settings::setModelHeaterW(float watts) { modelHeaterW.set(std::clamp(watts,
 
 void Settings::setModelHeatRate(float degreesPerSecond) { modelHeatRate.set(std::clamp(degreesPerSecond, 0.0f, 5.0f)); }
 
+void Settings::setModelLossW(float watts) { modelLossW.set(std::clamp(watts, 0.0f, 500.0f)); }
+
 void Settings::setPumpModelCoeffs(const String &pumpModelCoeffs) { this->pumpModelCoeffs.set(pumpModelCoeffs); }
 
 void Settings::setPumpSlipCoeffs(const String &pumpSlipCoeffs) { this->pumpSlipCoeffs.set(pumpSlipCoeffs); }

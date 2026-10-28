@@ -20,6 +20,8 @@ constexpr Range SENSOR_DEAD_TIME_S{2.0f, 60.0f};  // sensor in the water ... ver
 constexpr Range HEATER_W{200.0f, 2500.0f};        // espresso boiler elements
 constexpr Range HEAT_RATE_C_PER_S{0.05f, 3.0f};   // large HX/dual boilers ... small fast boilers (Silvia ~0.6)
 constexpr Range STANDING_LOSS_W{0.0f, 300.0f};    // holding power at brew temperature
+constexpr Range INLET_TEMP_C{5.0f, 70.0f};        // tank water; tanks beside the boiler warm up (40 degC on a Silvia)
+constexpr float DEFAULT_INLET_TEMP_C = 23.0f;     // used while the inlet temperature is 0 (not set)
 
 // 0 for off (<= 0 or not finite), otherwise clamped into the range.
 inline float clampOrOff(float value, Range range) {

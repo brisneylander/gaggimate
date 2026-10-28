@@ -71,6 +71,19 @@ void test_flush_gives_immediate_negative_correction() {
     TEST_ASSERT_FLOAT_WITHIN(0.05f, expected, p.getCorrection());
 }
 
+// Warmer tank water takes proportionally less heat per ml: a 40 °C tank (measured on a Silvia) removes
+// (98 - 40) / (98 - 23) = 77 % of what the old fixed 23 °C assumption did.
+void test_flush_correction_scales_with_inlet_temperature() {
+    HeatBalancePredictor cold, warm;
+    cold.configure(1100.0f, 0.6f, 20.0f, 23.0f);
+    warm.configure(1100.0f, 0.6f, 20.0f, 40.0f);
+    for (int i = 0; i < 5; ++i) {
+        cold.update(1.0f, 0.0f, 10.0f, 98.0f, 98.0f);
+        warm.update(1.0f, 0.0f, 10.0f, 98.0f, 98.0f);
+    }
+    TEST_ASSERT_FLOAT_WITHIN(0.01f, (98.0f - 40.0f) / (98.0f - 23.0f), warm.getCorrection() / cold.getCorrection());
+}
+
 // Holding temperature, the learned loss converges to the holding power, so the steady correction → 0 and the
 // PID still settles the real sensor on setpoint.
 void test_steady_state_correction_converges_to_zero() {
@@ -384,6 +397,7 @@ int main(int argc, char **argv) {
     RUN_TEST(test_full_power_correction_is_rate_times_dead_time);
     RUN_TEST(test_correction_decays_after_heater_off);
     RUN_TEST(test_flush_gives_immediate_negative_correction);
+    RUN_TEST(test_flush_correction_scales_with_inlet_temperature);
     RUN_TEST(test_steady_state_correction_converges_to_zero);
     RUN_TEST(test_correction_is_bounded);
     RUN_TEST(test_identical_reconfigure_keeps_state);

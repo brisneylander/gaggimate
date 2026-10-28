@@ -164,6 +164,8 @@ void Settings::setModelHeatRate(float degreesPerSecond) {
 
 void Settings::setModelLossW(float watts) { modelLossW.set(lag_limits::clampOrOff(watts, lag_limits::STANDING_LOSS_W)); }
 
+void Settings::setInletTempC(float degrees) { inletTempC.set(lag_limits::clampOrOff(degrees, lag_limits::INLET_TEMP_C)); }
+
 void Settings::setPumpModelCoeffs(const String &pumpModelCoeffs) { this->pumpModelCoeffs.set(pumpModelCoeffs); }
 
 void Settings::setPumpSlipCoeffs(const String &pumpSlipCoeffs) { this->pumpSlipCoeffs.set(pumpSlipCoeffs); }

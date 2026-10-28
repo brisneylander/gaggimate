@@ -375,6 +375,8 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
                 settings->setModelHeatRate(request->arg("modelHeatRate").toFloat());
             if (request->hasArg("modelLossW")) // 0 = forget the learned value (controller reseeds on its next boot)
                 settings->setModelLossW(request->arg("modelLossW").toFloat());
+            if (request->hasArg("inletTempC"))
+                settings->setInletTempC(request->arg("inletTempC").toFloat());
             if (request->hasArg("pid"))
                 settings->setPid(request->arg("pid"));
             if (request->hasArg("pumpModelCoeffs"))
@@ -578,6 +580,7 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
     doc["modelHeaterW"] = settings.getModelHeaterW();
     doc["modelHeatRate"] = settings.getModelHeatRate();
     doc["modelLossW"] = settings.getModelLossW();
+    doc["inletTempC"] = settings.getInletTempC();
     doc["pid"] = settings.getPid();
     doc["pumpModelCoeffs"] = settings.getPumpModelCoeffs();
     doc["pumpSlipCoeffs"] = settings.getPumpSlipCoeffs();

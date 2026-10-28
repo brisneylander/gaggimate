@@ -185,7 +185,7 @@ void GaggiMateController::setup() {
         float *pumpFlowPtr = dimmedPump->getPumpFlowPtr();
         int *valveStatusPtr = dimmedPump->getValveStatusPtr();
 
-        heater->setThermalFeedforward(pumpFlowPtr, 23.0f, valveStatusPtr);
+        heater->setThermalFeedforward(pumpFlowPtr, lag_limits::DEFAULT_INLET_TEMP_C, valveStatusPtr);
         heater->setFeedforwardScale(0.0f);
     }
     // Initialize last ping time
@@ -286,10 +286,10 @@ void GaggiMateController::setup() {
         using namespace lag_limits;
         const float derivativeFilterS = clampOrOff(settings.derivative_filter_s, DERIVATIVE_FILTER_S);
         const float integralZone = clampOrOff(settings.integral_zone, INTEGRAL_ZONE_C);
-        heater->setLagCompensation(derivativeFilterS, integralZone, clampOrOff(settings.sensor_dead_time_s, SENSOR_DEAD_TIME_S),
-                                   clampOrOff(settings.model_heater_w, HEATER_W),
-                                   clampOrOff(settings.model_heat_rate, HEAT_RATE_C_PER_S),
-                                   clampOrOff(settings.model_loss_w, STANDING_LOSS_W));
+        heater->setLagCompensation(
+            derivativeFilterS, integralZone, clampOrOff(settings.sensor_dead_time_s, SENSOR_DEAD_TIME_S),
+            clampOrOff(settings.model_heater_w, HEATER_W), clampOrOff(settings.model_heat_rate, HEAT_RATE_C_PER_S),
+            clampOrOff(settings.model_loss_w, STANDING_LOSS_W), clampOrOff(settings.inlet_temp_c, INLET_TEMP_C));
         if (heater2 != nullptr) {
             heater2->setTunings(settings.kp, settings.ki, settings.kd);
             // The heat-balance model describes the brew boiler only; the steam boiler keeps the plain loop.

@@ -4854,6 +4854,10 @@ msgctxt "Tuesday, one letter"
 msgid "T"
 msgstr "二"
 
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "Tank water temperature"
+msgstr ""
+
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "Tare"
 msgstr "去皮"
@@ -5018,6 +5022,10 @@ msgstr "温度（摄氏度）"
 #: src/utils/warnings.js
 msgid "Temperature not stable"
 msgstr "温度不稳定"
+
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "Temperature of the water drawn in by a shot or flush. A tank beside the boiler warms up; 0 assumes 23 °C."
+msgstr ""
 
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "Temperature Offset (°C)"

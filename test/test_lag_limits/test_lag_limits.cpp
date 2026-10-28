@@ -43,6 +43,8 @@ void test_ranges_are_sane() {
     TEST_ASSERT_EQUAL_FLOAT(1100.0f, clampOrOff(1100.0f, HEATER_W));
     TEST_ASSERT_EQUAL_FLOAT(0.6f, clampOrOff(0.6f, HEAT_RATE_C_PER_S));
     TEST_ASSERT_EQUAL_FLOAT(52.0f, clampOrOff(52.0f, STANDING_LOSS_W));
+    TEST_ASSERT_EQUAL_FLOAT(40.0f, clampOrOff(40.0f, INLET_TEMP_C)); // measured Silvia tank
+    TEST_ASSERT_EQUAL_FLOAT(70.0f, clampOrOff(95.0f, INLET_TEMP_C));
 }
 
 int main(int argc, char **argv) {

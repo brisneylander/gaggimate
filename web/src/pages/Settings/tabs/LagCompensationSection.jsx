@@ -11,6 +11,7 @@ const FIELDS = [
   { key: 'sensorDeadTimeS', unit: 's', min: 2, max: 60 },
   { key: 'modelHeaterW', unit: 'W', min: 200, max: 2500 },
   { key: 'modelHeatRate', unit: '°C/s', min: 0.05, max: 3 },
+  { key: 'inletTempC', unit: '°C', min: 5, max: 70 },
 ];
 
 const inRangeOrOff = (value, min, max) => {
@@ -26,6 +27,7 @@ export function LagCompensationSection({ formData, onChange }) {
     sensorDeadTimeS: t`Sensor dead time`,
     modelHeaterW: t`Heater power`,
     modelHeatRate: t`Full-power heat-up rate`,
+    inletTempC: t`Tank water temperature`,
   };
   const help = {
     derivativeFilterS: t`Smooths the D term so thermocouple steps don't switch the heater. Try 2 s; long filters delay its braking.`,
@@ -33,6 +35,7 @@ export function LagCompensationSection({ formData, onChange }) {
     sensorDeadTimeS: t`Delay from heater on to the temperature starting to rise.`,
     modelHeaterW: t`Element power, e.g. 1100 W for a 230 V Rancilio Silvia.`,
     modelHeatRate: t`Steady rise at full power, measured mid-warm-up (autotune logs it as k').`,
+    inletTempC: t`Temperature of the water drawn in by a shot or flush. A tank beside the boiler warms up; 0 assumes 23 °C.`,
   };
   const learnedLoss = Math.round(Number(formData.modelLossW) || 0);
   return (

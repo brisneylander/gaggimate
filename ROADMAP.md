@@ -33,9 +33,12 @@ on 2026-10-28 left open. See [FORK.md](FORK.md) for building and releasing.
   the first ~25 s. Next experiment: a higher model heat-up rate (0.8–0.9 °C/s) so the predictor backs off sooner.
 - **Standing loss per degree.** The learned loss works (45 W saved) but should be W/°C × (T − 23 °C) so brew and steam
   share one value.
-- **Steam switch input reads "on" with the switch off.** After an OTA restart the controller's start-up reading put
-  the machine into Steam. Upstream input code; check by switching it on for 5 s, then off, and watching the
-  "switch" warning.
+- **Steam switch input stays "on" with the switch off.** Tested 2026-10-28: switching on registered, switching off
+  never did (no debounce, 100 ms sampling, reliable messages, and still "on" with the heater off), but it has read
+  "off" right after some restarts. So the pin is held active electrically, intermittently: suspect leakage through
+  the Silvia's illuminated switch keeping the input partly on. Check the wiring against the GaggiMate Silvia guide.
+  Workaround in place: button behaviour `brew,none,water` (steam switch ignored; steam from the screen or web UI).
+  Restore with `brew,steam,water`. The display's "steam switch is on" warning only clears after a restart.
 - **Autotune.** Offset-aware, predictive safety cutoff (a run coasted to 131 °C), stop once dead time and k' are
   identified, remember the Heater Wattage field, optional relay test.
 - **Phone app** loads its web UI from the official releases (`web/src/app/updates.js`), so it never shows fork

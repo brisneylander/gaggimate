@@ -23,6 +23,20 @@ on 2026-10-28 left open. See [FORK.md](FORK.md) for building and releasing.
    flush replay) and check every change against it. Log temperature, duty and flow at a few Hz into shot history so
    tuning can use real data.
 
+## Bench results so far
+
+5 s flush from 93 °C, Kp 60 / Ki 0.658 / Kd 1500, 40 °C tank, calibrated pump (8.644, 4.676):
+
+| Configuration (runs) | Overshoot | Settled ±0.3 °C |
+|---|---|---|
+| Compensation off (3) | +2.23, +3.75, +2.75 — avg +2.91 °C | avg 318 s |
+| On, single 20 s delay (5) | +1.75, +1.89, +1.50, +1.79, +1.47 — avg +1.68 °C | avg 174 s |
+| **On, 12 s water delay (2), simon006** | **+0.75, +0.50 — avg +0.63 °C** | **avg 126 s** |
+
+With the 12 s water delay the heater puts back about what the flush took (net −0.8 to +0.3 kJ), so an explicit heat
+budget for flushes looks unnecessary; recovery to 93 °C is a little slower (69–81 s vs 56–62 s). Next: try 10 and
+15 s, then shots, where the planned-heat idea (pre-heat before a shot) still applies.
+
 ## Open from bench testing (v1.9.0-simon003/004)
 
 - **Flush A/B, one run each** (5 s flush from 93 °C, Kp 60 / Ki 0.658 / Kd 1500): overshoot 2.23 → 1.75 °C, settling

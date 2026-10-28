@@ -1,12 +1,14 @@
 #ifndef HEATER_H
 #define HEATER_H
 #include "Autotune/Autotune.h"
+#include "HeatBalancePredictor.h"
 #include "Max31855Thermocouple.h"
 #include "TemperatureSensor.h"
 #include <SimplePID/SimplePID.h>
 #include <atomic>
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
+#include <mutex>
 
 constexpr float MAX_AUTOTUNE_TEMP = 125.0f;
 constexpr float TUNER_OUTPUT_SPAN = 1000.0f;
@@ -42,6 +44,17 @@ class Heater {
     void setThermalFeedforward(float *pumpFlowPtr = nullptr, float incomingWaterTemp = 23.0f, int *valveStatusPtr = nullptr);
     void setFeedforwardScale(float combinedKff); // Set combined Kff value (output units per watt)
 
+    // Lag compensation; every value <= 0 keeps the legacy behaviour for that part.
+    //   derivativeFilterS: low-pass time constant on the D term
+    //   integralZoneC: integrate only within this |error| band, and pause the integral while water flows
+    //                  and for sensorDeadTimeS afterwards
+    //   sensorDeadTimeS: delay from heater power to the sensor reacting
+    //   modelHeaterW / modelHeatRate (°C/s at full power), with sensorDeadTimeS: heat-balance predictor;
+    //                  the PID then runs on measured + not-yet-seen temperature change
+    void setLagCompensation(float derivativeFilterS, float integralZoneC, float sensorDeadTimeS, float modelHeaterW,
+                            float modelHeatRate);
+    float getControlTemperature() const { return controlTemperature; }
+
   private:
     void setupPid();
     void setupAutotune(int testTimeSec, int windowSize, int heaterWattage);
@@ -53,6 +66,7 @@ class Heater {
     void plot(float optimumOutput, float outputScale, uint8_t everyNth);
     float calculateDisturbanceFeedforwardGain();
     float calculateSafetyScaling(float tempError);
+    void updateLagCompensation();
     TemperatureSensor *sensor;
     uint8_t heaterPin;
     xTaskHandle taskHandle;
@@ -64,7 +78,8 @@ class Heater {
     heater_autotune_fail_callback_t autotune_fail_callback;
     HeaterCoordinator *coordinator = nullptr;
 
-    float temperature = 0.0f;
+    float temperature = 0.0f;        // measured (what safety checks and telemetry use)
+    float controlTemperature = 0.0f; // PID input: measured + predictor correction
     float output = 0.0f;
     float setpoint = 0.0f;
     int plotCount = 0;
@@ -86,6 +101,16 @@ class Heater {
     float heaterEfficiency = 0.95f; // 95% efficiency (immersion heater)
     float heatLossWatts = 5.0f;     // 5W heat loss (well-insulated boiler)
     float combinedKff = 0.0f;       // Combined feedforward gain (output units per watt) - disabled by default
+
+    // Lag compensation state (written from the comms task, read on the heater task)
+    std::mutex lagMutex;
+    HeatBalancePredictor predictor;
+    bool integralZoneActive = false;
+    uint32_t integralHoldTailMs = 0;
+    uint32_t lastFlowMs = 0;
+    bool flowSeen = false;
+    uint32_t lastPredictorMs = 0;
+    bool predictorPrimed = false;
 
     // Thermal model constants
     static constexpr float WATER_DENSITY = 1.0f;        // g/ml

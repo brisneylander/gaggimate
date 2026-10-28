@@ -911,8 +911,14 @@ void Controller::setPumpModelCoeffs(void) {
 void Controller::setHeaterSettings() {
     float pid[4];
     parseFloatCsv(settings.getPid(), pid, 4, 0.0f);
+    HeaterLagCompensation lag;
+    lag.derivativeFilterS = settings.getDerivativeFilterS();
+    lag.integralZone = settings.getIntegralZone();
+    lag.sensorDeadTimeS = settings.getSensorDeadTimeS();
+    lag.modelHeaterW = settings.getModelHeaterW();
+    lag.modelHeatRate = settings.getModelHeatRate();
     comms.sendHeaterSettings(pid[0], pid[1], pid[2], pid[3], settings.isHeaterCoordinationEnabled(),
-                             static_cast<uint32_t>(settings.getHeaterHandoverMs()));
+                             static_cast<uint32_t>(settings.getHeaterHandoverMs()), lag);
 }
 
 int Controller::getTargetGrindDuration() const { return settings.getTargetGrindDuration(); }

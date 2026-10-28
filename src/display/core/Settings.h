@@ -99,6 +99,12 @@ class Settings {
     bool isDelayAdjust() const { return delayAdjust.get(); }
     bool isHeaterCoordinationEnabled() const { return heaterCoordinationEnabled.get(); }
     int getHeaterHandoverMs() const { return heaterHandoverMs.get(); }
+    // Brew-boiler lag compensation (0 = off); see HeaterLagCompensation.
+    float getDerivativeFilterS() const { return derivativeFilterS.get(); }
+    float getIntegralZone() const { return integralZone.get(); }
+    float getSensorDeadTimeS() const { return sensorDeadTimeS.get(); }
+    float getModelHeaterW() const { return modelHeaterW.get(); }
+    float getModelHeatRate() const { return modelHeatRate.get(); }
     String getPid() const { return pid.get(); }
     String getPumpModelCoeffs() const { return pumpModelCoeffs.get(); }
     String getPumpSlipCoeffs() const { return pumpSlipCoeffs.get(); }
@@ -214,6 +220,11 @@ class Settings {
     void setPid(const String &pid);
     void setHeaterCoordinationEnabled(bool enabled);
     void setHeaterHandoverMs(int handoverMs);
+    void setDerivativeFilterS(float seconds);
+    void setIntegralZone(float degrees);
+    void setSensorDeadTimeS(float seconds);
+    void setModelHeaterW(float watts);
+    void setModelHeatRate(float degreesPerSecond);
     void setPumpModelCoeffs(const String &pumpModelCoeffs);
     void setPumpSlipCoeffs(const String &pumpSlipCoeffs);
     void setWifiSsid(const String &wifiSsid);
@@ -363,6 +374,11 @@ class Settings {
 
     Property<bool> heaterCoordinationEnabled{registry, "hco", false};
     Property<int> heaterHandoverMs{registry, "hcg", DEFAULT_HEATER_HANDOVER_MS};
+    Property<float> derivativeFilterS{registry, "lc_df", 0.0f};
+    Property<float> integralZone{registry, "lc_iz", 0.0f};
+    Property<float> sensorDeadTimeS{registry, "lc_dt", 0.0f};
+    Property<float> modelHeaterW{registry, "lc_hw", 0.0f};
+    Property<float> modelHeatRate{registry, "lc_hr", 0.0f};
 
     // Display settings
     Property<int> mainBrightness{registry, "main_b", 16};

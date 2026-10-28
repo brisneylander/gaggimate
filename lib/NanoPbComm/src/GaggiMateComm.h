@@ -18,6 +18,15 @@ enum class BoilerControlMode : uint8_t {
     Pressure = 1,    // setpoint is a target pressure in bar
 };
 
+// Brew-boiler lag compensation carried in HeaterSettings; every field 0 = off (legacy loop).
+struct HeaterLagCompensation {
+    float derivativeFilterS = 0.0f; // low-pass time constant on the D term (s)
+    float integralZone = 0.0f;      // integrate only while |error| < this (degC); also pauses I during water flow
+    float sensorDeadTimeS = 0.0f;   // heater-to-sensor dead time (s): length of the post-flow I pause, predictor delay
+    float modelHeaterW = 0.0f;      // heat-balance predictor: heater power (W)
+    float modelHeatRate = 0.0f;     // heat-balance predictor: full-power heat-up rate (degC/s)
+};
+
 // Per-component commands: drive several components atomically in one frame, comparable so callers send only deltas.
 struct BoilerCommand {
     uint8_t index = 0;

@@ -76,7 +76,7 @@ gm::Payload GaggiMateClient::buildRelayControl(uint8_t index, bool open) {
 }
 
 gm::Payload GaggiMateClient::buildHeaterSettings(float kp, float ki, float kd, float kf, bool heaterCoordinationEnabled,
-                                                 uint32_t handoverMs) {
+                                                 uint32_t handoverMs, const HeaterLagCompensation &lag) {
     gm::Payload p = gaggimate_Payload_init_zero;
     p.which_content = gaggimate_Payload_heater_tag;
     p.content.heater.kp = kp;
@@ -85,6 +85,11 @@ gm::Payload GaggiMateClient::buildHeaterSettings(float kp, float ki, float kd, f
     p.content.heater.kf = kf;
     p.content.heater.heater_coordination_enabled = heaterCoordinationEnabled;
     p.content.heater.handover_ms = handoverMs;
+    p.content.heater.derivative_filter_s = lag.derivativeFilterS;
+    p.content.heater.integral_zone = lag.integralZone;
+    p.content.heater.sensor_dead_time_s = lag.sensorDeadTimeS;
+    p.content.heater.model_heater_w = lag.modelHeaterW;
+    p.content.heater.model_heat_rate = lag.modelHeatRate;
     return p;
 }
 
@@ -159,8 +164,8 @@ void GaggiMateClient::sendPumpControl(uint8_t index, PumpControlMode mode, float
 void GaggiMateClient::sendRelayControl(uint8_t index, bool open) { _endpoint.send(buildRelayControl(index, open)); }
 
 void GaggiMateClient::sendHeaterSettings(float kp, float ki, float kd, float kf, bool heaterCoordinationEnabled,
-                                         uint32_t handoverMs) {
-    _endpoint.send(buildHeaterSettings(kp, ki, kd, kf, heaterCoordinationEnabled, handoverMs));
+                                         uint32_t handoverMs, const HeaterLagCompensation &lag) {
+    _endpoint.send(buildHeaterSettings(kp, ki, kd, kf, heaterCoordinationEnabled, handoverMs, lag));
 }
 
 void GaggiMateClient::sendPumpSettings(float a, float b, float c, float d, float commutationGain, float convergenceGain,

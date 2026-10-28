@@ -1579,9 +1579,11 @@ void Controller::onFlush() { startFlush(static_cast<float>(settings.getFlushDura
 flush_to_target::Plan Controller::flushToTarget() {
     float coeffs[2] = {NAN, NAN};
     parseFloatCsv(settings.getPumpModelCoeffs(), coeffs, 2, NAN);
-    flush_to_target::Plan plan =
-        flush_to_target::plan(getCurrentTemp(), getTargetTemp(), static_cast<float>(settings.getTemperatureOffset()),
-                              settings.getModelHeaterW(), settings.getModelHeatRate(), settings.getInletTempC(), coeffs[0]);
+    // Always the selected profile's temperature: what the next shot will brew at.
+    const float target = profileManager->getSelectedProfile().temperature;
+    flush_to_target::Plan plan = flush_to_target::plan(
+        getCurrentTemp(), target, static_cast<float>(settings.getTemperatureOffset()), settings.getModelHeaterW(),
+        settings.getModelHeatRate(), settings.getInletTempC(), coeffs[0], settings.getModelLossW(), FLUSH_TO_TARGET_HOLD_S);
     if (plan.reason == nullptr && mode != MODE_BREW)
         plan.reason = "only in Brew mode";
     if (plan.reason == nullptr && isActive())
@@ -1590,7 +1592,7 @@ flush_to_target::Plan Controller::flushToTarget() {
         plan.ml = plan.seconds = 0.0f;
         return plan;
     }
-    ESP_LOGI(LOG_TAG, "Flush to target: %.1f°C over, %.0f ml in %.1f s", getCurrentTemp() - getTargetTemp(), plan.ml,
+    ESP_LOGI(LOG_TAG, "Flush to target %.1f°C: %.1f°C over, %.0f ml in %.1f s", target, getCurrentTemp() - target, plan.ml,
              plan.seconds);
     // The flush is sized so the boiler lands on target with only its standing loss after it. Left alone, the predictor
     // sees the cold water and the PID heats at full power (17.7 kJ, ~10 °C of rebound, on the first bench run), so the

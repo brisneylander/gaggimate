@@ -98,7 +98,7 @@ void Heater::setFeedforwardScale(float combinedKff) {
 }
 
 void Heater::setLagCompensation(float derivativeFilterS, float integralZoneC, float sensorDeadTimeS, float modelHeaterW,
-                                float modelHeatRate, float modelLossW, float inletTempC) {
+                                float modelHeatRate, float modelLossW, float inletTempC, float waterDeadTimeS) {
     std::lock_guard<std::mutex> lock(lagMutex);
     simplePid->setDerivativeFilterTime(derivativeFilterS);
     simplePid->setIntegralZone(integralZoneC);
@@ -109,12 +109,13 @@ void Heater::setLagCompensation(float derivativeFilterS, float integralZoneC, fl
     // The water a flush or shot draws in replaces boiler water; at 40 °C instead of the assumed 23 °C it takes ~30 %
     // less heat per ml, so a fixed guess makes the predictor (and the thermal feedforward) over-heat after a flush.
     incomingWaterTemp = inletTempC > 0.0f ? inletTempC : 23.0f;
-    predictor.configure(modelHeaterW, modelHeatRate, sensorDeadTimeS, incomingWaterTemp);
+    predictor.configure(modelHeaterW, modelHeatRate, sensorDeadTimeS, incomingWaterTemp, waterDeadTimeS);
     predictor.seedLoss(modelLossW);
     ESP_LOGI(LOG_TAG,
-             "Lag compensation: D filter %.1fs, I zone %.2f°C, dead time %.1fs, predictor %s (%.0fW, %.3f°C/s), inlet %.1f°C",
+             "Lag compensation: D filter %.1fs, I zone %.2f°C, dead time %.1fs, predictor %s (%.0fW, %.3f°C/s, water %.1fs), "
+             "inlet %.1f°C",
              derivativeFilterS, integralZoneC, sensorDeadTimeS, predictor.isEnabled() ? "on" : "off", modelHeaterW, modelHeatRate,
-             incomingWaterTemp);
+             predictor.getWaterDeadTime(), incomingWaterTemp);
 }
 
 float Heater::getLearnedLossWatts() {

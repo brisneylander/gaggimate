@@ -27,6 +27,7 @@ struct HeaterLagCompensation {
     float modelHeatRate = 0.0f;     // heat-balance predictor: full-power heat-up rate (degC/s)
     float modelLossW = 0.0f;        // heat-balance predictor: saved standing loss to start from (W), 0 = default guess
     float inletTempC = 0.0f;        // tank water temperature (degC) for the predictor and thermal feedforward, 0 = 23
+    float waterDeadTimeS = 0.0f;    // heat-balance predictor: delay from water flowing to the sensor (s), 0 = dead time
 };
 
 // Per-component commands: drive several components atomically in one frame, comparable so callers send only deltas.

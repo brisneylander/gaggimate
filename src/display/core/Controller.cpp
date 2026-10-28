@@ -927,6 +927,7 @@ void Controller::setHeaterSettings() {
     lag.modelHeatRate = settings.getModelHeatRate();
     lag.modelLossW = settings.getModelLossW();
     lag.inletTempC = settings.getInletTempC();
+    lag.waterDeadTimeS = settings.getWaterDeadTimeS();
     comms.sendHeaterSettings(pid[0], pid[1], pid[2], pid[3], settings.isHeaterCoordinationEnabled(),
                              static_cast<uint32_t>(settings.getHeaterHandoverMs()), lag);
 }

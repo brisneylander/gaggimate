@@ -3,16 +3,21 @@
 #include <cmath>
 #include <numeric>
 
-void HeatBalancePredictor::configure(float heaterWatts, float fullPowerRate, float deadTimeSeconds, float inletTemp) {
+void HeatBalancePredictor::configure(float heaterWatts, float fullPowerRate, float deadTimeSeconds, float inletTemp,
+                                     float waterDeadTimeSeconds) {
     const bool valid = std::isfinite(heaterWatts) && std::isfinite(fullPowerRate) && std::isfinite(deadTimeSeconds) &&
                        heaterWatts > 0.0f && fullPowerRate > 0.0f && deadTimeSeconds > 0.0f;
     const float capacity = valid ? heaterWatts / fullPowerRate : 0.0f;
     const float delay = valid ? deadTimeSeconds : 0.0f;
-    if (capacity == heatCapacity && delay == deadTime && heaterWatts == this->heaterWatts && inletTemp == this->inletTemp)
+    const float waterDelay =
+        valid ? (std::isfinite(waterDeadTimeSeconds) && waterDeadTimeSeconds > 0.0f ? waterDeadTimeSeconds : delay) : 0.0f;
+    if (capacity == heatCapacity && delay == deadTime && waterDelay == waterDeadTime && heaterWatts == this->heaterWatts &&
+        inletTemp == this->inletTemp)
         return; // unchanged re-send: keep the in-flight window
     this->heaterWatts = valid ? heaterWatts : 0.0f;
     heatCapacity = capacity;
     deadTime = delay;
+    waterDeadTime = waterDelay;
     this->inletTemp = inletTemp;
     // The standing loss is a property of the boiler, not of these parameters, so it survives a reconfigure.
     reset();
@@ -29,7 +34,6 @@ void HeatBalancePredictor::seedLoss(float savedWatts) {
 void HeatBalancePredictor::reset() {
     window.clear();
     windowTime = 0.0f;
-    windowRise = 0.0f;
     correction = 0.0f;
 }
 
@@ -50,17 +54,26 @@ float HeatBalancePredictor::update(float dt, float duty, float flow, float measu
         lossWatts += (heaterPower - lossWatts) * dt / (LOSS_LEARN_TAU + dt);
     }
 
-    const float rise = (heaterPower - waterPower - lossWatts) * dt / heatCapacity;
-    window.push_back({dt, rise});
+    window.push_back({dt, (heaterPower - lossWatts) * dt / heatCapacity, waterPower * dt / heatCapacity});
     windowTime += dt;
-    // Steps older than the dead time have reached the sensor; they are in measuredTemp already.
-    while (!window.empty() && windowTime - window.front().dt >= deadTime) {
+    // Steps older than both delays have reached the sensor; they are in measuredTemp already.
+    const float longest = std::max(deadTime, waterDeadTime);
+    while (!window.empty() && windowTime - window.front().dt >= longest) {
         windowTime -= window.front().dt;
         window.pop_front();
     }
-    // Re-summed (~dead-time samples) so float drift can't build up over hours.
-    windowRise = std::accumulate(window.begin(), window.end(), 0.0f, [](float sum, const Step &step) { return sum + step.rise; });
+    // Sum, newest first, what each path hasn't delivered to the sensor yet (re-summed each step, so float drift can't
+    // build up over hours). A step counts while the time since it is still shorter than that path's delay.
+    float pending = 0.0f;
+    float since = 0.0f;
+    for (auto it = window.rbegin(); it != window.rend(); ++it) {
+        if (since < deadTime)
+            pending += it->heat;
+        if (since < waterDeadTime)
+            pending -= it->water;
+        since += it->dt;
+    }
 
-    correction = std::min(std::max(windowRise, -MAX_CORRECTION), MAX_CORRECTION);
+    correction = std::min(std::max(pending, -MAX_CORRECTION), MAX_CORRECTION);
     return correction;
 }

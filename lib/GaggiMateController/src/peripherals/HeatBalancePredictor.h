@@ -10,6 +10,11 @@
 //
 // Parameters come straight from a full-power heat-up: heater wattage, the steady heating rate it produces
 // (°C/s, autotune's k') and the dead time before the sensor reacts. Heat capacity = wattage / rate.
+//
+// Water drawn in by a flush or shot reaches the sensor sooner than heater heat: on a Silvia the dip starts after ~5 s
+// and is half way down by ~12 s, while heater heat takes ~20 s. With one shared delay the predictor keeps counting a
+// flush the sensor already shows, i.e. counts it twice, and over-heats; so water has its own delay. Set it to about the
+// half-way time: a delay as short as the first reaction drops the flush while the sensor is still falling.
 class HeatBalancePredictor {
   public:
     static constexpr float WATER_SPECIFIC_HEAT = 4.18f;   // J/(g·°C), 1 ml = 1 g
@@ -19,9 +24,12 @@ class HeatBalancePredictor {
     static constexpr float DEFAULT_LOSS_FRACTION = 0.05f; // first-run loss guess: ~5 % of the element at brew temp
 
     // Any parameter <= 0 disables the predictor (correction stays 0).
-    void configure(float heaterWatts, float fullPowerRate, float deadTimeSeconds, float inletTemp = 23.0f);
+    // waterDeadTimeSeconds <= 0 uses deadTimeSeconds for water too (the original single-delay model).
+    void configure(float heaterWatts, float fullPowerRate, float deadTimeSeconds, float inletTemp = 23.0f,
+                   float waterDeadTimeSeconds = 0.0f);
     bool isEnabled() const { return heatCapacity > 0.0f; }
     float getDeadTime() const { return deadTime; }
+    float getWaterDeadTime() const { return waterDeadTime; }
     void reset();
     // Starting point for the learned standing loss, applied once: a value saved from an earlier run, or <= 0 for
     // DEFAULT_LOSS_FRACTION of the heater. Starting from zero would read the holding power as heat in flight and
@@ -37,11 +45,11 @@ class HeatBalancePredictor {
   private:
     struct Step {
         float dt;
-        float rise; // °C the model says this step added
+        float heat;  // °C the heater (net of standing loss) added this step; reaches the sensor after deadTime
+        float water; // °C fresh water removed this step; reaches the sensor after waterDeadTime
     };
-    std::deque<Step> window; // the last dead-time worth of model steps, oldest first
+    std::deque<Step> window; // the last max(deadTime, waterDeadTime) of model steps, oldest first
     float windowTime = 0.0f;
-    float windowRise = 0.0f;
     float correction = 0.0f;
     float lossWatts = 0.0f;
     bool lossSeeded = false;
@@ -49,6 +57,7 @@ class HeatBalancePredictor {
     float heaterWatts = 0.0f;
     float heatCapacity = 0.0f; // J/°C
     float deadTime = 0.0f;
+    float waterDeadTime = 0.0f;
     float inletTemp = 23.0f;
 };
 

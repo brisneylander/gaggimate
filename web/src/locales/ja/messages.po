@@ -5167,6 +5167,10 @@ msgstr "時間"
 msgid "Time (s)"
 msgstr "時間 (s)"
 
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "Time from water starting to flow until the temperature has dropped about half way; often shorter than the heater's (about 12 s on a Silvia). 0 uses the sensor dead time."
+msgstr ""
+
 #: src/pages/ShotAnalyzer/utils/formatting.js
 msgid "Time Limit"
 msgstr "時間制限"
@@ -5656,6 +5660,10 @@ msgstr "給湯ボタン"
 #: src/pages/Settings/tabs/GeneralTab.jsx
 msgid "Water Button Behavior"
 msgstr "給湯ボタンの動作"
+
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "Water dead time"
+msgstr ""
 
 #: src/pages/ProfileEdit/ExtendedPhaseTarget.jsx
 msgid "Water drawn"

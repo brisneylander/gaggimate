@@ -166,6 +166,10 @@ void Settings::setModelLossW(float watts) { modelLossW.set(lag_limits::clampOrOf
 
 void Settings::setInletTempC(float degrees) { inletTempC.set(lag_limits::clampOrOff(degrees, lag_limits::INLET_TEMP_C)); }
 
+void Settings::setWaterDeadTimeS(float seconds) {
+    waterDeadTimeS.set(lag_limits::clampOrOff(seconds, lag_limits::WATER_DEAD_TIME_S));
+}
+
 void Settings::setPumpModelCoeffs(const String &pumpModelCoeffs) { this->pumpModelCoeffs.set(pumpModelCoeffs); }
 
 void Settings::setPumpSlipCoeffs(const String &pumpSlipCoeffs) { this->pumpSlipCoeffs.set(pumpSlipCoeffs); }

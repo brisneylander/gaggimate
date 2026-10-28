@@ -377,6 +377,8 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
                 settings->setModelLossW(request->arg("modelLossW").toFloat());
             if (request->hasArg("inletTempC"))
                 settings->setInletTempC(request->arg("inletTempC").toFloat());
+            if (request->hasArg("waterDeadTimeS"))
+                settings->setWaterDeadTimeS(request->arg("waterDeadTimeS").toFloat());
             if (request->hasArg("pid"))
                 settings->setPid(request->arg("pid"));
             if (request->hasArg("pumpModelCoeffs"))
@@ -581,6 +583,7 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
     doc["modelHeatRate"] = settings.getModelHeatRate();
     doc["modelLossW"] = settings.getModelLossW();
     doc["inletTempC"] = settings.getInletTempC();
+    doc["waterDeadTimeS"] = settings.getWaterDeadTimeS();
     doc["pid"] = settings.getPid();
     doc["pumpModelCoeffs"] = settings.getPumpModelCoeffs();
     doc["pumpSlipCoeffs"] = settings.getPumpSlipCoeffs();

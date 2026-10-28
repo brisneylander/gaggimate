@@ -71,6 +71,35 @@ void test_flush_gives_immediate_negative_correction() {
     TEST_ASSERT_FLOAT_WITHIN(0.05f, expected, p.getCorrection());
 }
 
+// With its own, shorter delay a flush stops counting once the sensor has seen it (5 s), instead of after the heater's
+// dead time (20 s), so it isn't counted twice.
+void test_water_delay_drains_flush_sooner() {
+    HeatBalancePredictor shared, separate;
+    shared.configure(1100.0f, 0.6f, 20.0f, 23.0f);
+    separate.configure(1100.0f, 0.6f, 20.0f, 23.0f, 5.0f);
+    TEST_ASSERT_EQUAL_FLOAT(20.0f, shared.getWaterDeadTime());
+    TEST_ASSERT_EQUAL_FLOAT(5.0f, separate.getWaterDeadTime());
+    for (int i = 0; i < 5; ++i) { // 5 s flush, heater off
+        shared.update(1.0f, 0.0f, 10.0f, 98.0f, 98.0f);
+        separate.update(1.0f, 0.0f, 10.0f, 98.0f, 98.0f);
+    }
+    for (int i = 0; i < 10; ++i) {
+        shared.update(1.0f, 0.0f, 0.0f, 90.0f, 98.0f);
+        separate.update(1.0f, 0.0f, 0.0f, 90.0f, 98.0f);
+    }
+    TEST_ASSERT_TRUE(shared.getCorrection() < -3.0f); // still counting the flush 10 s after it ended
+    TEST_ASSERT_FLOAT_WITHIN(1e-3f, 0.0f, separate.getCorrection());
+}
+
+// Heater heat keeps the full dead time even when water has a shorter one.
+void test_water_delay_leaves_heater_delay_alone() {
+    HeatBalancePredictor p;
+    p.configure(1100.0f, 0.6f, 20.0f, 23.0f, 5.0f);
+    for (int i = 0; i < 60; ++i)
+        p.update(1.0f, 1.0f, 0.0f, 60.0f, 98.0f);
+    TEST_ASSERT_FLOAT_WITHIN(0.05f, 0.6f * 20.0f, p.getCorrection());
+}
+
 // Warmer tank water takes proportionally less heat per ml: a 40 °C tank (measured on a Silvia) removes
 // (98 - 40) / (98 - 23) = 77 % of what the old fixed 23 °C assumption did.
 void test_flush_correction_scales_with_inlet_temperature() {
@@ -168,6 +197,7 @@ struct Tuning {
     float integralZone = 0.0f;
     float modelW = 0.0f, modelRate = 0.0f, modelDeadS = 0.0f;
     float lossSeedW = 0.0f;       // as Heater: seedLoss(saved value, 0 = default guess); < 0 skips seeding (starts at 0)
+    float waterDeadS = 0.0f;      // predictor's water delay, 0 = same as modelDeadS
     float predictorStartS = 0.0f; // switch the predictor on this long into the run, once the PID has settled
 };
 
@@ -206,7 +236,7 @@ static Result simulate(const Tuning &tu) {
     HeatBalancePredictor predictor;
     bool predictorStarted = false;
     const auto startPredictor = [&] {
-        predictor.configure(tu.modelW, tu.modelRate, tu.modelDeadS, 20.0f);
+        predictor.configure(tu.modelW, tu.modelRate, tu.modelDeadS, 20.0f, tu.waterDeadS);
         if (tu.lossSeedW >= 0.0f)
             predictor.seedLoss(tu.lossSeedW);
         predictorStarted = true;
@@ -375,6 +405,23 @@ void test_robust_to_model_mismatch() {
 // Switching the predictor on while the PID holds setpoint, as on the bench: from zero loss it reads the ~65 W holding
 // power as heat in flight and sags the boiler by about dead time x holding power / capacity (0.49 degC measured on a
 // Silvia) until the loss is learned. The default guess shrinks that and a saved value removes it.
+// The simulated sensor sees flush water after ~6-10 s (transport + lag) but heater heat only after ~20 s (via the wall).
+void test_separate_water_delay() {
+    const Result shared = simulate(compensated());
+    report("water delay = dead time (20 s)", shared);
+    const float delays[] = {5.0f, 8.0f, 12.0f};
+    for (float d : delays) {
+        Tuning tu = compensated();
+        tu.waterDeadS = d;
+        const Result r = simulate(tu);
+        char name[48];
+        snprintf(name, sizeof(name), "water delay %.0f s", d);
+        report(name, r);
+        TEST_ASSERT_TRUE_MESSAGE(r.settleErr < 0.3f, name);
+        TEST_ASSERT_TRUE_MESSAGE(r.idleP2P <= 0.5f, name);
+    }
+}
+
 void test_seeded_start_avoids_sag() {
     Tuning zero = compensated();
     zero.lossSeedW = -1.0f;
@@ -398,6 +445,8 @@ int main(int argc, char **argv) {
     RUN_TEST(test_correction_decays_after_heater_off);
     RUN_TEST(test_flush_gives_immediate_negative_correction);
     RUN_TEST(test_flush_correction_scales_with_inlet_temperature);
+    RUN_TEST(test_water_delay_drains_flush_sooner);
+    RUN_TEST(test_water_delay_leaves_heater_delay_alone);
     RUN_TEST(test_steady_state_correction_converges_to_zero);
     RUN_TEST(test_correction_is_bounded);
     RUN_TEST(test_identical_reconfigure_keeps_state);
@@ -408,5 +457,6 @@ int main(int argc, char **argv) {
     RUN_TEST(test_individual_features);
     RUN_TEST(test_robust_to_model_mismatch);
     RUN_TEST(test_seeded_start_avoids_sag);
+    RUN_TEST(test_separate_water_delay);
     return UNITY_END();
 }

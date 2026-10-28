@@ -5171,6 +5171,10 @@ msgstr "Tempo"
 msgid "Time (s)"
 msgstr "Tempo (s)"
 
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "Time from water starting to flow until the temperature has dropped about half way; often shorter than the heater's (about 12 s on a Silvia). 0 uses the sensor dead time."
+msgstr ""
+
 #: src/pages/ShotAnalyzer/utils/formatting.js
 msgid "Time Limit"
 msgstr "Limite di tempo"
@@ -5660,6 +5664,10 @@ msgstr "Pulsante acqua"
 #: src/pages/Settings/tabs/GeneralTab.jsx
 msgid "Water Button Behavior"
 msgstr "Comportamento pulsante acqua"
+
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "Water dead time"
+msgstr ""
 
 #: src/pages/ProfileEdit/ExtendedPhaseTarget.jsx
 msgid "Water drawn"

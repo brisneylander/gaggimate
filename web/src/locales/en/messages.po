@@ -131,6 +131,10 @@ msgstr "<0>Brewing:</0> recipes with GbS turned on report each grind here; press
 msgid "<0>Pairing:</0> GaggiMate shows up to the grinder as a Xenia machine. Under Settings → Connectivity → Machine To Machine, turn on Enable Xenia, then type the address above into Configuration. Automatic discovery does not see GaggiMate."
 msgstr "<0>Pairing:</0> GaggiMate shows up to the grinder as a Xenia machine. Under Settings → Connectivity → Machine To Machine, turn on Enable Xenia, then type the address above into Configuration. Automatic discovery does not see GaggiMate."
 
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "0 (off) or {min}–{max} {unit}"
+msgstr "0 (off) or {min}–{max} {unit}"
+
 #: src/pages/ShotAnalyzer/components/shotDetails/ShotMainInfoCard.jsx
 msgid "1 year ago"
 msgstr "1 year ago"
@@ -289,6 +293,10 @@ msgstr "All Metrics"
 #: src/pages/ShotHistory/index.jsx
 msgid "All Shots"
 msgstr "All Shots"
+
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "Allowed: {range}."
+msgstr "Allowed: {range}."
 
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "Alt Relay / SSR2 Function"
@@ -5443,6 +5451,10 @@ msgstr "Uploading..."
 #: src/pages/Settings/tabs/CalibrationTab.jsx
 msgid "Upper bound on the identification test. Most espresso boilers resolve within 60–120 s. Extend if Autotune fails before peak slope is detected."
 msgstr "Upper bound on the identification test. Most espresso boilers resolve within 60–120 s. Extend if Autotune fails before peak slope is detected."
+
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "Use {range}."
+msgstr "Use {range}."
 
 #: src/pages/Statistics/components/StatisticsSearchHelp.jsx
 msgid "Use <0>></0>, <1>>=</1>, <2><</2>, <3><=</3>, <4>=</4>"

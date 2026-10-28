@@ -1,4 +1,5 @@
 #include "GaggiMateController.h"
+#include "LagCompensationLimits.h"
 #include "utilities.h"
 #include <Arduino.h>
 #include <ExtensionIOXL9555.hpp>
@@ -281,12 +282,18 @@ void GaggiMateController::setup() {
         }
         heater->setFeedforwardScale(settings.kf);
         heater->setTunings(settings.kp, settings.ki, settings.kd);
-        heater->setLagCompensation(settings.derivative_filter_s, settings.integral_zone, settings.sensor_dead_time_s,
-                                   settings.model_heater_w, settings.model_heat_rate, settings.model_loss_w);
+        // Clamp here as well as on the display: the controller drives the heater and shouldn't trust the link.
+        using namespace lag_limits;
+        const float derivativeFilterS = clampOrOff(settings.derivative_filter_s, DERIVATIVE_FILTER_S);
+        const float integralZone = clampOrOff(settings.integral_zone, INTEGRAL_ZONE_C);
+        heater->setLagCompensation(derivativeFilterS, integralZone, clampOrOff(settings.sensor_dead_time_s, SENSOR_DEAD_TIME_S),
+                                   clampOrOff(settings.model_heater_w, HEATER_W),
+                                   clampOrOff(settings.model_heat_rate, HEAT_RATE_C_PER_S),
+                                   clampOrOff(settings.model_loss_w, STANDING_LOSS_W));
         if (heater2 != nullptr) {
             heater2->setTunings(settings.kp, settings.ki, settings.kd);
             // The heat-balance model describes the brew boiler only; the steam boiler keeps the plain loop.
-            heater2->setLagCompensation(settings.derivative_filter_s, settings.integral_zone, 0.0f, 0.0f, 0.0f);
+            heater2->setLagCompensation(derivativeFilterS, integralZone, 0.0f, 0.0f, 0.0f);
         }
     });
     _comms.onPumpSettings([this](gm::PumpSettings settings) {

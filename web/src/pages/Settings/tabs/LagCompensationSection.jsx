@@ -2,14 +2,21 @@ import { Trans, useLingui } from '@lingui/react/macro';
 import Section from '../../../components/Card.jsx';
 import { InputGroupField } from '../../../components/SettingsFormField.jsx';
 
-// Brew-boiler lag compensation; every field 0 keeps the plain PID loop.
+// Brew-boiler lag compensation; every field 0 keeps the plain PID loop. Each value is 0 (off) or within
+// [min, max]: the same ranges as lag_limits in lib/NanoPbComm/src/LagCompensationLimits.h, which the display and
+// controller enforce too.
 const FIELDS = [
-  { key: 'derivativeFilterS', unit: 's', step: '0.5', min: '0', max: '60' },
-  { key: 'integralZone', unit: '°C', step: '0.1', min: '0', max: '20' },
-  { key: 'sensorDeadTimeS', unit: 's', step: '1', min: '0', max: '120' },
-  { key: 'modelHeaterW', unit: 'W', step: '10', min: '0', max: '3000' },
-  { key: 'modelHeatRate', unit: '°C/s', step: '0.01', min: '0', max: '5' },
+  { key: 'derivativeFilterS', unit: 's', min: 0.5, max: 10 },
+  { key: 'integralZone', unit: '°C', min: 0.5, max: 5 },
+  { key: 'sensorDeadTimeS', unit: 's', min: 2, max: 60 },
+  { key: 'modelHeaterW', unit: 'W', min: 200, max: 2500 },
+  { key: 'modelHeatRate', unit: '°C/s', min: 0.05, max: 3 },
 ];
+
+const inRangeOrOff = (value, min, max) => {
+  const v = Number(value);
+  return value === '' || v === 0 || (v >= min && v <= max);
+};
 
 export function LagCompensationSection({ formData, onChange }) {
   const { t } = useLingui();
@@ -38,29 +45,38 @@ export function LagCompensationSection({ formData, onChange }) {
         </Trans>
       </p>
       <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
-        {FIELDS.map(({ key, unit, step, min, max }) => (
-          <InputGroupField
-            key={key}
-            label={labels[key]}
-            htmlFor={key}
-            unit={unit}
-            helpText={help[key]}
-            noMargin
-          >
-            <input
-              id={key}
-              name={key}
-              type='number'
-              step={step}
-              min={min}
-              max={max}
-              className='grow'
-              placeholder='0'
-              value={formData[key] ?? 0}
-              onChange={onChange(key)}
-            />
-          </InputGroupField>
-        ))}
+        {FIELDS.map(({ key, unit, min, max }) => {
+          const range = t`0 (off) or ${min}–${max} ${unit}`;
+          return (
+            <InputGroupField
+              key={key}
+              label={labels[key]}
+              htmlFor={key}
+              unit={unit}
+              helpText={`${help[key]} ${t`Allowed: ${range}.`}`}
+              noMargin
+            >
+              <input
+                id={key}
+                name={key}
+                type='number'
+                step='any'
+                min='0'
+                max={max}
+                className='grow'
+                placeholder='0'
+                value={formData[key] ?? 0}
+                onInput={e =>
+                  // Values between 0 and the minimum are as silly as values above the maximum; block saving.
+                  e.target.setCustomValidity(
+                    inRangeOrOff(e.target.value, min, max) ? '' : t`Use ${range}.`,
+                  )
+                }
+                onChange={onChange(key)}
+              />
+            </InputGroupField>
+          );
+        })}
       </div>
       {learnedLoss > 0 && (
         <p className='mt-4 text-sm opacity-70'>

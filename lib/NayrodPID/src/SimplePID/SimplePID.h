@@ -80,6 +80,7 @@ class SimplePID {
     float feedback_integralState = 0.0f; // Integral state
     float prevError = 0.0f;              // Previous error for derivative calculation
     float prevOutput = 0.0f;             // Previous output for derivative calculation
+    float prevInput = 0.0f;              // Previous measurement; the derivative acts on it, not on the error
     Control mode = Control::manual;
     float manualOutput = 0.0f;
     unsigned long lastTime = 0;

@@ -26,6 +26,7 @@ bool SimplePID::update() {
     if (!isInitialized) {
         initSetPointFilter(*this->sensorOutput);
         resetFeedbackController();
+        prevInput = *this->sensorOutput; // first derivative sample is 0 rather than a kick
         if (gainFF != 0.0f)
             isFeedForwardActive = true; // Activate the feedforward control if gainFF is not zero
         isInitialized = true;
@@ -59,8 +60,11 @@ bool SimplePID::update() {
     feedback_integralState += error * deltaTime;
     float Iout = gainKi * feedback_integralState;
 
-    float derivative = (error - prevError) / deltaTime;
-    float Dout = gainKd * derivative;
+    // Derivative on measurement: identical to the error derivative while the setpoint holds, but a setpoint change
+    // (or the first sample after a reset, when prevError is 0) no longer kicks the output.
+    const float inputRate = (*sensorOutput - prevInput) / deltaTime;
+    prevInput = *sensorOutput;
+    float Dout = -gainKd * inputRate;
 
     // Calculate the output before antiwindup clamping
     float sumPID = Pout + Iout + Dout + FFOut + DistFFOut;

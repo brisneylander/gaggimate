@@ -288,6 +288,8 @@ void WebSocketHandler::handleWebSocketData(AsyncWebSocket *server, AsyncWebSocke
                     handleFlushStart(client->id(), doc);
                 } else if (msgType == "req:scale:tare") {
                     controller->getClientController()->tare();
+                } else if (msgType == "req:flush:to-target") {
+                    handleFlushToTarget(client->id(), doc);
                 } else if (msgType == "req:flush:stop") {
                     handleFlushStop(client->id(), doc);
                 } else if (auto it = pluginRequestHandlers.find(msgType); it != pluginRequestHandlers.end()) {
@@ -554,6 +556,20 @@ void WebSocketHandler::sendAutotuneFailed() {
     JsonDocument doc(&psramAllocator);
     doc["tp"] = "evt:autotune-failed";
     broadcastJson(doc);
+}
+
+void WebSocketHandler::handleFlushToTarget(uint32_t clientId, JsonDocument &request) {
+    const flush_to_target::Plan plan = controller->flushToTarget();
+
+    JsonDocument response(&psramAllocator);
+    response["tp"] = "res:flush:to-target";
+    response["rid"] = request["rid"];
+    response["success"] = plan.reason == nullptr;
+    response["ml"] = round(plan.ml);
+    response["seconds"] = round(plan.seconds * 10.0f) / 10.0f;
+    if (plan.reason != nullptr)
+        response["reason"] = plan.reason;
+    ws.text(clientId, toWsBuffer(response));
 }
 
 void WebSocketHandler::handleFlushStart(uint32_t clientId, JsonDocument &request) {

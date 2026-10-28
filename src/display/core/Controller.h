@@ -1,6 +1,7 @@
 #ifndef CONTROLLER_H
 #define CONTROLLER_H
 
+#include "FlushToTarget.h"
 #include "GaggiMateClient.h"
 #include "PluginManager.h"
 #include "Settings.h"
@@ -138,6 +139,8 @@ class Controller {
     bool isHardwareScaleCell1Valid() const { return hardwareScaleCell1Valid.load(); }
     bool isHardwareScaleCell2Valid() const { return hardwareScaleCell2Valid.load(); }
     void onFlush();
+    // Flush just enough tank water to bring the boiler back to its target; reason is set if it didn't start.
+    flush_to_target::Plan flushToTarget();
     void onFlushRelease(); // ends a hold-to-flush; no-op otherwise
     int getWaterLevel() const {
         float reversedLevel = static_cast<float>(settings.getEmptyTankDistance()) -
@@ -159,6 +162,7 @@ class Controller {
     GaggiMateClient *getClientController() { return &comms; }
 
   private:
+    void startFlush(float durationS); // 0 = hold-to-flush
     // Initialization methods
 #ifndef GAGGIMATE_HEADLESS
     void setupPanel();

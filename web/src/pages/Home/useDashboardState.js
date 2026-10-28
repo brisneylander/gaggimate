@@ -99,6 +99,22 @@ export function useDashboardState() {
     setFlushPending(true);
     apiService.request({ tp: 'req:flush:start' }).catch(() => setFlushPending(false));
   };
+  // Flushes just enough tank water to bring the boiler back to target; resolves to the firmware's reply
+  // ({ success, ml, seconds, reason }).
+  const flushToTarget = () => {
+    if (isFlushing) return Promise.resolve({ success: false });
+    setFlushPending(true);
+    return apiService
+      .request({ tp: 'req:flush:to-target' })
+      .then(res => {
+        if (!res?.success) setFlushPending(false);
+        return res;
+      })
+      .catch(() => {
+        setFlushPending(false);
+        return { success: false };
+      });
+  };
   // Ends a hold-to-flush (flush duration 0); the firmware ignores it for a fixed-length flush.
   const stopFlush = () => {
     if (!isFlushing) return;
@@ -181,6 +197,7 @@ export function useDashboardState() {
     clear,
     startFlush,
     stopFlush,
+    flushToTarget,
     raiseTemp,
     lowerTemp,
     raiseTarget,

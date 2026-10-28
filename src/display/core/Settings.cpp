@@ -170,6 +170,8 @@ void Settings::setWaterDeadTimeS(float seconds) {
     waterDeadTimeS.set(lag_limits::clampOrOff(seconds, lag_limits::WATER_DEAD_TIME_S));
 }
 
+void Settings::setReheatFullPower(bool enabled) { reheatFullPower.set(enabled); }
+
 void Settings::setPumpModelCoeffs(const String &pumpModelCoeffs) { this->pumpModelCoeffs.set(pumpModelCoeffs); }
 
 void Settings::setPumpSlipCoeffs(const String &pumpSlipCoeffs) { this->pumpSlipCoeffs.set(pumpSlipCoeffs); }

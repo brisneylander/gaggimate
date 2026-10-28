@@ -93,6 +93,7 @@ gm::Payload GaggiMateClient::buildHeaterSettings(float kp, float ki, float kd, f
     p.content.heater.model_loss_w = lag.modelLossW;
     p.content.heater.inlet_temp_c = lag.inletTempC;
     p.content.heater.water_dead_time_s = lag.waterDeadTimeS;
+    p.content.heater.reheat_full_power = lag.reheatFullPower;
     return p;
 }
 

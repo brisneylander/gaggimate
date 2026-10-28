@@ -198,6 +198,7 @@ struct Tuning {
     float modelW = 0.0f, modelRate = 0.0f, modelDeadS = 0.0f;
     float lossSeedW = 0.0f;       // as Heater: seedLoss(saved value, 0 = default guess); < 0 skips seeding (starts at 0)
     float waterDeadS = 0.0f;      // predictor's water delay, 0 = same as modelDeadS
+    bool reheat = false;          // as Heater: full power while the predictor says energy is owed
     float predictorStartS = 0.0f; // switch the predictor on this long into the run, once the PID has settled
 };
 
@@ -208,6 +209,7 @@ struct Result {
     float idleP2P;   // sensor peak-to-peak while idling before the flush
     float idleSwing; // mean |change in output| per second while idling (heater chatter), output units
     float startSag;  // lowest (sensor - setpoint) in the 10 minutes after the predictor starts (predictorStartS > 0)
+    float backAt;    // s after the flush starts until the sensor first climbs back to setpoint
 };
 
 static Result simulate(const Tuning &tu) {
@@ -248,7 +250,7 @@ static Result simulate(const Tuning &tu) {
     bool flowSeen = false;
 
     const float flushStart = 1800.0f, flushEnd = flushStart + 5.0f, end = flushStart + 600.0f;
-    Result r{1e9f, -1e9f, 0.0f, 0.0f, 0.0f, 0.0f};
+    Result r{1e9f, -1e9f, 0.0f, 0.0f, 0.0f, 0.0f, -1.0f};
     float swingSum = 0.0f, lastOutput = 0.0f;
     int swingN = 0;
     float idleMin = 1e9f, idleMax = -1e9f, errSum = 0.0f;
@@ -276,6 +278,8 @@ static Result simulate(const Tuning &tu) {
                 predictor.update(1.0f, output / 1000.0f, flow, measured, sp);
             control = measured + predictor.getCorrection();
             pid.update();
+            if (tu.reheat && predictor.eventDuty() >= 0.0f)
+                output = predictor.eventDuty() * 1000.0f;
             if (t > flushStart - 600.0f && t < flushStart) {
                 swingSum += std::fabs(output - lastOutput);
                 ++swingN;
@@ -295,6 +299,8 @@ static Result simulate(const Tuning &tu) {
                         dipped = true;
                 } else {
                     r.peak = std::max(r.peak, measured);
+                    if (r.backAt < 0.0f && measured >= setpoint)
+                        r.backAt = t - flushStart;
                 }
             }
             if (t > end - 120.0f) {
@@ -323,8 +329,8 @@ static Result simulate(const Tuning &tu) {
 }
 
 static void report(const char *name, const Result &r) {
-    printf("%-34s dip %6.2f  peak %6.2f  overshoot %5.2f  settle err %4.2f  idle p2p %4.2f  idle swing %5.1f\n", name, r.dipMin,
-           r.peak, r.peak - 98.0f, r.settleErr, r.idleP2P, r.idleSwing);
+    printf("%-34s dip %6.2f  peak %6.2f  overshoot %5.2f  back %5.0f s  settle err %4.2f  idle p2p %4.2f  idle swing %5.1f\n",
+           name, r.dipMin, r.peak, r.peak - 98.0f, r.backAt, r.settleErr, r.idleP2P, r.idleSwing);
 }
 
 static Tuning compensated() {
@@ -406,6 +412,41 @@ void test_robust_to_model_mismatch() {
 // power as heat in flight and sags the boiler by about dead time x holding power / capacity (0.49 degC measured on a
 // Silvia) until the loss is learned. The default guess shrinks that and a saved value removes it.
 // The simulated sensor sees flush water after ~6-10 s (transport + lag) but heater heat only after ~20 s (via the wall).
+// Full-power reheat puts back the flush's heat as fast as the element allows: back on setpoint ~3x sooner. The burst
+// leaves the element and wall hot, so it costs a little overshoot (0.75 vs 0.25 degC here, the same with the heat-up
+// rate 25 % off either way); it is opt-in for that reason.
+void test_full_power_reheat() {
+    Tuning base = compensated();
+    base.waterDeadS = 8.0f;
+    Tuning fast = base;
+    fast.reheat = true;
+    const Result rb = simulate(base), rf = simulate(fast);
+    report("water 8 s", rb);
+    report("water 8 s + full-power reheat", rf);
+    TEST_ASSERT_TRUE(rf.backAt > 0.0f && rb.backAt > 0.0f);
+    TEST_ASSERT_TRUE(rf.backAt < 0.5f * rb.backAt);              // at least twice as fast back to setpoint (51 vs 151 s)
+    TEST_ASSERT_TRUE(rf.peak - 98.0f <= rb.peak - 98.0f + 0.5f); // costing at most two sensor steps of overshoot
+    TEST_ASSERT_TRUE(rf.settleErr < 0.3f);
+    TEST_ASSERT_TRUE(rf.idleSwing <= rb.idleSwing + 0.5f); // reheat only runs during water events, not at idle
+}
+
+// Reheat with model errors: it must stay bounded (no runaway heat) and still settle.
+void test_full_power_reheat_with_model_mismatch() {
+    const float rates[] = {0.45f, 0.75f};
+    for (float rate : rates) {
+        Tuning tu = compensated();
+        tu.waterDeadS = 8.0f;
+        tu.reheat = true;
+        tu.modelRate = rate;
+        const Result r = simulate(tu);
+        char name[48];
+        snprintf(name, sizeof(name), "reheat, rate %.2f", rate);
+        report(name, r);
+        TEST_ASSERT_TRUE_MESSAGE(r.peak - 98.0f < 2.0f, name);
+        TEST_ASSERT_TRUE_MESSAGE(r.settleErr < 0.4f, name);
+    }
+}
+
 void test_separate_water_delay() {
     const Result shared = simulate(compensated());
     report("water delay = dead time (20 s)", shared);
@@ -458,5 +499,7 @@ int main(int argc, char **argv) {
     RUN_TEST(test_robust_to_model_mismatch);
     RUN_TEST(test_seeded_start_avoids_sag);
     RUN_TEST(test_separate_water_delay);
+    RUN_TEST(test_full_power_reheat);
+    RUN_TEST(test_full_power_reheat_with_model_mismatch);
     return UNITY_END();
 }

@@ -35,18 +35,31 @@ void HeatBalancePredictor::reset() {
     window.clear();
     windowTime = 0.0f;
     correction = 0.0f;
+    eventActive = false;
+    reheatActive = false;
+    coasting = false;
+    energyOwed = 0.0f;
 }
 
 float HeatBalancePredictor::update(float dt, float duty, float flow, float measuredTemp, float setpoint) {
     if (!isEnabled() || !(dt > 0.0f) || !std::isfinite(measuredTemp)) {
         correction = 0.0f;
+        eventActive = reheatActive = coasting = false;
+        energyOwed = 0.0f;
         return correction;
     }
     duty = std::min(std::max(duty, 0.0f), 1.0f);
     flow = std::isfinite(flow) && flow > 0.0f ? flow : 0.0f;
+    lastDt = dt;
 
     const float heaterPower = heaterWatts * duty;
     const float waterPower = flow * WATER_SPECIFIC_HEAT * std::max(measuredTemp - inletTemp, 0.0f);
+
+    // Water event energy count (see reheatWanted()); opened from the prediction before this step's water is added.
+    if (flow > 0.0f && !eventActive) {
+        eventActive = true;
+        energyOwed = setpoint > 0.0f ? (setpoint - (measuredTemp + correction)) * heatCapacity : 0.0f;
+    }
 
     // Standing losses: at rest near setpoint the heater power that holds temperature is the loss. Learning it
     // keeps the steady-state correction at zero, so the PID still settles the real sensor on setpoint.
@@ -75,5 +88,26 @@ float HeatBalancePredictor::update(float dt, float duty, float flow, float measu
     }
 
     correction = std::min(std::max(pending, -MAX_CORRECTION), MAX_CORRECTION);
+
+    if (eventActive) {
+        energyOwed += (waterPower + lossWatts - heaterPower) * dt;
+        if (flow > 0.0f) {
+            sinceFlow = 0.0f;
+        } else {
+            sinceFlow += dt;
+            const bool arrived = measuredTemp >= setpoint - COAST_BAND;
+            const float coastLimit = std::min(REHEAT_MAX_IDLE_S, 3.0f * deadTime);
+            if ((arrived && energyOwed <= REHEAT_START_J) || sinceFlow > coastLimit)
+                eventActive = false;
+        }
+    }
+    if (!eventActive) {
+        reheatActive = coasting = false;
+        energyOwed = 0.0f;
+    } else {
+        // Hysteresis: start once 300 J is owed, then run until nothing is; coast after the water has stopped.
+        reheatActive = reheatActive ? energyOwed > 0.0f : energyOwed > REHEAT_START_J;
+        coasting = !reheatActive && flow == 0.0f;
+    }
     return correction;
 }

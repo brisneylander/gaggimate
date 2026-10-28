@@ -1883,13 +1883,26 @@ msgstr "冲洗"
 msgid "Flush Duration"
 msgstr "冲洗时长"
 
+#: src/pages/Home/cards/ActionCard.jsx
+msgid "Flush just enough tank water to bring the boiler back to target. Remove the portafilter first."
+msgstr ""
+
 #: src/utils/warnings.js
 msgid "Flush recommended"
 msgstr "建议冲洗"
 
+#. placeholder {0}: Math.round(targetTemperature)
+#: src/pages/Home/cards/ActionCard.jsx
+msgid "Flush to {0}°"
+msgstr ""
+
 #: src/pages/Home/FlushButton.jsx
 msgid "Flush water"
 msgstr "冲洗水"
+
+#: src/pages/Home/cards/ActionCard.jsx
+msgid "Flushing {ml} ml ({seconds} s) to reach target"
+msgstr ""
 
 #: src/pages/Settings/tabs/LagCompensationSection.jsx
 msgid "For boilers where the temperature sensor reacts long after the heater. Heater power, heat-up rate and dead time together enable a heat-balance predictor, so the PID backs off before the overshoot shows. Leave a field at 0 to disable it."
@@ -2806,6 +2819,10 @@ msgstr "无日期"
 msgid "No favorites — mark profiles as ★ in the profile list"
 msgstr "暂无收藏 — 在曲线列表中将曲线标记为 ★"
 
+#: src/pages/Home/cards/ActionCard.jsx
+msgid "No flush: {reason}"
+msgstr ""
+
 #: src/pages/ProfileEdit/ProfileImageUpload.jsx
 msgid "No image"
 msgstr "无图片"
@@ -2905,6 +2922,10 @@ msgstr "无"
 msgctxt "relay function"
 msgid "None"
 msgstr "无"
+
+#: src/pages/Home/cards/ActionCard.jsx
+msgid "not available"
+msgstr ""
 
 #: src/components/PumpFlowCalibration/Footer.jsx
 msgid "Not connected to the machine"
@@ -3658,6 +3679,10 @@ msgstr "泵水量停止"
 msgid "Pumped-water target"
 msgstr "泵水量目标"
 
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "Puts back the heat the water took as fast as the element allows, then hands back to the PID. Needs heater power, heat-up rate and dead time."
+msgstr ""
+
 #: src/pages/Statistics/utils/statisticsSearchDsl.js
 msgid "Query clause {clauseNumber}: {valueError}"
 msgstr "查询子句 {clauseNumber}：{valueError}"
@@ -3763,6 +3788,10 @@ msgstr "正在录制回放..."
 #: src/pages/ShotAnalyzer/components/library/LibraryRow.jsx
 msgid "Reference shot"
 msgstr "参考萃取"
+
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "Reheat at full power after a flush or shot"
+msgstr ""
 
 #: src/pages/Statistics/components/StatisticsSearchHelp.jsx
 msgid "Relative time: <0>h</0> (now), <1>h-7d</1> (7 days ago)"

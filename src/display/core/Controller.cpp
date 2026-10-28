@@ -928,6 +928,7 @@ void Controller::setHeaterSettings() {
     lag.modelLossW = settings.getModelLossW();
     lag.inletTempC = settings.getInletTempC();
     lag.waterDeadTimeS = settings.getWaterDeadTimeS();
+    lag.reheatFullPower = settings.isReheatFullPower();
     comms.sendHeaterSettings(pid[0], pid[1], pid[2], pid[3], settings.isHeaterCoordinationEnabled(),
                              static_cast<uint32_t>(settings.getHeaterHandoverMs()), lag);
 }
@@ -1565,9 +1566,30 @@ bool Controller::isHardwareScaleHealthy() const {
     return lastMeasurement != 0 && millis() - lastMeasurement < HARDWARE_GRACE_PERIOD_MS;
 }
 
-void Controller::onFlush() {
+void Controller::onFlush() { startFlush(static_cast<float>(settings.getFlushDuration())); }
+
+flush_to_target::Plan Controller::flushToTarget() {
+    float coeffs[2] = {NAN, NAN};
+    parseFloatCsv(settings.getPumpModelCoeffs(), coeffs, 2, NAN);
+    flush_to_target::Plan plan =
+        flush_to_target::plan(getCurrentTemp(), getTargetTemp(), static_cast<float>(settings.getTemperatureOffset()),
+                              settings.getModelHeaterW(), settings.getModelHeatRate(), settings.getInletTempC(), coeffs[0]);
+    if (plan.reason == nullptr && mode != MODE_BREW)
+        plan.reason = "only in Brew mode";
+    if (plan.reason == nullptr && isActive())
+        plan.reason = "a shot or flush is already running";
+    if (plan.reason != nullptr) {
+        plan.ml = plan.seconds = 0.0f;
+        return plan;
+    }
+    ESP_LOGI(LOG_TAG, "Flush to target: %.1f°C over, %.0f ml in %.1f s", getCurrentTemp() - getTargetTemp(), plan.ml,
+             plan.seconds);
+    startFlush(plan.seconds);
+    return plan;
+}
+
+void Controller::startFlush(float duration) {
     // Allocate outside the lock; reachable from the UI, AsyncTCP and BLE tasks (GM-147).
-    const int duration = settings.getFlushDuration();
     Profile profile = FLUSH_PROFILE;
     profile.temperature = profileManager->getSelectedProfile().temperature;
     profile.phases[0].duration = duration > 0 ? duration : FLUSH_HOLD_MAX_DURATION_S; // 0 = hold, capped

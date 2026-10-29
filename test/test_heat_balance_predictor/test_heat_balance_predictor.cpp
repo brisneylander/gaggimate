@@ -121,8 +121,23 @@ void test_steady_state_correction_converges_to_zero() {
     p.configure(1100.0f, 0.6f, 20.0f);
     for (int i = 0; i < 3600; ++i)
         p.update(1.0f, 0.06f, 0.0f, 98.0f, 98.0f); // 66 W holding power
-    TEST_ASSERT_FLOAT_WITHIN(1.0f, 66.0f, p.getLossWatts());
+    TEST_ASSERT_FLOAT_WITHIN(1.0f, 66.0f, p.getLossWattsAt(98.0f));
+    TEST_ASSERT_FLOAT_WITHIN(1.0f, 66.0f * 70.0f / 75.0f, p.getLossWatts()); // reported at 93 °C in a 23 °C room
     TEST_ASSERT_FLOAT_WITHIN(0.02f, 0.0f, p.getCorrection());
+}
+
+// Learned at brew temperature, the loss scales with the temperature above the room: holding at steam temperature
+// the correction stays near zero straight away instead of reading the higher holding power as heat in flight.
+void test_loss_learned_at_brew_holds_at_steam() {
+    HeatBalancePredictor p;
+    p.configure(1100.0f, 0.6f, 20.0f);
+    for (int i = 0; i < 3600; ++i)
+        p.update(1.0f, 0.06f, 0.0f, 98.0f, 98.0f);              // 66 W at 98 °C: 0.88 W/°C
+    const float steamDuty = 0.88f * (140.0f - 23.0f) / 1100.0f; // 103 W at 140 °C
+    for (int i = 0; i < 30; ++i)
+        p.update(1.0f, steamDuty, 0.0f, 140.0f, 140.0f);
+    TEST_ASSERT_FLOAT_WITHIN(0.1f, 0.0f, p.getCorrection());
+    TEST_ASSERT_FLOAT_WITHIN(2.0f, 103.0f, p.getLossWattsAt(140.0f));
 }
 
 void test_correction_is_bounded() {
@@ -561,6 +576,7 @@ int main(int argc, char **argv) {
     RUN_TEST(test_water_delay_drains_flush_sooner);
     RUN_TEST(test_water_delay_leaves_heater_delay_alone);
     RUN_TEST(test_steady_state_correction_converges_to_zero);
+    RUN_TEST(test_loss_learned_at_brew_holds_at_steam);
     RUN_TEST(test_correction_is_bounded);
     RUN_TEST(test_identical_reconfigure_keeps_state);
     RUN_TEST(test_first_seed_uses_default_fraction);

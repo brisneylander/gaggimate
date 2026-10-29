@@ -23,6 +23,10 @@ class HeatBalancePredictor {
     static constexpr float LOSS_LEARN_BAND = 1.0f;        // °C, losses are only learned this close to setpoint
     static constexpr float LOSS_LEARN_TAU = 300.0f;       // s, time constant of the standing-loss estimate
     static constexpr float DEFAULT_LOSS_FRACTION = 0.05f; // first-run loss guess: ~5 % of the element at brew temp
+    // The standing loss is learned per degree above the room, so brew and steam share one value. It is reported (and
+    // seeded) in watts at LOSS_REFERENCE_DELTA_C above the room, i.e. at a 93 °C brew temperature in a 23 °C room.
+    static constexpr float AMBIENT_C = 23.0f;
+    static constexpr float LOSS_REFERENCE_DELTA_C = 70.0f;
 
     // Any parameter <= 0 disables the predictor (correction stays 0).
     // waterDeadTimeSeconds <= 0 uses deadTimeSeconds for water too (the original single-delay model).
@@ -41,7 +45,8 @@ class HeatBalancePredictor {
     // duty: heater on-fraction 0..1 over dt; flow: ml/s of fresh water entering the boiler.
     float update(float dt, float duty, float flow, float measuredTemp, float setpoint);
     float getCorrection() const { return correction; }
-    float getLossWatts() const { return lossWatts; }
+    float getLossWatts() const { return lossPerC * LOSS_REFERENCE_DELTA_C; } // at the reference temperature
+    float getLossWattsAt(float temp) const { return lossPerC * std::max(temp - AMBIENT_C, 0.0f); }
 
   private:
     struct Step {
@@ -52,7 +57,7 @@ class HeatBalancePredictor {
     std::deque<Step> window; // the last max(deadTime, waterDeadTime) of model steps, oldest first
     float windowTime = 0.0f;
     float correction = 0.0f;
-    float lossWatts = 0.0f;
+    float lossPerC = 0.0f; // W per °C above AMBIENT_C
     bool lossSeeded = false;
     float lastFlow = 0.0f; // ml/s at the previous step: its fall to 0 is the valve's dump
 

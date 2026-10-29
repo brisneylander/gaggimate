@@ -30,8 +30,9 @@ void HeatBalancePredictor::configure(float heaterWatts, float fullPowerRate, flo
 void HeatBalancePredictor::seedLoss(float savedWatts) {
     if (!isEnabled() || lossSeeded)
         return;
-    lossWatts =
+    const float watts =
         std::isfinite(savedWatts) && savedWatts > 0.0f ? std::min(savedWatts, heaterWatts) : DEFAULT_LOSS_FRACTION * heaterWatts;
+    lossPerC = watts / LOSS_REFERENCE_DELTA_C;
     lossSeeded = true;
 }
 
@@ -61,9 +62,12 @@ float HeatBalancePredictor::update(float dt, float duty, float flow, float measu
 
     // Standing losses: at rest near setpoint the heater power that holds temperature is the loss. Learning it
     // keeps the steady-state correction at zero, so the PID still settles the real sensor on setpoint.
-    if (flow == 0.0f && setpoint > 0.0f && std::fabs(measuredTemp - setpoint) < LOSS_LEARN_BAND) {
-        lossWatts += (heaterPower - lossWatts) * dt / (LOSS_LEARN_TAU + dt);
+    // Learned per degree above the room, so a value learned at brew temperature also holds at steam temperature.
+    const float aboveRoom = measuredTemp - AMBIENT_C;
+    if (flow == 0.0f && setpoint > 0.0f && std::fabs(measuredTemp - setpoint) < LOSS_LEARN_BAND && aboveRoom > 10.0f) {
+        lossPerC += (heaterPower / aboveRoom - lossPerC) * dt / (LOSS_LEARN_TAU + dt);
     }
+    const float lossWatts = lossPerC * std::max(aboveRoom, 0.0f);
 
     window.push_back({dt, (heaterPower - lossWatts) * dt / heatCapacity, waterJ / heatCapacity});
     windowTime += dt;

@@ -209,7 +209,7 @@ message BoilerReading {
     float temperature = 2;
     float pressure = 3;
     float power = 4; // heater power 0..100 %
-    float standing_loss_w = 5; // heat-balance predictor's learned standing loss (W), 0 = predictor off
+    float standing_loss_w = 5; // learned standing loss (W) at 93 °C in a 23 °C room (learned per °C), 0 = predictor off
 }
 
 message SensorData {

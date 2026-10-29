@@ -55,8 +55,8 @@ void GitHubOTA::checkForUpdates() {
         _latest_version_string = semver_str;
         semver_free(&_latest_version);
         _latest_version = from_string(semver_str.c_str());
-        _screen_update_required = update_required(_latest_version, _version);
-        _controller_update_required = update_required(_latest_version, _controller_version);
+        _screen_update_required = required(_version);
+        _controller_update_required = required(_controller_version);
     } else {
         _latest_url = _release_url + "/";
         _latest_url.replace("tag", "download");
@@ -71,8 +71,8 @@ void GitHubOTA::checkForUpdates() {
         _latest_version_string = version;
         semver_free(&_latest_version);
         _latest_version = from_string(version.c_str());
-        _screen_update_required = update_required(_latest_version, _version);
-        _controller_update_required = update_required(_latest_version, _controller_version);
+        _screen_update_required = required(_version);
+        _controller_update_required = required(_controller_version);
     }
 }
 
@@ -103,7 +103,7 @@ void GitHubOTA::update(bool controller, bool display, NimBLEClient *client) {
         return;
     }
 
-    if (controller && update_required(_latest_version, _controller_version)) {
+    if (controller && required(_controller_version)) {
         ESP_LOGI(TAG, "Controller update is required, running firmware update.");
         setPhase(PHASE_CONTROLLER_FW);
         if (!_controller_ota.update(client, _latest_url + _controller_firmware_name)) {
@@ -115,7 +115,7 @@ void GitHubOTA::update(bool controller, bool display, NimBLEClient *client) {
         updateExecuted = true;
     }
 
-    if (display && update_required(_latest_version, _version)) {
+    if (display && required(_version)) {
         ESP_LOGI(TAG, "Update is required, running firmware update.");
         setPhase(PHASE_DISPLAY_FW);
         if (!flashDisplayFirmware(_latest_url + _firmware_name)) {
@@ -138,6 +138,17 @@ void GitHubOTA::update(bool controller, bool display, NimBLEClient *client) {
 }
 
 void GitHubOTA::setReleaseUrl(const String &release_url) { this->_release_url = release_url; }
+
+void GitHubOTA::setAllowDowngrade(bool allow) { _allow_downgrade = allow; }
+
+bool GitHubOTA::required(const semver_t &current) const {
+    if (!_allow_downgrade)
+        return update_required(_latest_version, current);
+    // No release found yet (0.0.0): never "downgrade" to nothing.
+    if (_latest_version.major == 0 && _latest_version.minor == 0 && _latest_version.patch == 0)
+        return false;
+    return semver_compare(_latest_version, current) != 0;
+}
 
 bool GitHubOTA::flashDisplayFirmware(const String &url) {
     const char *TAG = "flashDisplayFirmware";
@@ -212,5 +223,5 @@ bool GitHubOTA::flashDisplayFirmware(const String &url) {
 void GitHubOTA::setControllerVersion(const String &controller_version) {
     semver_free(&_controller_version);
     _controller_version = from_string(controller_version.substring(1).c_str());
-    _controller_update_required = update_required(_latest_version, _controller_version);
+    _controller_update_required = required(_controller_version);
 }

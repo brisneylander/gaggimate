@@ -33,6 +33,15 @@ static void mbedtlsPsramFree(void *p) { heap_caps_free(p); } // NOSONAR
 
 WebUIPlugin::WebUIPlugin() : server(80) { g_webUIPlugin = this; }
 
+// Stable: this fork's latest release; Nightly: its head build; Upstream: the official GaggiMate release.
+static String releaseUrlFor(const String &channel) {
+    if (channel == "latest")
+        return RELEASE_URL + "latest";
+    if (channel == "upstream")
+        return UPSTREAM_RELEASE_URL + "latest";
+    return RELEASE_URL + "tag/nightly";
+}
+
 void WebUIPlugin::setup(Controller *_controller, PluginManager *_pluginManager) {
     // Redirect mbedTLS allocations to PSRAM before any TLS (OTA) handshake runs, so the
     // ~32 KB handshake buffers don't exhaust the scarce internal-DRAM pool. See mbedtlsPsramCalloc.
@@ -41,8 +50,7 @@ void WebUIPlugin::setup(Controller *_controller, PluginManager *_pluginManager) 
     this->profileManager = _controller->getProfileManager();
     this->pluginManager = _pluginManager;
     this->ota = new GitHubOTA(
-        BUILD_GIT_VERSION, controller->getSystemInfo().version,
-        RELEASE_URL + (controller->getSettings().getOTAChannel() == "latest" ? "latest" : "tag/nightly"),
+        BUILD_GIT_VERSION, controller->getSystemInfo().version, releaseUrlFor(controller->getSettings().getOTAChannel()),
         [this](uint8_t phase) {
             pluginManager->trigger("ota:update:phase", "phase", phase);
             updateOTAProgress(phase, 0);
@@ -52,6 +60,7 @@ void WebUIPlugin::setup(Controller *_controller, PluginManager *_pluginManager) 
             updateOTAProgress(phase, progress);
         },
         OTA_DISPLAY_FIRMWARE, OTA_DISPLAY_FILESYSTEM, "board-firmware.bin");
+    ota->setAllowDowngrade(controller->getSettings().getOTAChannel() == "upstream");
     pluginManager->on("controller:wifi:connect", [this](Event const &event) {
         apMode = event.getInt("AP");
         start();
@@ -294,8 +303,10 @@ void WebUIPlugin::stop() {
 void WebUIPlugin::handleOTASettings(JsonDocument &request) {
     if (request["update"].as<bool>()) {
         if (!request["channel"].isNull()) {
-            controller->getSettings().setOTAChannel(request["channel"].as<String>() == "latest" ? "latest" : "nightly");
-            ota->setReleaseUrl(RELEASE_URL + (controller->getSettings().getOTAChannel() == "latest" ? "latest" : "tag/nightly"));
+            const String channel = request["channel"].as<String>();
+            controller->getSettings().setOTAChannel(channel == "latest" || channel == "upstream" ? channel : "nightly");
+            ota->setReleaseUrl(releaseUrlFor(controller->getSettings().getOTAChannel()));
+            ota->setAllowDowngrade(controller->getSettings().getOTAChannel() == "upstream");
             lastUpdateCheck = 0;
         }
     }

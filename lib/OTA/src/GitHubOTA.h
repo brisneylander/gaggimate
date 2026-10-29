@@ -32,10 +32,14 @@ class GitHubOTA {
     void update(bool controller = true, bool display = true, NimBLEClient *client = nullptr);
     void setReleaseUrl(const String &release_url);
     void setControllerVersion(const String &controller_version);
+    // Install the release whenever its version differs from the running one, older included (a channel that
+    // switches to another release line, e.g. back to upstream).
+    void setAllowDowngrade(bool allow);
 
   private:
     bool flashDisplayFirmware(const String &url);
     void setPhase(uint8_t newPhase);
+    bool required(const semver_t &current) const;
 
     uint8_t phase = PHASE_IDLE;
     semver_t _version;
@@ -53,6 +57,7 @@ class GitHubOTA {
     progress_callback_t _progress_callback = nullptr;
     bool _controller_update_required = false;
     bool _screen_update_required = false;
+    bool _allow_downgrade = false;
 };
 
 #endif

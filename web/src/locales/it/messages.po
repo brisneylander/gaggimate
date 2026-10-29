@@ -2506,6 +2506,14 @@ msgstr "INCOMPLETO"
 msgid "Infusion"
 msgstr "Infusione"
 
+#: src/pages/Settings/tabs/SystemTab.jsx
+msgid "Install the official GaggiMate release? This fork's boiler control features stop, and updates then come from the official project. The update doesn't erase your profiles, shots or settings. To return to this fork later, flash it over USB."
+msgstr ""
+
+#: src/pages/Settings/tabs/SystemTab.jsx
+#~ msgid "Install the official GaggiMate release? This fork's boiler control features stop, and updates then come from the official project. Your profiles, shots and settings stay. To return to this fork later, flash it over USB."
+#~ msgstr ""
+
 #: src/pages/ProfileEdit/ExtendedPhase.jsx
 msgctxt "ramp style"
 msgid "Instant"
@@ -4132,6 +4140,14 @@ msgstr "Punti dati grezzi"
 msgid "Ready to brew"
 msgstr "Pronta per l'erogazione"
 
+#: src/pages/Settings/tabs/SystemTab.jsx
+msgid "Ready to go back to the official GaggiMate release: update the controller first, then the display. The update doesn't erase your profiles, shots or settings. This fork's boiler control features are off on the official firmware, and it updates from the official project from then on; to return to this fork later, flash it over USB."
+msgstr ""
+
+#: src/pages/Settings/tabs/SystemTab.jsx
+#~ msgid "Ready to go back to the official GaggiMate release: update the controller first, then the display. Your profiles, shots and settings stay. This fork's boiler control features are off on the official firmware, and it updates from the official project from then on; to return to this fork later, flash it over USB."
+#~ msgstr ""
+
 #: src/pages/Home/cards/ActionCard.jsx
 msgid "Ready to steam, open wand"
 msgstr "Pronta per il vapore, apri la lancia"
@@ -4983,6 +4999,10 @@ msgstr "Distribuisci uniformemente"
 msgctxt "update channel"
 msgid "Stable"
 msgstr "Stabile"
+
+#: src/pages/Settings/tabs/SystemTab.jsx
+msgid "Stable installs this fork's releases and Nightly its latest build. To go back to the official GaggiMate firmware at any time, choose Upstream, save, then update the controller and the display: no USB cable needed, even if the official release is older."
+msgstr ""
 
 #: src/pages/ShotAnalyzer/components/analysisTable/ColumnControls.jsx
 msgctxt "column preset"
@@ -6030,6 +6050,11 @@ msgstr "Caricamento..."
 #: src/pages/Settings/tabs/CalibrationTab.jsx
 msgid "Upper bound on the identification test. Most espresso boilers resolve within 60–120 s. Extend if Autotune fails before peak slope is detected."
 msgstr "Limite massimo del test di identificazione. La maggior parte delle caldaie per espresso si risolve in 60–120 s. Aumentalo se l'autotune fallisce prima di rilevare la pendenza massima."
+
+#: src/pages/Settings/tabs/SystemTab.jsx
+msgctxt "update channel"
+msgid "Upstream (official GaggiMate)"
+msgstr ""
 
 #: src/pages/Settings/tabs/LagCompensationSection.jsx
 msgid "Use {range}."

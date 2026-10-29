@@ -18,6 +18,8 @@ constexpr size_t DNS_PERIOD = 50;
 const String LOCAL_URL = "http://4.4.4.1/";
 // Fork: OTA updates come from this fork's GitHub releases (see FORK.md).
 const String RELEASE_URL = "https://github.com/brisneylander/gaggimate/releases/";
+// The "upstream" update channel: the official GaggiMate release, installed even when older (back to upstream).
+const String UPSTREAM_RELEASE_URL = "https://github.com/jniebuhr/gaggimate/releases/";
 // Headless builds must pull their own release assets; the screen firmware would not boot on them.
 #ifdef GAGGIMATE_HEADLESS
 #define OTA_DISPLAY_FIRMWARE "display-headless-firmware.bin"

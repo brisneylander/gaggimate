@@ -312,9 +312,17 @@ export function SystemTab() {
 
   const onUpdate = useCallback(
     component => {
+      // The upstream channel installs the official release even when older, and leaves this fork for good.
+      if (
+        formData.channel === 'upstream' &&
+        !window.confirm(
+          t`Install the official GaggiMate release? This fork's boiler control features stop, and updates then come from the official project. The update doesn't erase your profiles, shots or settings. To return to this fork later, flash it over USB.`,
+        )
+      )
+        return;
       apiService.send({ tp: 'req:ota-start', cp: component });
     },
-    [apiService],
+    [apiService, formData.channel, t],
   );
 
   const [rebuilding, setRebuilding] = useState(false);
@@ -353,11 +361,33 @@ export function SystemTab() {
                 <option value='nightly' selected={formData.channel === 'nightly'}>
                   {t({ message: 'Nightly', context: 'update channel' })}
                 </option>
+                <option value='upstream' selected={formData.channel === 'upstream'}>
+                  {t({ message: 'Upstream (official GaggiMate)', context: 'update channel' })}
+                </option>
               </select>
               <button type='submit' className='btn btn-secondary' disabled={submitting}>
                 <Trans>Save Channel & Refresh</Trans>
               </button>
             </div>
+            <div className='text-xs opacity-70'>
+              <Trans>
+                Stable installs this fork's releases and Nightly its latest build. To go back to the
+                official GaggiMate firmware at any time, choose Upstream, save, then update the
+                controller and the display: no USB cable needed, even if the official release is
+                older.
+              </Trans>
+            </div>
+            {formData.channel === 'upstream' && (
+              <div className='alert alert-info mt-2 text-sm'>
+                <Trans>
+                  Ready to go back to the official GaggiMate release: update the controller first,
+                  then the display. The update doesn't erase your profiles, shots or settings. This
+                  fork's boiler control features are off on the official firmware, and it updates
+                  from the official project from then on; to return to this fork later, flash it
+                  over USB.
+                </Trans>
+              </div>
+            )}
           </div>
         </form>
 

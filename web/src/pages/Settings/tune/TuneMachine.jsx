@@ -477,17 +477,26 @@ export function TuneMachine({ formData, setField }) {
           )}
           {phase === 'steam' && (
             <p className='mt-2'>
-              <Trans>Heating in Steam: {live.ct?.toFixed(1)} °C…</Trans>
+              <Trans>
+                Heating in Steam to {(steamRef.current?.brewTarget ?? 0) + STEAM_OVERSHOOT_C} °C,
+                then back to Brew; it coasts on from there. Now {live.ct?.toFixed(1)} °C…
+              </Trans>
             </p>
           )}
           {phase === 'peak' && (
             <p className='mt-2'>
-              <Trans>Back in Brew, waiting for the peak: {live.ct?.toFixed(1)} °C…</Trans>
+              <Trans>
+                Back in Brew, coasting up to its peak: {live.ct?.toFixed(1)} °C (highest so far{' '}
+                {steamRef.current?.peak?.toFixed(1)} °C)…
+              </Trans>
             </p>
           )}
           {phase === 'target' && (
             <p className='mt-2'>
-              <Trans>Flushed to target; watching the landing: {live.ct?.toFixed(1)} °C…</Trans>
+              <Trans>
+                Peaked at {steamRef.current?.peak?.toFixed(1)} °C, flushed to target{' '}
+                {steamRef.current?.brewTarget} °C. Watching the landing: {live.ct?.toFixed(1)} °C…
+              </Trans>
             </p>
           )}
           {targetResult && (

@@ -572,9 +572,15 @@ msgid "Back"
 msgstr "戻る"
 
 #. placeholder {0}: live.ct?.toFixed(1)
+#. placeholder {1}: steamRef.current?.peak?.toFixed(1)
 #: src/pages/Settings/tune/TuneMachine.jsx
-msgid "Back in Brew, waiting for the peak: {0} °C…"
+msgid "Back in Brew, coasting up to its peak: {0} °C (highest so far {1} °C)…"
 msgstr ""
+
+#. placeholder {0}: live.ct?.toFixed(1)
+#: src/pages/Settings/tune/TuneMachine.jsx
+#~ msgid "Back in Brew, waiting for the peak: {0} °C…"
+#~ msgstr ""
 
 #: src/pages/ShotAnalyzer/shotAnalyzer/ActiveAnalysisView.jsx
 msgid "Back to analyzer"
@@ -2010,8 +2016,8 @@ msgstr "フラッシュ水量"
 
 #. placeholder {0}: live.ct?.toFixed(1)
 #: src/pages/Settings/tune/TuneMachine.jsx
-msgid "Flushed to target; watching the landing: {0} °C…"
-msgstr ""
+#~ msgid "Flushed to target; watching the landing: {0} °C…"
+#~ msgstr ""
 
 #: src/pages/Settings/tune/TuneMachine.jsx
 msgid "Flushing and logging for {FLUSH_RECORD_S} s…"
@@ -2197,10 +2203,16 @@ msgstr "ヒーター出力 (W)"
 msgid "Heater wattage in Watts (e.g. Gaggia Classic: 1360 W, Rancilio Silvia 120V: 950W, Rancilio Silvia 230V: 1100W)."
 msgstr "ヒーターの消費電力（ワット）（例: Gaggia Classic: 1360 W、Rancilio Silvia 120V: 950W、Rancilio Silvia 230V: 1100W）。"
 
+#. placeholder {0}: (steamRef.current?.brewTarget ?? 0) + STEAM_OVERSHOOT_C
+#. placeholder {1}: live.ct?.toFixed(1)
+#: src/pages/Settings/tune/TuneMachine.jsx
+msgid "Heating in Steam to {0} °C, then back to Brew; it coasts on from there. Now {1} °C…"
+msgstr ""
+
 #. placeholder {0}: live.ct?.toFixed(1)
 #: src/pages/Settings/tune/TuneMachine.jsx
-msgid "Heating in Steam: {0} °C…"
-msgstr ""
+#~ msgid "Heating in Steam: {0} °C…"
+#~ msgstr ""
 
 #. placeholder {0}: TARGET_RECORD_S / 60
 #: src/pages/Settings/tune/TuneMachine.jsx
@@ -3336,6 +3348,13 @@ msgstr "リプレイを一時停止"
 #: src/pages/ShotAnalyzer/components/shotDetails/ShotMetricCards.jsx
 msgid "Peak Pressure"
 msgstr "ピーク圧力"
+
+#. placeholder {0}: steamRef.current?.peak?.toFixed(1)
+#. placeholder {1}: steamRef.current?.brewTarget
+#. placeholder {2}: live.ct?.toFixed(1)
+#: src/pages/Settings/tune/TuneMachine.jsx
+msgid "Peaked at {0} °C, flushed to target {1} °C. Watching the landing: {2} °C…"
+msgstr ""
 
 #: src/pages/ShotAnalyzer/components/shotChart/controls/compareControls.jsx
 msgid "Per Shot"

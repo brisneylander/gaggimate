@@ -84,25 +84,6 @@ export function LagCompensationSection({ formData, onChange }) {
           );
         })}
       </div>
-      <label htmlFor='reheatFullPower' className='label mt-4 cursor-pointer justify-start gap-3'>
-        <input
-          id='reheatFullPower'
-          name='reheatFullPower'
-          type='checkbox'
-          className='toggle toggle-primary'
-          checked={!!formData.reheatFullPower}
-          onChange={onChange('reheatFullPower')}
-        />
-        <span>
-          <Trans>Reheat at full power after a flush or shot</Trans>
-        </span>
-      </label>
-      <p className='text-sm opacity-70'>
-        <Trans>
-          Puts back the heat the water took as fast as the element allows, then hands back to the
-          PID. Needs heater power, heat-up rate and dead time.
-        </Trans>
-      </p>
       <label
         htmlFor='flushButtonToTarget'
         className='label mt-4 cursor-pointer justify-start gap-3'

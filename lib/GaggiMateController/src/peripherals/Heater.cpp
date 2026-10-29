@@ -98,8 +98,7 @@ void Heater::setFeedforwardScale(float combinedKff) {
 }
 
 void Heater::setLagCompensation(float derivativeFilterS, float integralZoneC, float sensorDeadTimeS, float modelHeaterW,
-                                float modelHeatRate, float modelLossW, float inletTempC, float waterDeadTimeS,
-                                bool reheatFullPower) {
+                                float modelHeatRate, float modelLossW, float inletTempC, float waterDeadTimeS) {
     std::lock_guard<std::mutex> lock(lagMutex);
     simplePid->setDerivativeFilterTime(derivativeFilterS);
     simplePid->setIntegralZone(integralZoneC);
@@ -112,7 +111,6 @@ void Heater::setLagCompensation(float derivativeFilterS, float integralZoneC, fl
     incomingWaterTemp = inletTempC > 0.0f ? inletTempC : 23.0f;
     predictor.configure(modelHeaterW, modelHeatRate, sensorDeadTimeS, incomingWaterTemp, waterDeadTimeS);
     predictor.seedLoss(modelLossW);
-    reheatEnabled = reheatFullPower;
     ESP_LOGI(LOG_TAG,
              "Lag compensation: D filter %.1fs, I zone %.2f°C, dead time %.1fs, predictor %s (%.0fW, %.3f°C/s, water %.1fs), "
              "inlet %.1f°C",
@@ -143,7 +141,6 @@ void Heater::updateLagCompensation() {
 
     if (!predictor.isEnabled()) {
         controlTemperature = temperature;
-        eventDuty = -1.0f;
         return;
     }
     if (!predictorPrimed) {
@@ -156,7 +153,6 @@ void Heater::updateLagCompensation() {
         predictor.update(dt, output / TUNER_OUTPUT_SPAN, flowing ? flow : 0.0f, temperature, setpoint);
     }
     controlTemperature = temperature + predictor.getCorrection();
-    eventDuty = reheatEnabled ? predictor.eventDuty() : -1.0f;
 }
 
 void Heater::autotune(int testTimeSec, int windowSize, int heaterWattage) {
@@ -195,10 +191,6 @@ void Heater::loopPid() {
 
     // Now run PID with proper feedforward integrated
     bool pidUpdated = simplePid->update();
-    // Full-power reheat, then coast: the PID keeps running underneath (its integral is held during and after the flow), so
-    // it takes over smoothly when the water event ends. Safety limits act on the raw sensor as before.
-    if (eventDuty >= 0.0f)
-        output = eventDuty * TUNER_OUTPUT_SPAN;
 
     if (pidUpdated) {
         plot(output, 1.0f, 1);

@@ -108,7 +108,6 @@ class Settings {
     float getModelLossW() const { return modelLossW.get(); } // learned by the controller, saved here
     float getInletTempC() const { return inletTempC.get(); }
     float getWaterDeadTimeS() const { return waterDeadTimeS.get(); }
-    bool isReheatFullPower() const { return reheatFullPower.get(); }
     bool isFlushButtonToTarget() const { return flushButtonToTarget.get(); }
     String getPid() const { return pid.get(); }
     String getPumpModelCoeffs() const { return pumpModelCoeffs.get(); }
@@ -233,7 +232,6 @@ class Settings {
     void setModelLossW(float watts);
     void setInletTempC(float degrees);
     void setWaterDeadTimeS(float seconds);
-    void setReheatFullPower(bool enabled);
     void setFlushButtonToTarget(bool enabled);
     void setPumpModelCoeffs(const String &pumpModelCoeffs);
     void setPumpSlipCoeffs(const String &pumpSlipCoeffs);
@@ -392,7 +390,6 @@ class Settings {
     Property<float> modelLossW{registry, "lc_lw", 0.0f};
     Property<float> inletTempC{registry, "lc_it", 0.0f};
     Property<float> waterDeadTimeS{registry, "lc_wd", 0.0f};
-    Property<bool> reheatFullPower{registry, "lc_rh", false};
     Property<bool> flushButtonToTarget{registry, "fl_tt", true};
 
     // Display settings

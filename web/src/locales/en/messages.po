@@ -3666,10 +3666,6 @@ msgstr "Pumped Water Stop"
 msgid "Pumped-water target"
 msgstr "Pumped-water target"
 
-#: src/pages/Settings/tabs/LagCompensationSection.jsx
-msgid "Puts back the heat the water took as fast as the element allows, then hands back to the PID. Needs heater power, heat-up rate and dead time."
-msgstr "Puts back the heat the water took as fast as the element allows, then hands back to the PID. Needs heater power, heat-up rate and dead time."
-
 #: src/pages/Statistics/utils/statisticsSearchDsl.js
 msgid "Query clause {clauseNumber}: {valueError}"
 msgstr "Query clause {clauseNumber}: {valueError}"
@@ -3775,10 +3771,6 @@ msgstr "Recording replay..."
 #: src/pages/ShotAnalyzer/components/library/LibraryRow.jsx
 msgid "Reference shot"
 msgstr "Reference shot"
-
-#: src/pages/Settings/tabs/LagCompensationSection.jsx
-msgid "Reheat at full power after a flush or shot"
-msgstr "Reheat at full power after a flush or shot"
 
 #: src/pages/Statistics/components/StatisticsSearchHelp.jsx
 msgid "Relative time: <0>h</0> (now), <1>h-7d</1> (7 days ago)"

@@ -55,10 +55,7 @@ class Heater {
     //   inletTempC: tank water temperature for the predictor and the thermal feedforward (<= 0: keep 23 °C)
     //   waterDeadTimeS: delay from water flowing to the sensor reacting (<= 0: same as sensorDeadTimeS)
     void setLagCompensation(float derivativeFilterS, float integralZoneC, float sensorDeadTimeS, float modelHeaterW,
-                            float modelHeatRate, float modelLossW = 0.0f, float inletTempC = 0.0f, float waterDeadTimeS = 0.0f,
-                            bool reheatFullPower = false);
-    // True while a full-power reheat after a flush or shot overrides the PID (needs the predictor).
-    bool isReheating() const { return eventDuty >= 1.0f; }
+                            float modelHeatRate, float modelLossW = 0.0f, float inletTempC = 0.0f, float waterDeadTimeS = 0.0f);
     float getControlTemperature() const { return controlTemperature; }
     // Predictor's learned standing loss (W), 0 while the predictor is off.
     float getLearnedLossWatts();
@@ -119,8 +116,6 @@ class Heater {
     bool flowSeen = false;
     uint32_t lastPredictorMs = 0;
     bool predictorPrimed = false;
-    bool reheatEnabled = false;
-    float eventDuty = -1.0f; // water-event heater duty override, < 0 = none; set and read on the heater task
 
     // Thermal model constants
     static constexpr float WATER_DENSITY = 1.0f;        // g/ml

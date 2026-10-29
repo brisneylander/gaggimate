@@ -188,7 +188,7 @@ void test_seed_waits_for_enable_and_is_bounded() {
 // output and pump flow open loop): three thermal nodes. The element (200 J/°C) feeds the water (1296 J/°C) through
 // 9.6 W/°C, so heater heat reaches the water with a ~21 s time constant and keeps arriving after the heater stops,
 // which makes the real overshoot. The group head (819 J/°C) trades heat with the water through 5.7 W/°C (~2.4 min) and
-// carries the standing loss (~45 W at 98 °C), so it sits ~8 °C below the water: after a flush or a fast reheat it keeps
+// carries the standing loss (~45 W at 98 °C), so it sits ~8 °C below the water: after a flush it keeps
 // pulling the water down, or soaking up the extra, for minutes. The thermocouple sees the water through a 4.6 s
 // transport delay and a 15 s first-order lag (flush water shows after ~12 s, heater heat after ~40 s), then MAX31855
 // quantisation (0.25 °C) and the driver's 0.2 EMA at 4 Hz. Each flush ends with the valve's ~5 g dump. Against bench flushes it
@@ -203,7 +203,6 @@ struct Tuning {
     float modelW = 0.0f, modelRate = 0.0f, modelDeadS = 0.0f;
     float lossSeedW = 0.0f;       // as Heater: seedLoss(saved value, 0 = default guess); < 0 skips seeding (starts at 0)
     float waterDeadS = 0.0f;      // predictor's water delay, 0 = same as modelDeadS
-    bool reheat = false;          // as Heater: full power while the predictor says energy is owed
     float predictorStartS = 0.0f; // switch the predictor on this long into the run, once the PID has settled
     // Tank temperature the flush water really cools like (plant) and the one the predictor is told. On the bench each ml
     // took ~20 % more heat than (boiler - tank setting) predicts: fitted sessions cool like 24-27 °C water at 35 °C.
@@ -312,8 +311,6 @@ static Result simulate(const Tuning &tu) {
                 pid.setDisturbanceFeedforward(0.0f, 0.0f);
             }
             pid.update();
-            if (tu.reheat && predictor.eventDuty() >= 0.0f)
-                output = predictor.eventDuty() * 1000.0f;
             if (t > flushStart - 600.0f && t < flushStart) {
                 swingSum += std::fabs(output - lastOutput);
                 ++swingN;
@@ -458,42 +455,6 @@ void test_robust_to_model_mismatch() {
 // Switching the predictor on while the PID holds setpoint, as on the bench: from zero loss it reads the ~65 W holding
 // power as heat in flight and sags the boiler by about dead time x holding power / capacity (0.49 degC measured on a
 // Silvia) until the loss is learned. The default guess shrinks that and a saved value removes it.
-// Full-power reheat puts back the flush's heat as fast as the element allows. The earlier two-node plant promised it
-// back on setpoint ~3x sooner; on the Silvia it was no faster (124-129 s vs 62-100 s), with the heat needing ~2 min to
-// reach the thermocouple. The fitted plant gets back sooner only when the predictor's tank temperature is exact (it
-// was ~10 °C warm on the bench, see test_bench_configurations), and its "back" time is sensitive to the 0.25 °C sensor
-// steps, so this only checks that reheat stays bounded and settles; it is opt-in.
-void test_full_power_reheat() {
-    Tuning base = compensated();
-    base.waterDeadS = 8.0f;
-    Tuning fast = base;
-    fast.reheat = true;
-    const Result rb = simulate(base), rf = simulate(fast);
-    report("water 8 s", rb);
-    report("water 8 s + full-power reheat", rf);
-    TEST_ASSERT_TRUE(rf.backAt > 0.0f && rb.backAt > 0.0f);
-    TEST_ASSERT_TRUE(rf.peak - 98.0f <= rb.peak - 98.0f + 1.0f); // at most four sensor steps of extra overshoot
-    TEST_ASSERT_TRUE(rf.settleErr < 0.3f);
-    TEST_ASSERT_TRUE(rf.idleSwing <= rb.idleSwing + 0.5f); // reheat only runs during water events, not at idle
-}
-
-// Reheat with model errors: it must stay bounded (no runaway heat) and still settle.
-void test_full_power_reheat_with_model_mismatch() {
-    const float rates[] = {0.45f, 0.75f};
-    for (float rate : rates) {
-        Tuning tu = compensated();
-        tu.waterDeadS = 8.0f;
-        tu.reheat = true;
-        tu.modelRate = rate;
-        const Result r = simulate(tu);
-        char name[48];
-        snprintf(name, sizeof(name), "reheat, rate %.2f", rate);
-        report(name, r);
-        TEST_ASSERT_TRUE_MESSAGE(r.peak - 98.0f < 2.0f, name);
-        TEST_ASSERT_TRUE_MESSAGE(r.settleErr < 0.4f, name);
-    }
-}
-
 void test_separate_water_delay() {
     const Result shared = simulate(compensated());
     report("water delay = dead time (20 s)", shared);
@@ -527,8 +488,7 @@ void test_seeded_start_avoids_sag() {
 }
 
 // The bench configurations (Kp 60 / Ki 0.658 / Kd 1500, 5 s flush from 93 °C): the plant should rank them as the
-// Silvia did. Bench overshoot: off +2.91, shared 20 s delay +1.68, 12 s water delay +0.63 °C; full-power reheat no
-// faster back to 93 °C (124-129 s vs 62-100 s).
+// Silvia did. Bench overshoot: off +2.91, shared 20 s delay +1.68, 12 s water delay +0.63 °C.
 void test_bench_configurations() {
     Tuning off;
     off.kd = 1500.0f;
@@ -538,13 +498,10 @@ void test_bench_configurations() {
     shared.plantInletC = 25.0f;
     Tuning water = compensated();
     water.plantInletC = 25.0f;
-    Tuning reheat = water;
-    reheat.reheat = true;
-    const Result ro = simulate(off), rs = simulate(shared), rw = simulate(water), rr = simulate(reheat);
+    const Result ro = simulate(off), rs = simulate(shared), rw = simulate(water);
     report("bench: off", ro);
     report("bench: shared 20 s delay", rs);
     report("bench: 12 s water delay", rw);
-    report("bench: 12 s water + reheat", rr);
 }
 
 // A logged shot (Londonium on a Silvia, 2026-10-29: 5 s fill at ~8.8 ml/s, 10 s infusion, then 9 bar at 0.8-2.2 ml/s; 38 g
@@ -552,7 +509,7 @@ void test_bench_configurations() {
 // heater backed off to 22-33 %: the integral is held while water flows, so only P answers a steady draw. The plant
 // gives 6.5 °C. Most of it is physics: the 5 s fill draws ~45 ml (~11 kJ, ~2 kW) faster than the 1100 W element can
 // replace, and heater heat reaches the water with a ~21 s time constant, mostly after the shot. So the thermal
-// feedforward (kf) and full-power reheat each lift the sensor's low by ~2 °C but the water's by only ~0.6 °C; only heat
+// feedforward (kf) lifts the sensor's low by ~2 °C but the water's by only ~0.6 °C; only heat
 // put in before the shot (idling hotter) lifts the water itself.
 static const std::vector<float> LONDONIUM_SHOT = {0.19f, 8.17f, 8.84f, 8.85f, 8.94f, 8.74f, 5.94f, 1.73f, 1.07f, 0.24f,
                                                   0.01f, 0.1f,  0.29f, 0.26f, 0.22f, 0.16f, 4.87f, 0.87f, 0.76f, 0.84f,
@@ -568,16 +525,9 @@ void test_shot_feedforward() {
     const Result rb = simulate(base);
     printf("shot, no feedforward:   sensor low %.2f (%.2f under), water low %.2f, peak after %.2f\n", rb.dipMin,
            rb.dipMin - 93.0f, rb.waterLow, rb.peak);
-    Tuning rh = base;
-    rh.reheat = true;
-    const Result rr = simulate(rh);
-    printf("shot, full-power reheat: sensor low %.2f (%.2f under), water low %.2f, peak after %.2f\n", rr.dipMin,
-           rr.dipMin - 93.0f, rr.waterLow, rr.peak);
-    Tuning rf = rh;
-    rf.kff = 0.909f;
-    const Result rrf = simulate(rf);
-    printf("shot, reheat + ff 0.909: sensor low %.2f (%.2f under), water low %.2f, peak after %.2f\n", rrf.dipMin,
-           rrf.dipMin - 93.0f, rrf.waterLow, rrf.peak);
+    Tuning ffFull = base;
+    ffFull.kff = 0.909f; // the water's heat exactly
+    const Result rr = simulate(ffFull);
     Result hot3{};
     for (float pre : {1.0f, 2.0f, 3.0f}) {
         Tuning hot = base;
@@ -588,7 +538,7 @@ void test_shot_feedforward() {
         hot3 = rh2;
     }
     TEST_ASSERT_TRUE_MESSAGE(rb.dipMin < 93.0f - 5.0f, "plant should reproduce the bench shot's ~6 °C drop");
-    TEST_ASSERT_TRUE(rr.dipMin > rb.dipMin + 1.0f);       // reheat lifts the sensor's low
+    TEST_ASSERT_TRUE(rr.dipMin > rb.dipMin + 1.0f);       // feedforward lifts the sensor's low
     TEST_ASSERT_TRUE(rr.waterLow < rb.waterLow + 1.0f);   // ... but hardly the water's: the element can't keep up
     TEST_ASSERT_TRUE(hot3.waterLow > rb.waterLow + 2.0f); // heat put in before the shot does
     const float gains[] = {0.45f, 0.7f, 0.909f};
@@ -621,8 +571,6 @@ int main(int argc, char **argv) {
     RUN_TEST(test_robust_to_model_mismatch);
     RUN_TEST(test_seeded_start_avoids_sag);
     RUN_TEST(test_separate_water_delay);
-    RUN_TEST(test_full_power_reheat);
-    RUN_TEST(test_full_power_reheat_with_model_mismatch);
     RUN_TEST(test_bench_configurations);
     RUN_TEST(test_shot_feedforward);
     return UNITY_END();

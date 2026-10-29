@@ -358,8 +358,8 @@ export function TuneMachine({ formData, setField }) {
             />
             <Trans>Portafilter out, cup in place, drip tray empty</Trans>
           </label>
+          {!flushResult && !stepThreeRunning && <div className='mt-2'>{steadyLine}</div>}
           <div className='mt-2'>
-            {!flushResult && !stepThreeRunning && steadyLine}{' '}
             {/* One flush per weighing: a second press would add to the cup already being measured. */}
             {flushResult ? (
               <button

@@ -413,7 +413,7 @@ export function TuneMachine({ formData, setField }) {
               )}
               {weighed && !weighed.error && (
                 <p className='opacity-70'>
-                  <Trans>You can change the measured values below.</Trans>
+                  <Trans>You can enter the weighed values below.</Trans>
                 </p>
               )}
               <div className='flex flex-wrap items-center gap-2'>

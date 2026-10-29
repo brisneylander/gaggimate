@@ -6248,7 +6248,11 @@ msgid "Yield:"
 msgstr "出液量："
 
 #: src/pages/Settings/tune/TuneMachine.jsx
-msgid "You can change the measured values below."
+#~ msgid "You can change the measured values below."
+#~ msgstr ""
+
+#: src/pages/Settings/tune/TuneMachine.jsx
+msgid "You can enter the weighed values below."
 msgstr ""
 
 #: src/components/VisualizerUploadModal.jsx

@@ -1,4 +1,5 @@
 #include "Heater.h"
+#include "HeatUpBoost.h"
 #include "HeaterCoordinator.h"
 #include <Arduino.h>
 #include <algorithm>
@@ -194,6 +195,12 @@ void Heater::loopPid() {
 
     // Now run PID with proper feedforward integrated
     bool pidUpdated = simplePid->update();
+    if (pidUpdated) {
+        // Far below the setpoint with no water about: full power (HeatUpBoost.h).
+        std::lock_guard<std::mutex> lock(lagMutex);
+        if (HeatUpBoost::active(predictor.isEnabled(), setpoint, controlTemperature, flowSeen, millis() - lastFlowMs))
+            output = TUNER_OUTPUT_SPAN;
+    }
 
     if (pidUpdated) {
         checkSafety(pumpFlowRate != nullptr && *pumpFlowRate > 0.01f);

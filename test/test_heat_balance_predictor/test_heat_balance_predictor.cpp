@@ -20,6 +20,7 @@ static uint32_t millis() { return fakeNow; }
 #endif
 
 #include "SimplePID/SimplePID.cpp"
+#include "peripherals/HeatUpBoost.h"
 #include "peripherals/HeatBalancePredictor.cpp"
 
 void setUp() {}
@@ -228,6 +229,7 @@ struct Tuning {
     float setpointC = 98.0f;
     // Thermal feedforward as Heater::loopPid (settings kf, output units per watt; 1000 / 1100 W = the water's heat exactly).
     float kff = 0.0f;
+    bool heatUpBoost = true; // as Heater::loopPid (HeatUpBoost.h)
 };
 
 struct Result {
@@ -329,6 +331,9 @@ static Result simulate(const Tuning &tu) {
                 pid.setDisturbanceFeedforward(0.0f, 0.0f);
             }
             pid.update();
+            if (tu.heatUpBoost &&
+                HeatUpBoost::active(predictorStarted && predictor.isEnabled(), sp, control, flowSeen, fakeNow - lastFlowMs))
+                output = 1000.0f;
             if (t > flushStart - 600.0f && t < flushStart) {
                 swingSum += std::fabs(output - lastOutput);
                 ++swingN;
@@ -569,6 +574,110 @@ void test_shot_feedforward() {
     }
 }
 
+
+// Heat-up from below the setpoint: a warm restart (the morning case, boiler ~22 °C under with the group head colder still)
+// and a switch to steam. The fork's loop as on the machine (bench 2026-10-30 morning): the predictor counts the full
+// power's heat in flight (~12 °C) and Kd 1500 brakes on the rise, so the heater fell to ~10-20 % while still 10-30 °C
+// under. HeatUpBoost (Heater::loopPid): full power while the predicted temperature is more than 5 °C under.
+struct HeatUp {
+    float reach;   // s until the sensor is first within 0.5 °C of the setpoint
+    float over;    // highest sensor reading above the setpoint after that
+    float settled; // s until the sensor stays within ±0.3 °C (last time outside)
+    float duty;    // mean output (0..1) over the first 120 s
+};
+
+static HeatUp simulateHeatUp(const Tuning &tu, float startC, float groupBelowC, float setpoint) {
+    const float dt = 0.25f, room = 22.0f, lossPerK = 0.59f;
+    const float plantW = 1100.0f, wallC = 200.0f, waterC = 1296.0f, wallToWater = 9.6f;
+    const float groupC = 819.0f, waterToGroup = 5.7f;
+    const float delayS = 4.6f, lagS = 15.0f;
+    const int delaySteps = static_cast<int>(delayS / dt);
+    const float holdW = lossPerK * (startC - room);
+    float boiler = startC, wall = startC + holdW / wallToWater, group = startC - holdW / waterToGroup - groupBelowC;
+    std::deque<float> pipe(delaySteps, boiler);
+    float lagged = boiler, ema = boiler;
+    float output = 0.0f, control = boiler, measured = boiler, sp = setpoint;
+    SimplePID pid(&output, &control, &sp);
+    pid.setDerivativeInput(&measured);
+    pid.setSamplingFrequency(1.0f);
+    pid.setCtrlOutputLimits(0.0f, 1000.0f);
+    pid.activateSetPointFilter(false);
+    pid.setControllerPIDGains(tu.kp, tu.ki, tu.kd, 0.0f);
+    pid.setDerivativeFilterTime(tu.derivFilterS);
+    pid.setIntegralZone(tu.integralZone);
+    pid.reset();
+    pid.setMode(SimplePID::Control::automatic);
+    HeatBalancePredictor predictor;
+    predictor.configure(tu.modelW, tu.modelRate, tu.modelDeadS, tu.predictorInletC, tu.waterDeadS);
+    predictor.seedLoss(tu.lossSeedW);
+    HeatUp r{-1.0f, -1e9f, 0.0f, 0.0f};
+    float dutySum = 0.0f, lastOut = -1.0f;
+    int dutyN = 0;
+    const float end = 1500.0f;
+    fakeNow = 1000;
+    for (int step = 0; step * dt < end; ++step) {
+        const float t = step * dt;
+        if (step % 4 == 0) {
+            fakeNow += 1000;
+            measured = ema;
+            predictor.update(1.0f, output / 1000.0f, 0.0f, measured, sp);
+            control = measured + predictor.getCorrection();
+            pid.update();
+            if (tu.heatUpBoost && HeatUpBoost::active(predictor.isEnabled(), sp, control, false, 0))
+                output = 1000.0f;
+            if (t < 120.0f) {
+                dutySum += output / 1000.0f;
+                ++dutyN;
+            }
+            if (r.reach < 0.0f && measured >= sp - 0.5f)
+                r.reach = t;
+            if (r.reach >= 0.0f)
+                r.over = std::max(r.over, measured - sp);
+            if (std::fabs(measured - sp) > 0.3f)
+                lastOut = t;
+        }
+        const float heat = plantW * output / 1000.0f;
+        const float toWater = wallToWater * (wall - boiler);
+        const float toGroup = waterToGroup * (boiler - group);
+        wall += (heat - toWater) * dt / wallC;
+        group += (toGroup - lossPerK * (boiler - room)) * dt / groupC;
+        boiler += (toWater - toGroup) * dt / waterC;
+        pipe.push_back(boiler);
+        const float delayed = pipe.front();
+        pipe.pop_front();
+        lagged += (delayed - lagged) * dt / lagS;
+        ema = 0.2f * (std::floor(lagged * 4.0f) / 4.0f) + 0.8f * ema;
+    }
+    r.settled = lastOut;
+    r.duty = dutySum / static_cast<float>(dutyN);
+    return r;
+}
+
+static void test_heat_up_boost() {
+    Tuning tu = compensated();
+    tu.lossSeedW = 36.0f;
+    const struct {
+        const char *name;
+        float start, groupBelow, sp;
+    } cases[] = {{"warm restart 76->98, group -15", 76.0f, 15.0f, 98.0f},
+                 {"warm restart 76->98, group even", 76.0f, 0.0f, 98.0f},
+                 {"cold start 25->98", 25.0f, 0.0f, 98.0f},
+                 {"steam 98->125", 98.0f, 0.0f, 125.0f}};
+    for (const auto &c : cases) {
+        Tuning off = tu;
+        off.heatUpBoost = false;
+        const HeatUp before = simulateHeatUp(off, c.start, c.groupBelow, c.sp);
+        const HeatUp after = simulateHeatUp(tu, c.start, c.groupBelow, c.sp);
+        printf("%-34s within 0.5 °C %4.0f -> %4.0f s  over %+5.2f -> %+5.2f  settled %4.0f -> %4.0f s\n", c.name, before.reach,
+               after.reach, before.over, after.over, before.settled, after.settled);
+        // Within half a degree in under 3 minutes (from 6-10), no more than 2 °C over, and settled no later than before.
+        TEST_ASSERT_TRUE(after.reach > 0.0f && after.reach < 180.0f);
+        TEST_ASSERT_TRUE(after.reach < 0.5f * before.reach);
+        TEST_ASSERT_TRUE(after.over < 2.0f);
+        TEST_ASSERT_TRUE(after.settled <= before.settled + 60.0f);
+    }
+}
+
 int main(int argc, char **argv) {
     UNITY_BEGIN();
     RUN_TEST(test_disabled_when_any_parameter_missing);
@@ -592,5 +701,6 @@ int main(int argc, char **argv) {
     RUN_TEST(test_separate_water_delay);
     RUN_TEST(test_bench_configurations);
     RUN_TEST(test_shot_feedforward);
+    RUN_TEST(test_heat_up_boost);
     return UNITY_END();
 }

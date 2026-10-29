@@ -2272,6 +2272,15 @@ msgstr "Importazione"
 msgid "Importing shot or profile"
 msgstr "Importazione estrazione o profilo"
 
+#. placeholder {0}: inUse.name
+#: src/pages/Settings/tabs/MachineProfilePicker.jsx
+msgid "In use: {0}"
+msgstr ""
+
+#: src/pages/Settings/tabs/MachineProfilePicker.jsx
+msgid "In use: custom values (no built-in profile matches)"
+msgstr ""
+
 #: src/pages/ShotAnalyzer/components/shotChart/controls/chartReplayControls.jsx
 msgid "Include legend"
 msgstr "Includi legenda"

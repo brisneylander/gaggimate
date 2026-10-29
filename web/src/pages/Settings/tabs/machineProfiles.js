@@ -52,6 +52,22 @@ export const BUILT_IN_PROFILES = [
   },
 ];
 
+function sameValue(a, b) {
+  if (a === undefined || a === null || a === '') return false;
+  const as = String(a).split(','),
+    bs = String(b).split(',');
+  return as.length === bs.length && as.every((x, i) => Math.abs(Number(x) - Number(bs[i])) < 1e-6);
+}
+
+// The built-in profile the form's values match (every value in it), or null: custom values.
+export function matchingProfile(formData) {
+  return (
+    BUILT_IN_PROFILES.find(p =>
+      Object.entries(p.values).every(([key, value]) => sameValue(formData[key], value)),
+    ) || null
+  );
+}
+
 // The profile fields as they are in the settings form now.
 export function profileFromForm(name, formData) {
   const values = {};

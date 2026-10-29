@@ -1,13 +1,23 @@
-import { useRef, useState } from 'preact/hooks';
+import { useEffect, useRef, useState } from 'preact/hooks';
 import { Trans, useLingui } from '@lingui/react/macro';
-import { BUILT_IN_PROFILES, profileFromForm, validateProfile } from './machineProfiles.js';
+import {
+  BUILT_IN_PROFILES,
+  matchingProfile,
+  profileFromForm,
+  validateProfile,
+} from './machineProfiles.js';
 
 // Pick a built-in machine profile, or import / export one as JSON. Applying fills the form; Save stores it.
 export function MachineProfilePicker({ formData, setField }) {
   const { t } = useLingui();
+  // The profile the settings match: shown in use, and preselected once the settings have loaded.
+  const inUse = matchingProfile(formData);
   const [selected, setSelected] = useState('');
   const [note, setNote] = useState('');
   const fileInput = useRef(null);
+  useEffect(() => {
+    if (inUse && selected === '') setSelected(inUse.name);
+  }, [inUse?.name]);
 
   const apply = (values, label) => {
     for (const [key, value] of Object.entries(values)) setField(key, value);
@@ -104,6 +114,13 @@ export function MachineProfilePicker({ formData, setField }) {
           calibration, flush to target, tank warming, safety times, temperature offset). Tank
           temperatures are left as they are.
         </Trans>
+      </p>
+      <p className='text-sm'>
+        {inUse ? (
+          <Trans>In use: {inUse.name}</Trans>
+        ) : (
+          <Trans>In use: custom values (no built-in profile matches)</Trans>
+        )}
       </p>
       {note && <p className='text-sm'>{note}</p>}
     </div>

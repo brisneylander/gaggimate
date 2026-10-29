@@ -171,6 +171,14 @@ msgstr "达到任一间隔时将显示清洁提醒；将间隔设为 0 可关闭
 msgid "A given alpha behaves faster in time at 80 SPS because it is applied more often. Tune the two alpha values independently for your installed sample rate. Changing sample rate resets both values to 0.80 at 10 SPS or 0.40 at 80 SPS as sensible starting points."
 msgstr "在 80 SPS 下，相同的 alpha 值在时间上响应更快，因为它被更频繁地应用。请根据实际安装的采样率分别调整两个 alpha 值。更改采样率会将两个值重置为合理的起始值：10 SPS 时为 0.80，80 SPS 时为 0.40。"
 
+#: src/pages/Settings/tune/TuneMachine.jsx
+msgid "a result is showing: empty the cup and tray, then Run again"
+msgstr ""
+
+#: src/pages/Settings/tune/TuneMachine.jsx
+msgid "a test is running"
+msgstr ""
+
 #: src/pages/Settings/tabs/GeneralTab.jsx
 msgid "Access Point Password"
 msgstr "热点密码"
@@ -4417,6 +4425,10 @@ msgstr ""
 msgid "Server error - the API may not support this data format or account type"
 msgstr "服务器错误 - API 可能不支持此数据格式或账户类型"
 
+#: src/pages/Settings/tune/TuneMachine.jsx
+msgid "set heater power and heat-up rate first (step 1)"
+msgstr ""
+
 #: src/pages/ShotAnalyzer/components/shotDetails/ShotMainInfoCard.jsx
 msgid "Set rating to {value} of 5"
 msgstr "评分设为 {value} / 5"
@@ -5025,6 +5037,10 @@ msgid "Switch import mode to View temporarily"
 msgstr "将导入模式切换为临时查看"
 
 #: src/pages/Settings/tune/TuneMachine.jsx
+msgid "switch to Brew"
+msgstr ""
+
+#: src/pages/Settings/tune/TuneMachine.jsx
 msgid "Switch to Brew"
 msgstr ""
 
@@ -5422,6 +5438,10 @@ msgstr "无法设置此型号的秤。"
 #: src/pages/ShotAnalyzer/components/shotDetails/ShotMainInfoCard.jsx
 msgid "Thursday"
 msgstr "星期四"
+
+#: src/pages/Settings/tune/TuneMachine.jsx
+msgid "tick the checklist above"
+msgstr ""
 
 #: src/pages/ShotAnalyzer/components/analysisTable/analysisTableModel.js
 msgid "Time"
@@ -5913,11 +5933,23 @@ msgctxt "weekday initial: Wednesday"
 msgid "W"
 msgstr "三"
 
+#: src/pages/Settings/tune/TuneMachine.jsx
+msgid "wait for the shot or flush to finish"
+msgstr ""
+
 #. placeholder {0}: live.tt
 #. placeholder {1}: live.ct?.toFixed(1)
 #. placeholder {2}: Math.round(steadyFor)
 #: src/pages/Settings/tune/TuneMachine.jsx
 msgid "Waiting for a steady {0} °C ({1} °C now, {2} of {STEADY_S} s)"
+msgstr ""
+
+#: src/pages/Settings/tune/TuneMachine.jsx
+msgid "waiting for a steady temperature"
+msgstr ""
+
+#: src/pages/Settings/tune/TuneMachine.jsx
+msgid "waiting for the machine's readings"
 msgstr ""
 
 #: src/utils/warnings.js

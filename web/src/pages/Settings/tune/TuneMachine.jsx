@@ -181,6 +181,22 @@ export function TuneMachine({ formData, setField }) {
 
   const busy = phase === 'flushing' || phase === 'steam' || phase === 'peak' || phase === 'target';
   const modelSet = Number(formData.modelHeaterW) > 0 && Number(formData.modelHeatRate) > 0;
+  const connected = Number.isFinite(live.ct);
+  // Why a step can't start yet (the first unmet condition), or null when it can.
+  const commonBlock = () => {
+    if (!connected) return t`waiting for the machine's readings`;
+    if (!modelSet) return t`set heater power and heat-up rate first (step 1)`;
+    if (busy) return t`a test is running`;
+    if (!ready) return t`tick the checklist above`;
+    if (live.mode !== 1) return t`switch to Brew`;
+    if (live.active) return t`wait for the shot or flush to finish`;
+    return null;
+  };
+  const flushBlock =
+    commonBlock() ??
+    (flushResult ? t`a result is showing: empty the cup and tray, then Run again` : null) ??
+    (isSteady ? null : t`waiting for a steady temperature`);
+  const targetBlock = commonBlock() ?? (isSteady ? null : t`waiting for a steady temperature`);
 
   return (
     <Section title={t`Tune this machine`}>
@@ -280,12 +296,13 @@ export function TuneMachine({ formData, setField }) {
               <button
                 type='button'
                 className='btn btn-primary btn-sm'
-                disabled={!ready || !isSteady || busy || !modelSet}
+                disabled={flushBlock !== null}
                 onClick={startFlushTest}
               >
                 <Trans>Start flush</Trans>
               </button>
             )}
+            {flushBlock && !flushResult && <span className='ml-2 opacity-70'>({flushBlock})</span>}
           </div>
           {phase === 'flushing' && (
             <p className='mt-2'>
@@ -372,11 +389,14 @@ export function TuneMachine({ formData, setField }) {
           <button
             type='button'
             className='btn btn-primary btn-sm mt-2'
-            disabled={!ready || busy || live.mode !== 1 || !modelSet}
+            disabled={targetBlock !== null}
             onClick={startTargetTest}
           >
             <Trans>Start</Trans>
           </button>
+          {targetBlock && phase !== 'steam' && phase !== 'peak' && phase !== 'target' && (
+            <span className='ml-2 opacity-70'>({targetBlock})</span>
+          )}
           {phase === 'steam' && (
             <p className='mt-2'>
               <Trans>Heating in Steam: {live.ct?.toFixed(1)} °C…</Trans>

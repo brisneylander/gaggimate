@@ -171,6 +171,14 @@ msgstr "Un avertissement de nettoyage s'affiche dès qu'un des intervalles est a
 msgid "A given alpha behaves faster in time at 80 SPS because it is applied more often. Tune the two alpha values independently for your installed sample rate. Changing sample rate resets both values to 0.80 at 10 SPS or 0.40 at 80 SPS as sensible starting points."
 msgstr "Un alpha donné réagit plus vite dans le temps à 80 SPS car il est appliqué plus souvent. Réglez les deux valeurs d'alpha indépendamment pour la fréquence d'échantillonnage installée. Changer la fréquence d'échantillonnage remet les deux valeurs à 0,80 à 10 SPS ou 0,40 à 80 SPS comme points de départ raisonnables."
 
+#: src/pages/Settings/tune/TuneMachine.jsx
+msgid "a result is showing: empty the cup and tray, then Run again"
+msgstr ""
+
+#: src/pages/Settings/tune/TuneMachine.jsx
+msgid "a test is running"
+msgstr ""
+
 #: src/pages/Settings/tabs/GeneralTab.jsx
 msgid "Access Point Password"
 msgstr "Mot de passe du point d'accès"
@@ -4417,6 +4425,10 @@ msgstr ""
 msgid "Server error - the API may not support this data format or account type"
 msgstr "Erreur serveur - l'API ne prend peut-être pas en charge ce format de données ou ce type de compte"
 
+#: src/pages/Settings/tune/TuneMachine.jsx
+msgid "set heater power and heat-up rate first (step 1)"
+msgstr ""
+
 #: src/pages/ShotAnalyzer/components/shotDetails/ShotMainInfoCard.jsx
 msgid "Set rating to {value} of 5"
 msgstr "Attribuer la note {value} sur 5"
@@ -5025,6 +5037,10 @@ msgid "Switch import mode to View temporarily"
 msgstr "Passer le mode d'import sur Afficher temporairement"
 
 #: src/pages/Settings/tune/TuneMachine.jsx
+msgid "switch to Brew"
+msgstr ""
+
+#: src/pages/Settings/tune/TuneMachine.jsx
 msgid "Switch to Brew"
 msgstr ""
 
@@ -5422,6 +5438,10 @@ msgstr "Ce modèle de balance n'a pas pu être configuré."
 #: src/pages/ShotAnalyzer/components/shotDetails/ShotMainInfoCard.jsx
 msgid "Thursday"
 msgstr "Jeudi"
+
+#: src/pages/Settings/tune/TuneMachine.jsx
+msgid "tick the checklist above"
+msgstr ""
 
 #: src/pages/ShotAnalyzer/components/analysisTable/analysisTableModel.js
 msgid "Time"
@@ -5913,11 +5933,23 @@ msgctxt "weekday initial: Wednesday"
 msgid "W"
 msgstr "M"
 
+#: src/pages/Settings/tune/TuneMachine.jsx
+msgid "wait for the shot or flush to finish"
+msgstr ""
+
 #. placeholder {0}: live.tt
 #. placeholder {1}: live.ct?.toFixed(1)
 #. placeholder {2}: Math.round(steadyFor)
 #: src/pages/Settings/tune/TuneMachine.jsx
 msgid "Waiting for a steady {0} °C ({1} °C now, {2} of {STEADY_S} s)"
+msgstr ""
+
+#: src/pages/Settings/tune/TuneMachine.jsx
+msgid "waiting for a steady temperature"
+msgstr ""
+
+#: src/pages/Settings/tune/TuneMachine.jsx
+msgid "waiting for the machine's readings"
 msgstr ""
 
 #: src/utils/warnings.js

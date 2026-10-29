@@ -224,7 +224,7 @@ export function TuneMachine({ formData, setField }) {
     live.mode !== 1 ? (
       <button
         type='button'
-        className='btn btn-sm'
+        className='btn btn-primary btn-sm'
         onClick={() => api.send({ tp: 'req:change-mode', mode: 1 })}
       >
         <Trans>Switch to Brew</Trans>

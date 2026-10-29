@@ -233,6 +233,10 @@ message AutotuneResult {
     float ki = 2;
     float kd = 3;
     float kf = 4;
+    // What the step response identified, for the lag-compensation settings; 0 = not measured (older controllers).
+    float heat_rate = 5;   // k': steady rise at full power (degC/s)
+    float dead_time_s = 6; // step to first reaction (s)
+    float heater_w = 7;    // the wattage the run was started with
 }
 
 message VolumetricMeasurement {

@@ -335,6 +335,10 @@ msgstr "App Settings"
 msgid "Appearance"
 msgstr "Appearance"
 
+#: src/pages/Settings/tabs/CalibrationTab.jsx
+msgid "Apply suggested gains"
+msgstr "Apply suggested gains"
+
 #: src/pages/ShotAnalyzer/components/library/LibraryPanel.jsx
 msgid "Are you sure you want to delete \"{itemName}\"?"
 msgstr "Are you sure you want to delete \"{itemName}\"?"
@@ -2606,6 +2610,12 @@ msgstr "Maximum Pressure (0 = Ignore)"
 msgid "Maximum Pump Power (0 - 1)"
 msgstr "Maximum Pump Power (0 - 1)"
 
+#. placeholder {0}: autotuneResult.heatRate.toFixed(3)
+#. placeholder {1}: autotuneResult.deadTime.toFixed(1)
+#: src/pages/Settings/tabs/CalibrationTab.jsx
+msgid "Measured and saved for Boiler Lag Compensation: heat-up rate {0} °C/s, dead time {1} s. Your PID gains are unchanged."
+msgstr "Measured and saved for Boiler Lag Compensation: heat-up rate {0} °C/s, dead time {1} s. Your PID gains are unchanged."
+
 #: src/pages/ShotAnalyzer/services/ReplayVideoExportService.js
 msgid "MediaRecorder is not supported in this browser."
 msgstr "MediaRecorder is not supported in this browser."
@@ -4768,6 +4778,11 @@ msgstr "Storage & Memory"
 #: src/pages/ShotAnalyzer/components/EmptyState.jsx
 msgid "Stores imported external shots and profiles locally in this browser on this device. They are not automatically available in other browsers or on other devices."
 msgstr "Stores imported external shots and profiles locally in this browser on this device. They are not automatically available in other browsers or on other devices."
+
+#. placeholder {0}: autotuneResult.pid
+#: src/pages/Settings/tabs/CalibrationTab.jsx
+msgid "Suggested gains above; in use: {0}"
+msgstr "Suggested gains above; in use: {0}"
 
 #: src/pages/Settings/PluginCard.jsx
 #: src/pages/ShotAnalyzer/components/shotDetails/ShotMainInfoCard.jsx

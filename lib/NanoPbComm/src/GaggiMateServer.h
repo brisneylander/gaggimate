@@ -40,7 +40,8 @@ class GaggiMateServer {
     gm::Payload buildSensorData(float temperature, float pressure, float puckFlow, float pumpFlow, float puckResistance,
                                 float pumpPower = 0.0f, float heaterPower = 0.0f, float waterPumped = 0.0f);
     gm::Payload buildButtonState(uint8_t index, bool pressed);
-    gm::Payload buildAutotuneResult(float kp, float ki, float kd, float kf);
+    gm::Payload buildAutotuneResult(float kp, float ki, float kd, float kf, float heatRate = 0.0f, float deadTimeS = 0.0f,
+                                    float heaterW = 0.0f);
     gm::Payload buildVolumetricMeasurement(float volume);
     gm::Payload buildScaleMeasurement(float weight, float cell1Weight = 0.0f, float cell2Weight = 0.0f, bool cell1Valid = false,
                                       bool cell2Valid = false);
@@ -51,7 +52,8 @@ class GaggiMateServer {
     void sendSensorData(float temperature, float pressure, float puckFlow, float pumpFlow, float puckResistance,
                         float pumpPower = 0.0f, float heaterPower = 0.0f);
     void sendButtonState(uint8_t index, bool pressed);
-    void sendAutotuneResult(float kp, float ki, float kd, float kf);
+    void sendAutotuneResult(float kp, float ki, float kd, float kf, float heatRate = 0.0f, float deadTimeS = 0.0f,
+                            float heaterW = 0.0f);
     void sendVolumetricMeasurement(float volume);
     void sendScaleMeasurement(float weight, float cell1Weight = 0.0f, float cell2Weight = 0.0f, bool cell1Valid = false,
                               bool cell2Valid = false);

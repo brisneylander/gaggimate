@@ -19,7 +19,9 @@ using heater_autotune_fail_callback_t = std::function<void()>;
 // Kff = combinedKff = output units per watt (disturbance feedforward), derived
 // in Heater::loopAutotune as 1000 / heaterWattage when wattage > 0; 0 when the
 // caller didn't supply a wattage.
-using pid_result_callback_t = std::function<void(float Kp, float Ki, float Kd, float Kff)>;
+// Autotune result: suggested gains, plus the identified heat-up rate (k', °C/s), dead time (s) and the run's wattage.
+using pid_result_callback_t =
+    std::function<void(float Kp, float Ki, float Kd, float Kff, float heatRate, float deadTimeS, float heaterW)>;
 
 class HeaterCoordinator;
 

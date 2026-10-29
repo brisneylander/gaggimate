@@ -150,6 +150,11 @@ class Controller {
     float getTankEstimateC() const { return tank.isEnabled() ? tank.get() : 0.0f; }
     float getFlushImpliedTankC() const { return lastFlushImpliedTank; } // last plain flush's verdict, 0 = none yet
     void onTankRefilled(); // fresh water in the tank (the UI's "Tank refilled", or the water level climbing to full)
+    // Last autotune: the gains it suggested ("kp,ki,kd,kf", empty = none yet) and what it measured; applied on request.
+    const String &getAutotuneSuggestedPid() const { return autotuneSuggestedPid; }
+    float getLastAutotuneHeatRate() const { return lastAutotuneHeatRate; }
+    float getLastAutotuneDeadTimeS() const { return lastAutotuneDeadTimeS; }
+    void applyAutotuneGains();
     void onFlushRelease(); // ends a hold-to-flush; no-op otherwise
     int getWaterLevel() const {
         float reversedLevel = static_cast<float>(settings.getEmptyTankDistance()) -
@@ -310,6 +315,8 @@ class Controller {
     static constexpr unsigned long TANK_UPDATE_MS = 10000;
     unsigned long flushToTargetHoldUntil = 0;
     StrayFlowGuard strayFlowGuard; // see StrayFlowGuard.h
+    String autotuneSuggestedPid;
+    float lastAutotuneHeatRate = 0.0f, lastAutotuneDeadTimeS = 0.0f;
     TankTemperature tank;
     unsigned long lastTankMs = 0;
     float tankSentC = -1.0f; // tank temperature last sent to the controller

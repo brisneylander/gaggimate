@@ -335,6 +335,10 @@ msgstr "アプリ設定"
 msgid "Appearance"
 msgstr "外観"
 
+#: src/pages/Settings/tabs/CalibrationTab.jsx
+msgid "Apply suggested gains"
+msgstr ""
+
 #: src/pages/ShotAnalyzer/components/library/LibraryPanel.jsx
 msgid "Are you sure you want to delete \"{itemName}\"?"
 msgstr "「{itemName}」を削除してもよろしいですか？"
@@ -2606,6 +2610,12 @@ msgstr "最大圧力（0 = 無視）"
 msgid "Maximum Pump Power (0 - 1)"
 msgstr "最大ポンプ出力（0 - 1）"
 
+#. placeholder {0}: autotuneResult.heatRate.toFixed(3)
+#. placeholder {1}: autotuneResult.deadTime.toFixed(1)
+#: src/pages/Settings/tabs/CalibrationTab.jsx
+msgid "Measured and saved for Boiler Lag Compensation: heat-up rate {0} °C/s, dead time {1} s. Your PID gains are unchanged."
+msgstr ""
+
 #: src/pages/ShotAnalyzer/services/ReplayVideoExportService.js
 msgid "MediaRecorder is not supported in this browser."
 msgstr "このブラウザーは MediaRecorder に対応していません。"
@@ -4768,6 +4778,11 @@ msgstr "ストレージとメモリ"
 #: src/pages/ShotAnalyzer/components/EmptyState.jsx
 msgid "Stores imported external shots and profiles locally in this browser on this device. They are not automatically available in other browsers or on other devices."
 msgstr "インポートした外部のショットとプロファイルを、このデバイスのこのブラウザーにローカル保存します。他のブラウザーや他のデバイスでは自動的には利用できません。"
+
+#. placeholder {0}: autotuneResult.pid
+#: src/pages/Settings/tabs/CalibrationTab.jsx
+msgid "Suggested gains above; in use: {0}"
+msgstr ""
 
 #: src/pages/Settings/PluginCard.jsx
 #: src/pages/ShotAnalyzer/components/shotDetails/ShotMainInfoCard.jsx

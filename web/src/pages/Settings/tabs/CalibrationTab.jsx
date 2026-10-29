@@ -41,7 +41,12 @@ export function CalibrationTab({ formData, onChange, setField }) {
     const resultListener = apiService.on('evt:autotune-result', msg => {
       setAutotuneActive(false);
       setAutotuneFailed(false);
-      setAutotuneResult(msg.pid);
+      setAutotuneResult({
+        pid: msg.pid,
+        suggested: msg.suggested,
+        heatRate: Number(msg.heatRate) || 0,
+        deadTime: Number(msg.deadTime) || 0,
+      });
     });
     const failedListener = apiService.on('evt:autotune-failed', () => {
       setAutotuneActive(false);
@@ -91,15 +96,41 @@ export function CalibrationTab({ formData, onChange, setField }) {
                   <Trans>Autotune Complete!</Trans>
                 </h3>
                 <div className='text-sm'>
-                  <Trans>Your new PID values have been saved successfully.</Trans>
+                  {autotuneResult.heatRate > 0 ? (
+                    <Trans>
+                      Measured and saved for Boiler Lag Compensation: heat-up rate{' '}
+                      {autotuneResult.heatRate.toFixed(3)} °C/s, dead time{' '}
+                      {autotuneResult.deadTime.toFixed(1)} s. Your PID gains are unchanged.
+                    </Trans>
+                  ) : (
+                    <Trans>Your new PID values have been saved successfully.</Trans>
+                  )}
                 </div>
               </div>
             </div>
             <div className='mockup-code bg-base-200 mx-auto max-w-md'>
               <pre data-prefix='$'>
-                <code>{autotuneResult}</code>
+                <code>
+                  {autotuneResult.heatRate > 0 ? autotuneResult.suggested : autotuneResult.pid}
+                </code>
               </pre>
             </div>
+            {autotuneResult.heatRate > 0 &&
+              autotuneResult.suggested &&
+              autotuneResult.suggested !== autotuneResult.pid && (
+                <div className='space-y-2'>
+                  <p className='text-sm opacity-70'>
+                    <Trans>Suggested gains above; in use: {autotuneResult.pid}</Trans>
+                  </p>
+                  <button
+                    type='button'
+                    className='btn btn-primary btn-sm'
+                    onClick={() => apiService.send({ tp: 'req:autotune:apply' })}
+                  >
+                    <Trans>Apply suggested gains</Trans>
+                  </button>
+                </div>
+              )}
             <button
               type='button'
               className='btn btn-outline btn-sm mt-2'

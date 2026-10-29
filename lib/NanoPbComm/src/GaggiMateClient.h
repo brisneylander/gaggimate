@@ -21,7 +21,8 @@ class GaggiMateClient {
         std::function<void(float temperature, float temperature2, float pressure, float puckFlow, float pumpFlow,
                            float puckResistance, float pumpPower, float heaterPower, float waterPumped)>;
     using ButtonCallback = std::function<void(uint8_t index, bool pressed)>;
-    using AutotuneResultCallback = std::function<void(float kp, float ki, float kd, float kf)>;
+    using AutotuneResultCallback =
+        std::function<void(float kp, float ki, float kd, float kf, float heatRate, float deadTimeS, float heaterW)>;
     using VolumetricCallback = std::function<void(float volume)>;
     using ScaleCallback =
         std::function<void(float weight, float cell1Weight, float cell2Weight, bool cell1Valid, bool cell2Valid)>;

@@ -285,10 +285,10 @@ void Heater::loopAutotune() {
     // cpp:S1117).
     const float kffFromWattage = autotuneHeaterWattage > 0 ? TUNER_OUTPUT_SPAN / static_cast<float>(autotuneHeaterWattage) : 0.0f;
 
-    pid_callback(autotuner->getKp() * 1000.0f, autotuner->getKi() * 1000.0f, autotuner->getKd() * 1000.0f, kffFromWattage);
-
-    setTunings(autotuner->getKp() * 1000.0f, autotuner->getKi() * 1000.0f, autotuner->getKd() * 1000.0f);
-    setFeedforwardScale(kffFromWattage);
+    // The display saves the identified model and offers the gains; it sends them back only if the user applies them, so
+    // hand-tuned gains survive a run that was only meant to measure the boiler.
+    pid_callback(autotuner->getKp() * 1000.0f, autotuner->getKi() * 1000.0f, autotuner->getKd() * 1000.0f, kffFromWattage,
+                 autotuner->getSystemGain(), autotuner->getSystemDelay(), static_cast<float>(autotuneHeaterWattage));
 
     ESP_LOGI(LOG_TAG, "Autotuning finished: Kp=%.4f, Ki=%.4f, Kd=%.4f, Kff=%.4f", autotuner->getKp() * 1000.0f,
              autotuner->getKi() * 1000.0f, autotuner->getKd() * 1000.0f, kffFromWattage);

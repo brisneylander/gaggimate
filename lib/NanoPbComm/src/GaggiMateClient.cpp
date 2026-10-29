@@ -231,7 +231,8 @@ void GaggiMateClient::registerHandlers() {
     _endpoint.on(gaggimate_Payload_autotune_result_tag, [this](const gm::Payload &p) {
         if (_autotuneResultCb)
             _autotuneResultCb(p.content.autotune_result.kp, p.content.autotune_result.ki, p.content.autotune_result.kd,
-                              p.content.autotune_result.kf);
+                              p.content.autotune_result.kf, p.content.autotune_result.heat_rate,
+                              p.content.autotune_result.dead_time_s, p.content.autotune_result.heater_w);
     });
     _endpoint.on(gaggimate_Payload_volumetric_tag, [this](const gm::Payload &p) {
         if (_volumetricCb)

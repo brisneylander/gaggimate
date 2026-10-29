@@ -234,6 +234,9 @@ void WebSocketHandler::handleWebSocketData(AsyncWebSocket *server, AsyncWebSocke
                 } else if (msgType == "req:process:deactivate") {
                     controller->deactivate();
                     controller->clear();
+                } else if (msgType == "req:autotune:apply") {
+                    controller->applyAutotuneGains();
+                    sendAutotuneResult();
                 } else if (msgType == "req:tank:refilled") {
                     controller->onTankRefilled();
                 } else if (msgType == "req:process:clear") {
@@ -548,7 +551,10 @@ void WebSocketHandler::broadcastJson(JsonDocument &doc) {
 void WebSocketHandler::sendAutotuneResult() {
     JsonDocument doc(&psramAllocator);
     doc["tp"] = "evt:autotune-result";
-    doc["pid"] = controller->getSettings().getPid();
+    doc["pid"] = controller->getSettings().getPid();          // in use (unchanged unless the controller is older)
+    doc["suggested"] = controller->getAutotuneSuggestedPid(); // autotune's gains, applied with req:autotune:apply
+    doc["heatRate"] = controller->getLastAutotuneHeatRate();  // saved as the full-power heat-up rate, 0 = not measured
+    doc["deadTime"] = controller->getLastAutotuneDeadTimeS(); // saved as the sensor dead time
     broadcastJson(doc);
 }
 

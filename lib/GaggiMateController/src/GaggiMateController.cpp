@@ -57,12 +57,16 @@ void GaggiMateController::setup() {
     }
     heater = new Heater(
         this->brewTemperature, _config.heaterPin, [this]() { thermalRunawayShutdown(); },
-        [this](float Kp, float Ki, float Kd, float Kf) { _comms.sendAutotuneResult(Kp, Ki, Kd, Kf); },
+        [this](float Kp, float Ki, float Kd, float Kf, float rate, float dead, float watts) {
+            _comms.sendAutotuneResult(Kp, Ki, Kd, Kf, rate, dead, watts);
+        },
         [this]() { _comms.sendError(ERROR_CODE_AUTOTUNE_TIMEOUT); });
     if (_config.capabilites.dualBoiler) {
         heater2 = new Heater(
             this->steamTemperature, _config.altPin, [this]() { thermalRunawayShutdown(); },
-            [this](float Kp, float Ki, float Kd, float Kf) { _comms.sendAutotuneResult(Kp, Ki, Kd, Kf); },
+            [this](float Kp, float Ki, float Kd, float Kf, float rate, float dead, float watts) {
+                _comms.sendAutotuneResult(Kp, Ki, Kd, Kf, rate, dead, watts);
+            },
             [this]() { _comms.sendError(ERROR_CODE_AUTOTUNE_TIMEOUT); });
         heaterCoordinator = new HeaterCoordinator(heater, heater2);
         refill = new SimpleRelay(_config.refillPin, _config.valveOn);

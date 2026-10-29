@@ -348,10 +348,11 @@ void Controller::setupBluetooth() {
             ESP_LOGE(LOG_TAG, "Received error %d", error);
         }
     });
-    comms.onAutotuneResult([this](float Kp, float Ki, float Kd, float Kf) {
-        ESP_LOGI(LOG_TAG, "Received autotune values: Kp=%.3f, Ki=%.3f, Kd=%.3f, Kf=%.3f (combined)", Kp, Ki, Kd, Kf);
-        // Guard: older controller firmware could emit zero/NaN gains (#672
-        // class). Reject — keep existing PID, surface as "Autotune Failed".
+    comms.onAutotuneResult([this](float Kp, float Ki, float Kd, float Kf, float heatRate, float deadTimeS, float heaterW) {
+        ESP_LOGI(LOG_TAG, "Autotune: Kp=%.3f Ki=%.3f Kd=%.3f Kf=%.3f, k'=%.3f°C/s, dead time %.1fs, %.0fW", Kp, Ki, Kd, Kf,
+                 heatRate, deadTimeS, heaterW);
+        // Guard: older controller firmware could emit zero/NaN gains (#672 class). Reject: keep the existing PID and the
+        // model settings, surface as "Autotune Failed".
         if (!std::isfinite(Kp) || !std::isfinite(Ki) || !std::isfinite(Kd) || !std::isfinite(Kf) || Kp <= 0.0f ||
             (Kp + Ki + Kd) <= 0.0f) {
             ESP_LOGW(LOG_TAG, "Rejecting autotune result: invalid gains, preserving existing PID");
@@ -359,10 +360,23 @@ void Controller::setupBluetooth() {
             pluginManager->trigger("controller:autotune:failed");
             return;
         }
+        // The boiler model it measured goes straight into the lag-compensation settings (each setter clamps to its
+        // range; 0 = not measured by this controller, leave as is). The gains are only offered: applyAutotuneGains().
+        if (std::isfinite(heatRate) && heatRate > 0.0f)
+            settings.setModelHeatRate(heatRate);
+        if (std::isfinite(deadTimeS) && deadTimeS > 0.0f)
+            settings.setSensorDeadTimeS(deadTimeS);
+        if (std::isfinite(heaterW) && heaterW > 0.0f)
+            settings.setModelHeaterW(heaterW);
         char pid[64];
-        // Store in simplified format with combined Kf
         snprintf(pid, sizeof(pid), "%.3f,%.3f,%.3f,%.3f", Kp, Ki, Kd, Kf);
-        settings.setPid(String(pid));
+        autotuneSuggestedPid = String(pid);
+        lastAutotuneHeatRate = heatRate;
+        lastAutotuneDeadTimeS = deadTimeS;
+        // Older controllers (no model values) applied the gains themselves; keep the display's PID in step with them.
+        if (!(heatRate > 0.0f))
+            settings.setPid(autotuneSuggestedPid);
+        setHeaterSettings();
         pluginManager->trigger("controller:autotune:result");
         autotuning = false;
     });
@@ -757,6 +771,14 @@ void Controller::loopTank() {
     // Resend only on a whole-degree change: each resend reconfigures the heater.
     if (comms.isConnected() && std::fabs(getTankTempC() - tankSentC) >= 1.0f)
         setHeaterSettings();
+}
+
+void Controller::applyAutotuneGains() {
+    if (autotuneSuggestedPid.length() == 0)
+        return;
+    settings.setPid(autotuneSuggestedPid);
+    setHeaterSettings();
+    ESP_LOGI(LOG_TAG, "Applied autotune gains %s", autotuneSuggestedPid.c_str());
 }
 
 void Controller::onTankRefilled() {

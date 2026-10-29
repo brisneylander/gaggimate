@@ -671,6 +671,10 @@ msgstr "Impostazioni pompa BLDC"
 msgid "Bluetooth Devices"
 msgstr "Dispositivi Bluetooth"
 
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "Boiler (measured)"
+msgstr ""
+
 #: src/app/notifications.js
 msgid "Boiler at {temperature} °C"
 msgstr "Caldaia a {temperature} °C"
@@ -2039,6 +2043,10 @@ msgstr "Flush consigliato"
 
 #: src/pages/Settings/tabs/GeneralTab.jsx
 msgid "Flush to brew target when hot"
+msgstr ""
+
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "Flush to target"
 msgstr ""
 
 #: src/pages/Settings/tune/TuneMachine.jsx
@@ -3520,6 +3528,10 @@ msgstr "Fasi"
 msgid "Physical Buttons"
 msgstr "Pulsanti fisici"
 
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "PID"
+msgstr ""
+
 #: src/pages/Settings/tabs/CalibrationTab.jsx
 msgid "PID Autotune"
 msgstr "Autotune PID"
@@ -4292,6 +4304,10 @@ msgstr "D"
 msgctxt "column type, short for start/end"
 msgid "S/E"
 msgstr "I/F"
+
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "Safety"
+msgstr ""
 
 #: src/pages/ShotAnalyzer/services/analyzer/exitReasons.js
 msgid "Safety timeout"
@@ -5287,7 +5303,15 @@ msgid "Take the portafilter out and empty the drip tray."
 msgstr ""
 
 #: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "Tank"
+msgstr ""
+
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
 msgid "Tank fill temperature"
+msgstr ""
+
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "Tank model"
 msgstr ""
 
 #: src/pages/Settings/tabs/LagCompensationSection.jsx

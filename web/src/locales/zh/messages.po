@@ -667,6 +667,10 @@ msgstr "BLDC 泵设置"
 msgid "Bluetooth Devices"
 msgstr "蓝牙设备"
 
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "Boiler (measured)"
+msgstr ""
+
 #: src/app/notifications.js
 msgid "Boiler at {temperature} °C"
 msgstr "锅炉温度 {temperature} °C"
@@ -2035,6 +2039,10 @@ msgstr "建议冲洗"
 
 #: src/pages/Settings/tabs/GeneralTab.jsx
 msgid "Flush to brew target when hot"
+msgstr ""
+
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "Flush to target"
 msgstr ""
 
 #: src/pages/Settings/tune/TuneMachine.jsx
@@ -3516,6 +3524,10 @@ msgstr "阶段"
 msgid "Physical Buttons"
 msgstr "实体按钮"
 
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "PID"
+msgstr ""
+
 #: src/pages/Settings/tabs/CalibrationTab.jsx
 msgid "PID Autotune"
 msgstr "PID 自动整定"
@@ -4288,6 +4300,10 @@ msgstr "日"
 msgctxt "column type, short for start/end"
 msgid "S/E"
 msgstr "始/终"
+
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "Safety"
+msgstr ""
 
 #: src/pages/ShotAnalyzer/services/analyzer/exitReasons.js
 msgid "Safety timeout"
@@ -5283,7 +5299,15 @@ msgid "Take the portafilter out and empty the drip tray."
 msgstr ""
 
 #: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "Tank"
+msgstr ""
+
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
 msgid "Tank fill temperature"
+msgstr ""
+
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "Tank model"
 msgstr ""
 
 #: src/pages/Settings/tabs/LagCompensationSection.jsx

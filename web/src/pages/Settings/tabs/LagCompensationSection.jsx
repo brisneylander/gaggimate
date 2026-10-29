@@ -141,6 +141,18 @@ export function LagCompensationSection({ formData, onChange, setField }) {
           f.key in inUseBuiltIn.values && !sameNumber(formData[f.key], inUseBuiltIn.values[f.key]),
       ).length
     : 0;
+  // Advanced, in groups (only the fields shown above, in this order).
+  const ADVANCED_GROUPS = [
+    { title: t`PID`, keys: ['derivativeFilterS', 'integralZone'] },
+    { title: t`Flush to target`, keys: ['valveDumpMl', 'flushTargetFactor', 'flushTargetHoldS'] },
+    { title: t`Tank model`, keys: ['tankRiseC', 'tankWarmMin', 'inletTempC'] },
+    { title: t`Safety`, keys: ['noRiseBrewS', 'noRiseSteamS'] },
+  ];
+  const groupHeading = title => (
+    <h4 className='text-base-content/80 mb-2 text-xs font-semibold tracking-wide uppercase'>
+      {title}
+    </h4>
+  );
   const learnedLoss = Math.round(Number(formData.modelLossW) || 0);
   const tankEstimate = Math.round(Number(formData.tankEstimateC) || 0);
   const apiService = useContext(ApiServiceContext);
@@ -155,7 +167,14 @@ export function LagCompensationSection({ formData, onChange, setField }) {
           before the overshoot shows. Leave a field at 0 to disable it.
         </Trans>
       </p>
-      <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>{mainFields.map(renderField)}</div>
+      {groupHeading(t`Boiler (measured)`)}
+      <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
+        {mainFields.filter(f => f.key !== 'tankFillC').map(renderField)}
+      </div>
+      <div className='mt-4'>{groupHeading(t`Tank`)}</div>
+      <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
+        {mainFields.filter(f => f.key === 'tankFillC').map(renderField)}
+      </div>
       {tankEstimate > 0 && (
         <div className='mt-4 flex items-center gap-3 text-sm'>
           <span className='opacity-70'>
@@ -177,9 +196,16 @@ export function LagCompensationSection({ formData, onChange, setField }) {
             </span>
           )}
         </summary>
-        <div className='mt-3 grid grid-cols-1 gap-4 md:grid-cols-2'>
-          {advancedFields.map(renderField)}
-        </div>
+        {ADVANCED_GROUPS.map(group => {
+          const fields = advancedFields.filter(f => group.keys.includes(f.key));
+          if (fields.length === 0) return null;
+          return (
+            <div key={group.title} className='mt-4'>
+              {groupHeading(group.title)}
+              <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>{fields.map(renderField)}</div>
+            </div>
+          );
+        })}
       </details>
       {learnedLoss > 0 && (
         <p className='mt-4 text-sm opacity-70'>

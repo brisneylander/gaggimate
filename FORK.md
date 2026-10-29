@@ -10,6 +10,7 @@ firmware over Wi-Fi while staying in sync with upstream.
 |---|---|
 | `src/display/plugins/WebUIPlugin.h` | `RELEASE_URL` points at this fork's releases, so OTA updates come from here. |
 | `.github/workflows/fork-release.yml` | Fork-only copy of `build.yml`: builds the firmware on `v*-simon*` tags and publishes a GitHub release here. It leaves out the steps that upload to the official update server. |
+| Boiler control | Lag compensation, flush to target, tank estimate, heater safety layer, machine profiles and the Tune this machine routine: goal, bench observations and how the code addresses them in [docs/boiler-control.md](docs/boiler-control.md); bench data and open items in [ROADMAP.md](ROADMAP.md). |
 | `FORK.md` | This file. |
 
 Upstream's own `Build`, `Build Nightly` and `Deploy PR Preview` workflows are

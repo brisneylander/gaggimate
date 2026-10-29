@@ -55,6 +55,17 @@ switching reheat on → off should be re-checked with a single flush.)
 Run 4 was within 1 °C 56 s after the flush, bottomed out 2 min later, and held 93.0 °C from ~4 min. The remaining
 −0.8 °C dip is the heater's dead time after the 30 s hold, not the volume. The 0.85 factor held over three runs (lowest 91.85–92.24 °C, within 0.5 °C after 146–157 s).
 
+**Simulator plant fitted to the Silvia** (2026-10-29, `scripts/fit_plant.py`): the test plant in
+`test/test_heat_balance_predictor` now has three nodes fitted to the bench logs. Heater heat reaches the water with a
+~21 s time constant; the group head (819 J/°C, ~2.4 min to the water) carries the standing loss and keeps pulling the
+water down after a flush; the sensor sees the water through 4.6 s + 15 s. On flushes left out of the fit it tracks
+the sensor to 0.45 °C rms (old plant 1.09 °C) and puts the dip's low within ~6 s (old: 7-18 s early). Two findings:
+- **Flush water cools ~20 % more per ml than (boiler - tank setting) predicts**: sessions fit as if the tank were
+  24-27 °C with the setting at 35. The same shortfall explains flush to target's 0.85 factor, and the full-power
+  reheat being sized short on the bench. Next: find out why (flow under-read, colder intake, cold water mixing at the
+  sensor), then fix the per-ml figure once in the shared code instead of the 0.85 factor.
+- The fitted plant still flatters full-power reheat a little in closed loop; trust bench runs over it for timing.
+
 With the 12 s water delay the heater puts back about what the flush took (net −0.8 to +0.3 kJ), so an explicit heat
 budget for flushes looks unnecessary; recovery to 93 °C is a little slower (69–81 s vs 56–62 s). Next: try 10 and
 15 s, then shots, where the planned-heat idea (pre-heat before a shot) still applies.

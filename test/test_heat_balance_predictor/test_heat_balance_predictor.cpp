@@ -183,13 +183,17 @@ void test_seed_waits_for_enable_and_is_bounded() {
 // Closed-loop flush replay
 // ---------------------------------------------------------------------------
 //
-// Plant: two thermal nodes — the element and boiler wall (700 J/°C) feeding the water (1133 J/°C) through
-// 35 W/°C — so 1100 W heats the whole at 0.6 °C/s and the wall keeps releasing stored heat after the heater
-// stops, which is what makes the real overshoot. The thermocouple sees the water through a 6 s transport delay
-// and a 4 s first-order lag (~20 s apparent dead time with the wall), then MAX31855 quantisation (0.25 °C) and
-// the driver's 0.2 EMA at 4 Hz.
+// Plant, fitted to a Rancilio Silvia (scripts/fit_plant.py over the 2026-10-29 bench logs, replaying the logged heater
+// output and pump flow open loop): three thermal nodes. The element (200 J/°C) feeds the water (1296 J/°C) through
+// 9.6 W/°C, so heater heat reaches the water with a ~21 s time constant and keeps arriving after the heater stops,
+// which makes the real overshoot. The group head (819 J/°C) trades heat with the water through 5.7 W/°C (~2.4 min) and
+// carries the standing loss (~45 W at 98 °C), so it sits ~8 °C below the water: after a flush or a fast reheat it keeps
+// pulling the water down, or soaking up the extra, for minutes. The thermocouple sees the water through a 4.6 s
+// transport delay and a 15 s first-order lag (flush water shows after ~12 s, heater heat after ~40 s), then MAX31855
+// quantisation (0.25 °C) and the driver's 0.2 EMA at 4 Hz. Against bench flushes it doesn't see in fitting, it tracks
+// the sensor to 0.45 °C rms (the earlier two-node plant: 1.09 °C) and puts the dip's low within ~6 s.
 // Controller: SimplePID at 1 Hz on 0..1000 ms of a 1 s window, mirroring Heater::loopPid/updateLagCompensation.
-// Scenario: settle at 98 °C (93 + 5 offset), then a 5 s, 10 ml/s flush of 20 °C water.
+// Scenario: settle at 98 °C (93 + 5 offset), then a 5 s, 8.9 ml/s flush of 35 °C tank water (as on the bench).
 
 struct Tuning {
     float kp = 60.0f, ki = 0.658f, kd = 2800.0f;
@@ -200,6 +204,9 @@ struct Tuning {
     float waterDeadS = 0.0f;      // predictor's water delay, 0 = same as modelDeadS
     bool reheat = false;          // as Heater: full power while the predictor says energy is owed
     float predictorStartS = 0.0f; // switch the predictor on this long into the run, once the PID has settled
+    // Tank temperature the flush water really cools like (plant) and the one the predictor is told. On the bench each ml
+    // took ~20 % more heat than (boiler - tank setting) predicts: fitted sessions cool like 24-27 °C water at 35 °C.
+    float plantInletC = 35.0f, predictorInletC = 35.0f;
 };
 
 struct Result {
@@ -213,13 +220,17 @@ struct Result {
 };
 
 static Result simulate(const Tuning &tu) {
-    const float dt = 0.25f, setpoint = 98.0f, room = 22.0f, lossPerK = 0.85f; // ~65 W at 98 °C
-    const float plantW = 1100.0f, wallC = 700.0f, waterC = 1133.0f, wallToWater = 35.0f;
-    const float delayS = 6.0f, lagS = 4.0f;
+    const float dt = 0.25f, setpoint = 98.0f, room = 22.0f, lossPerK = 0.59f; // ~45 W at 98 °C
+    const float plantW = 1100.0f, wallC = 200.0f, waterC = 1296.0f, wallToWater = 9.6f;
+    const float groupC = 819.0f, waterToGroup = 5.7f;
+    const float inletC = tu.plantInletC, flushFlow = 8.9f;
+    const float delayS = 4.6f, lagS = 15.0f;
     const int delaySteps = static_cast<int>(delayS / dt);
 
+    const float holdW = lossPerK * (setpoint - room);
     float boiler = setpoint;
-    float wall = setpoint + 65.0f / wallToWater; // carrying the holding power
+    float wall = setpoint + holdW / wallToWater;   // carrying the holding power
+    float group = setpoint - holdW / waterToGroup; // the standing loss leaves through the group
     std::deque<float> pipe(delaySteps, boiler);
     float lagged = boiler, ema = boiler;
 
@@ -238,7 +249,7 @@ static Result simulate(const Tuning &tu) {
     HeatBalancePredictor predictor;
     bool predictorStarted = false;
     const auto startPredictor = [&] {
-        predictor.configure(tu.modelW, tu.modelRate, tu.modelDeadS, 20.0f, tu.waterDeadS);
+        predictor.configure(tu.modelW, tu.modelRate, tu.modelDeadS, tu.predictorInletC, tu.waterDeadS);
         if (tu.lossSeedW >= 0.0f)
             predictor.seedLoss(tu.lossSeedW);
         predictorStarted = true;
@@ -260,7 +271,7 @@ static Result simulate(const Tuning &tu) {
 
     for (int step = 0; step * dt < end; ++step) {
         const float t = step * dt;
-        const float flow = (t >= flushStart && t < flushEnd) ? 10.0f : 0.0f;
+        const float flow = (t >= flushStart && t < flushEnd) ? flushFlow : 0.0f;
 
         // Controller, once per second (the PWM window); `output` was applied over the last second.
         if (step % 4 == 0) {
@@ -312,9 +323,11 @@ static Result simulate(const Tuning &tu) {
         // Plant
         const float heat = plantW * output / 1000.0f;
         const float toWater = wallToWater * (wall - boiler);
-        const float water = flow * 4.18f * (boiler - 20.0f);
+        const float toGroup = waterToGroup * (boiler - group);
+        const float water = flow * 4.18f * (boiler - inletC);
         wall += (heat - toWater) * dt / wallC;
-        boiler += (toWater - water - lossPerK * (boiler - room)) * dt / waterC;
+        group += (toGroup - lossPerK * (boiler - room)) * dt / groupC;
+        boiler += (toWater - water - toGroup) * dt / waterC;
         pipe.push_back(boiler);
         const float delayed = pipe.front();
         pipe.pop_front();
@@ -333,8 +346,11 @@ static void report(const char *name, const Result &r) {
            name, r.dipMin, r.peak, r.peak - 98.0f, r.backAt, r.settleErr, r.idleP2P, r.idleSwing);
 }
 
+// The Silvia's settings (simon006 on): Kd 1500, D filter, integral zone, predictor with a 12 s water delay.
 static Tuning compensated() {
     Tuning tu;
+    tu.kd = 1500.0f;
+    tu.waterDeadS = 12.0f;
     tu.derivFilterS = 2.0f;
     tu.integralZone = 1.5f;
     tu.modelW = 1100.0f;
@@ -359,8 +375,9 @@ void test_flush_overshoot_is_reduced() {
     TEST_ASSERT_TRUE(comp.idleSwing < 0.25f * legacy.idleSwing); // far less heater chatter at idle
 }
 
-// Each part on its own: the D filter cuts chatter without hurting the overshoot, the integral zone and the
-// predictor each cut the overshoot.
+// Each part on its own: the D filter cuts chatter, the predictor cuts the overshoot. On the fitted plant a 2 s filter
+// alone delays the D term's braking enough to cost ~0.75 °C more overshoot (8 s: ~2.75 °C), which is why it ships with
+// the predictor rather than on its own.
 void test_individual_features() {
     const Result legacy = simulate(Tuning{});
     Tuning filt;
@@ -379,9 +396,11 @@ void test_individual_features() {
     slow.derivFilterS = 8.0f;
     report("D filter 8 s only", simulate(slow));
 
-    TEST_ASSERT_TRUE(rf.peak <= legacy.peak + 0.25f);
-    TEST_ASSERT_TRUE(rf.idleSwing < 0.25f * legacy.idleSwing);
-    TEST_ASSERT_TRUE(rz.peak - 98.0f < 0.5f * (legacy.peak - 98.0f));
+    TEST_ASSERT_TRUE(rf.peak <= legacy.peak + 1.0f);
+    TEST_ASSERT_TRUE(rf.idleSwing < 0.5f * legacy.idleSwing); // ~3x less chatter (2.5 vs 7.4)
+    // On the fitted plant most of the overshoot is element heat still arriving, which the integral can't see coming:
+    // the zone alone trims it a little (3.0 -> 2.75 °C) but mustn't make it worse.
+    TEST_ASSERT_TRUE(rz.peak <= legacy.peak);
     // 75 %: the sensor's 0.25 degC steps make the simulated peak move in quarter-degree jumps.
     TEST_ASSERT_TRUE(rp.peak - 98.0f < 0.75f * (legacy.peak - 98.0f));
     TEST_ASSERT_TRUE(rp.settleErr < 0.3f);
@@ -411,10 +430,11 @@ void test_robust_to_model_mismatch() {
 // Switching the predictor on while the PID holds setpoint, as on the bench: from zero loss it reads the ~65 W holding
 // power as heat in flight and sags the boiler by about dead time x holding power / capacity (0.49 degC measured on a
 // Silvia) until the loss is learned. The default guess shrinks that and a saved value removes it.
-// The simulated sensor sees flush water after ~6-10 s (transport + lag) but heater heat only after ~20 s (via the wall).
-// Full-power reheat puts back the flush's heat as fast as the element allows: back on setpoint ~3x sooner. The burst
-// leaves the element and wall hot, so it costs a little overshoot (0.75 vs 0.25 degC here, the same with the heat-up
-// rate 25 % off either way); it is opt-in for that reason.
+// Full-power reheat puts back the flush's heat as fast as the element allows. The earlier two-node plant promised it
+// back on setpoint ~3x sooner; on the Silvia it was no faster (124-129 s vs 62-100 s), with the heat needing ~2 min to
+// reach the thermocouple. The fitted plant gets back sooner only when the predictor's tank temperature is exact (it
+// was ~10 °C warm on the bench, see test_bench_configurations), and its "back" time is sensitive to the 0.25 °C sensor
+// steps, so this only checks that reheat stays bounded and settles; it is opt-in.
 void test_full_power_reheat() {
     Tuning base = compensated();
     base.waterDeadS = 8.0f;
@@ -424,8 +444,7 @@ void test_full_power_reheat() {
     report("water 8 s", rb);
     report("water 8 s + full-power reheat", rf);
     TEST_ASSERT_TRUE(rf.backAt > 0.0f && rb.backAt > 0.0f);
-    TEST_ASSERT_TRUE(rf.backAt < 0.5f * rb.backAt);              // at least twice as fast back to setpoint (51 vs 151 s)
-    TEST_ASSERT_TRUE(rf.peak - 98.0f <= rb.peak - 98.0f + 0.5f); // costing at most two sensor steps of overshoot
+    TEST_ASSERT_TRUE(rf.peak - 98.0f <= rb.peak - 98.0f + 1.0f); // at most four sensor steps of extra overshoot
     TEST_ASSERT_TRUE(rf.settleErr < 0.3f);
     TEST_ASSERT_TRUE(rf.idleSwing <= rb.idleSwing + 0.5f); // reheat only runs during water events, not at idle
 }
@@ -479,6 +498,27 @@ void test_seeded_start_avoids_sag() {
     TEST_ASSERT_TRUE(rs.startSag > -0.3f); // within one 0.25 degC sensor step, i.e. idle noise
 }
 
+// The bench configurations (Kp 60 / Ki 0.658 / Kd 1500, 5 s flush from 93 °C): the plant should rank them as the
+// Silvia did. Bench overshoot: off +2.91, shared 20 s delay +1.68, 12 s water delay +0.63 °C; full-power reheat no
+// faster back to 93 °C (124-129 s vs 62-100 s).
+void test_bench_configurations() {
+    Tuning off;
+    off.kd = 1500.0f;
+    off.plantInletC = 25.0f;
+    Tuning shared = compensated();
+    shared.waterDeadS = 0.0f;
+    shared.plantInletC = 25.0f;
+    Tuning water = compensated();
+    water.plantInletC = 25.0f;
+    Tuning reheat = water;
+    reheat.reheat = true;
+    const Result ro = simulate(off), rs = simulate(shared), rw = simulate(water), rr = simulate(reheat);
+    report("bench: off", ro);
+    report("bench: shared 20 s delay", rs);
+    report("bench: 12 s water delay", rw);
+    report("bench: 12 s water + reheat", rr);
+}
+
 int main(int argc, char **argv) {
     UNITY_BEGIN();
     RUN_TEST(test_disabled_when_any_parameter_missing);
@@ -501,5 +541,6 @@ int main(int argc, char **argv) {
     RUN_TEST(test_separate_water_delay);
     RUN_TEST(test_full_power_reheat);
     RUN_TEST(test_full_power_reheat_with_model_mismatch);
+    RUN_TEST(test_bench_configurations);
     return UNITY_END();
 }

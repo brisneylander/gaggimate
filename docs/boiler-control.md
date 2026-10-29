@@ -53,6 +53,24 @@ calculated amount lands near the brew temperature and settles in under 3 minutes
 
 ![Two flushes from 108 °C: an 88–90 ml flush undershoots to 90.8 °C and settles after 290 s; a calculated 74 ml flush bottoms at 92.2 °C and settles after 174 s](assets/flush-to-target.svg)
 
+### Against stock settings: holding and after steam
+
+On 2026-10-30 the same machine ran four setups through the same routine: a 5 minute idle hold at 93 °C, then steam
+to 100 °C, back to Brew, and what an owner does at the peak (stock settings: press flush twice; the fork: press once,
+which flushes to target). Stock setups ran with every compensation setting at 0.
+
+| Setup (2 runs each)                                                                                 | Holding at 93 °C: 90 % band (peak to peak) | Peak after steam   | Lowest after flush  | Overshoot after  | Settled ±0.3 °C after the flush |
+| --------------------------------------------------------------------------------------------------- | ------------------------------------------ | ------------------ | ------------------- | ---------------- | ------------------------------- |
+| **Fork profile, one press (flush to target)**                                                       | **0.33–0.35 °C (0.43–0.45)**               | **105.7–106.7 °C** | 92.25–92.5 °C       | **0 to +0.2 °C** | 203–272 s                       |
+| Autotuned PID 60 / 0.658 / 1500, compensation off, two flushes                                      | 0.41–0.72 °C (0.47–0.75)                   | 110.5–111.5 °C     | 92.75–93.06 °C      | 0 to +0.25 °C    | 265–348 s                       |
+| Upstream's Silvia PID 112.315 / 0.658 / 1436.887, compensation off, two flushes                     | 0.41–0.67 °C (0.71–0.74)                   | 111.5–112.2 °C     | 92.25 °C            | +0.75 to +0.8 °C | 236–375 s                       |
+| GaggiMate's default PID 58.397 / 1.027 / 249.055 (the Gaggia values), compensation off, two flushes | 1.5 °C (1.54–1.69)                         | 112.0–112.5 °C     | 91.9–92.2 °C        | +1.6 to +1.75 °C | not within 7½ min               |
+| Upstream's Silvia PID, one press of the 5 s flush                                                   | 0.74 °C                                    | 112.8 °C           | 96.9 °C after 4 min |                  | not settled                     |
+
+Holding steadiness is what makes shots repeatable: a shot starts at whatever the boiler reads when brew is pressed.
+The sensor is on the boiler wall and the water swings less, so these are a fair comparison between setups rather than
+the spread of the shots themselves.
+
 ### The tank warms up
 
 The tank sits beside the boiler: about 25 °C fresh, about 40 °C after a few hours on (and 15–45 °C across a year).

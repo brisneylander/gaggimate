@@ -37,6 +37,23 @@ on 2026-10-28 left open. See [FORK.md](FORK.md) for building and releasing.
 
 ## Bench results so far
 
+**Against stock settings, after steam** (2026-10-30, issue #1, `out/diag/steam-*.csv`, script `scripts/bench/steam_benchmark.mjs`).
+Each run: settle at 93 °C on the fork settings, switch to the run's settings, 5 min idle hold test, Steam to 100 °C, back
+to Brew, act at the peak, log 7 min. Stock setups run the fork's firmware with every compensation setting at 0 (D on
+measurement stays, so a close stand-in for upstream). Two flushes = flush, then again 15 s after it ends. Tank ~32 °C.
+
+| Setup (2 runs each)                                                                                 | Holding at 93 °C: 90 % band (peak to peak) | Peak after steam   | Lowest after flush  | Overshoot after  | Settled ±0.3 °C after the flush |
+| --------------------------------------------------------------------------------------------------- | ------------------------------------------ | ------------------ | ------------------- | ---------------- | ------------------------------- |
+| **Fork profile, one press (flush to target)**                                                       | **0.33–0.35 °C (0.43–0.45)**               | **105.7–106.7 °C** | 92.25–92.5 °C       | **0 to +0.2 °C** | 203–272 s                       |
+| Autotuned PID 60 / 0.658 / 1500, compensation off, two flushes                                      | 0.41–0.72 °C (0.47–0.75)                   | 110.5–111.5 °C     | 92.75–93.06 °C      | 0 to +0.25 °C    | 265–348 s                       |
+| Upstream's Silvia PID 112.315 / 0.658 / 1436.887, compensation off, two flushes                     | 0.41–0.67 °C (0.71–0.74)                   | 111.5–112.2 °C     | 92.25 °C            | +0.75 to +0.8 °C | 236–375 s                       |
+| GaggiMate's default PID 58.397 / 1.027 / 249.055 (the Gaggia values), compensation off, two flushes | 1.5 °C (1.54–1.69)                         | 112.0–112.5 °C     | 91.9–92.2 °C        | +1.6 to +1.75 °C | not within 7½ min               |
+| Upstream's Silvia PID, one press of the 5 s flush                                                   | 0.74 °C                                    | 112.8 °C           | 96.9 °C after 4 min |                  | not settled                     |
+
+The fork's lower peak comes from the compensation during steam. The autotuned gains alone give most of the steadier
+recovery; the compensation adds the lower peak, the narrower holding band and flush to target's one press. Two fixed
+flushes landed well from ~112 °C with a 32 °C tank; they need testing from other peaks (issue #1 follow-up).
+
 5 s flush from 93 °C, Kp 60 / Ki 0.658 / Kd 1500, 40 °C tank, calibrated pump (8.644, 4.676):
 
 | Configuration (runs)                   | Overshoot                                        | Settled ±0.3 °C |

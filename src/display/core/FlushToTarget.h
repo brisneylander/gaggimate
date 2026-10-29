@@ -16,6 +16,10 @@ constexpr float MIN_SECONDS = 0.5f;          // shorter pulses mostly fill the g
 constexpr float MAX_SECONDS = 30.0f;         // one press never empties more than this; press again if still hot
 constexpr float DEFAULT_INLET_TEMP_C = 23.0f;
 constexpr float DEFAULT_LOSS_FRACTION = 0.05f; // standing-loss guess while none has been learned (as the predictor)
+// Share of the shown surplus that is really in the boiler. Straight after steaming the water at the thermocouple is
+// hotter than the boiler as a whole, so the reading overstates the surplus: on a Silvia two flushes from 106.5 and
+// 108 °C, sized on the full reading, both undershot by ~2.2 °C (about 15 % too much water). Empirical; re-check.
+constexpr float SURPLUS_REALISED = 0.85f;
 
 struct Plan {
     float ml = 0.0f;
@@ -53,7 +57,7 @@ inline Plan plan(float shownTemp, float shownTarget, float offset, float heaterW
     }
     const float capacity = heaterW / heatRate; // J/°C
     const float loss = lossW > 0.0f ? lossW : DEFAULT_LOSS_FRACTION * heaterW;
-    const float surplusJ = surplus * capacity;
+    const float surplusJ = surplus * SURPLUS_REALISED * capacity;
     // The loss runs over the flush itself too, which depends on the volume: two passes converge.
     float seconds = surplusJ / perMl / flowMlPerS;
     for (int i = 0; i < 2; ++i)

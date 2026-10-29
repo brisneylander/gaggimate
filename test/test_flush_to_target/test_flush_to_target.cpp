@@ -16,22 +16,22 @@ constexpr float NO_LOSS = 1e-6f; // isolates the heat sums from the standing-los
 void test_two_degrees_over_needs_a_short_flush() {
     const auto p = plan(95.0f, 93.0f, OFFSET, W, RATE, TANK, FLOW, NO_LOSS);
     TEST_ASSERT_NULL(p.reason);
-    // 2 °C x 1833 J/°C / (4.18 x (99 - 30)) = 12.7 ml
-    TEST_ASSERT_FLOAT_WITHIN(0.2f, 12.7f, p.ml);
-    TEST_ASSERT_FLOAT_WITHIN(0.05f, 12.7f / FLOW, p.seconds);
+    // 2 °C x 0.85 realised x 1833 J/°C / (4.18 x (99 - 30)) = 10.8 ml
+    TEST_ASSERT_FLOAT_WITHIN(0.2f, 12.7f * flush_to_target::SURPLUS_REALISED, p.ml);
+    TEST_ASSERT_FLOAT_WITHIN(0.05f, 12.7f * flush_to_target::SURPLUS_REALISED / FLOW, p.seconds);
 }
 
-// Straight after steaming: 32 °C x 1833 J/°C / (4.18 x (114 - 30)) = 167 ml, about 19 s.
+// Straight after steaming: 32 °C x 0.85 x 1833 J/°C / (4.18 x (114 - 30)) = 142 ml, about 16 s.
 void test_after_steam() {
     const auto p = plan(125.0f, 93.0f, OFFSET, W, RATE, TANK, FLOW, NO_LOSS);
     TEST_ASSERT_NULL(p.reason);
-    TEST_ASSERT_FLOAT_WITHIN(2.0f, 167.0f, p.ml);
-    TEST_ASSERT_FLOAT_WITHIN(0.3f, 19.3f, p.seconds);
+    TEST_ASSERT_FLOAT_WITHIN(2.0f, 167.0f * flush_to_target::SURPLUS_REALISED, p.ml);
+    TEST_ASSERT_FLOAT_WITHIN(0.3f, 19.3f * flush_to_target::SURPLUS_REALISED, p.seconds);
 }
 
-// A surplus needing more than 30 s (here a 60 °C tank) is capped per press; press again if still hot.
+// A surplus needing more than 30 s (here a 70 °C tank) is capped per press; press again if still hot.
 void test_long_flush_is_capped() {
-    const auto p = plan(125.0f, 93.0f, OFFSET, W, RATE, 60.0f, FLOW, NO_LOSS);
+    const auto p = plan(125.0f, 93.0f, OFFSET, W, RATE, 70.0f, FLOW, NO_LOSS);
     TEST_ASSERT_NULL(p.reason);
     TEST_ASSERT_EQUAL_FLOAT(flush_to_target::MAX_SECONDS, p.seconds);
     TEST_ASSERT_FLOAT_WITHIN(0.1f, flush_to_target::MAX_SECONDS * FLOW, p.ml);
@@ -71,10 +71,10 @@ void test_standing_loss_reduces_the_flush() {
     TEST_ASSERT_NULL(loss.reason);
     // 37 W over the ~9 s flush + 30 s hold = ~1.45 kJ less of a 24.7 kJ surplus: ~6 % less water.
     const float perMl = 4.18f * ((106.5f + 93.0f) / 2.0f + OFFSET - 35.0f);
-    const float expectedMl = (13.5f * W / RATE - 37.0f * (loss.seconds + 30.0f)) / perMl;
+    const float expectedMl = (13.5f * flush_to_target::SURPLUS_REALISED * W / RATE - 37.0f * (loss.seconds + 30.0f)) / perMl;
     TEST_ASSERT_FLOAT_WITHIN(0.3f, expectedMl, loss.ml);
     TEST_ASSERT_TRUE(loss.ml < none.ml);
-    TEST_ASSERT_FLOAT_WITHIN(0.02f, 0.94f, loss.ml / none.ml);
+    TEST_ASSERT_FLOAT_WITHIN(0.02f, 0.93f, loss.ml / none.ml);
 }
 
 // No learned loss yet: falls back to 5 % of the heater, like the predictor.

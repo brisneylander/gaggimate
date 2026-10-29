@@ -1,8 +1,11 @@
 import { Trans, useLingui } from '@lingui/react/macro';
 import { useContext } from 'preact/hooks';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faCircleInfo } from '@fortawesome/free-solid-svg-icons/faCircleInfo';
 import { ApiServiceContext } from '../../../services/ApiService.js';
 import Section from '../../../components/Card.jsx';
 import { InputGroupField } from '../../../components/SettingsFormField.jsx';
+import { Tooltip } from '../../../components/Tooltip.jsx';
 import { MachineProfilePicker } from './MachineProfilePicker.jsx';
 import { BUILT_IN_PROFILES, profileInUse } from './machineProfiles.js';
 
@@ -88,6 +91,37 @@ export function LagCompensationSection({ formData, onChange, setField }) {
     noRiseBrewS: t`The heater stops (until a restart) after this long near full power with no water flowing and the temperature not rising: a sensor off the boiler. Raise it for a slow sensor. 0 uses 60 s.`,
     noRiseSteamS: t`The same at steam temperatures, where steaming milk holds the heater flat out. 0 uses 180 s.`,
   };
+  // What each advanced setting does, on hover (or tap: the icon takes focus) beside its label.
+  const tips = {
+    derivativeFilterS: t`Smooths the D term (the part reacting to how fast the temperature changes) so the thermocouple's 0.25 °C steps don't flick the heater between 0 and 100 %. Longer calms it more but brakes a real rise later.`,
+    integralZone: t`The integral (the slow, building correction) only runs within this distance of the target, and pauses while water flows and for the dead time after, so a flush dip can't wind it up into an overshoot.`,
+    valveDumpMl: t`Water the 3-way valve releases into the drip tray each time a flush or shot ends. It leaves the boiler too, so it's counted as cold water drawn in. Tune this machine measures it from the drip tray weight.`,
+    flushTargetFactor: t`Correction to the calculated flush volume for heat the simple model misses, mainly the group head. Lower it if flushes to target land under the brew temperature, raise it if they land over.`,
+    flushTargetHoldS: t`How long the heater stays off after a flush to target, so the flush's cooling reaches the slow sensor before the PID reacts and it doesn't heat into a dip that's already corrected.`,
+    tankRiseC: t`How far above the fill temperature the tank water settles after hours beside the hot boiler: 25 °C fresh water ends up around 43 °C at 18 °C.`,
+    tankWarmMin: t`How quickly the tank approaches that warmer temperature while the machine is on. It cools 1.5× slower in standby and resets to the fill temperature on a refill.`,
+    inletTempC: t`A fixed tank temperature, used instead of the estimate while the tank fill temperature is 0. Simpler, but wrong as the tank warms through a session.`,
+    noRiseBrewS: t`If the heater runs near full power this long with no water flowing and no 2 °C rise, it latches off until a restart: usually a sensor off the boiler. Raise it only for a very slow sensor.`,
+    noRiseSteamS: t`The same check at steam temperatures, longer because steaming milk can hold the heater flat out without much rise.`,
+  };
+  const labelWithTip = key =>
+    tips[key] ? (
+      <span className='inline-flex items-center gap-1.5'>
+        {labels[key]}
+        <Tooltip content={<div className='max-w-xs text-xs leading-snug'>{tips[key]}</div>}>
+          <button
+            type='button'
+            className='cursor-help opacity-50 hover:opacity-100 focus:opacity-100'
+            aria-label={tips[key]}
+            onClick={e => e.preventDefault()}
+          >
+            <FontAwesomeIcon icon={faCircleInfo} />
+          </button>
+        </Tooltip>
+      </span>
+    ) : (
+      labels[key]
+    );
   const calibratedBy = {
     autotune: t`Set by autotune (Calibration).`,
     tune: t`Set by Tune this machine (Calibration).`,
@@ -98,7 +132,7 @@ export function LagCompensationSection({ formData, onChange, setField }) {
     return (
       <InputGroupField
         key={key}
-        label={labels[key]}
+        label={labelWithTip(key)}
         htmlFor={key}
         unit={unit}
         helpText={`${by}${help[key]} ${t`Allowed: ${range}.`}`}

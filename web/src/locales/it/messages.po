@@ -185,6 +185,10 @@ msgstr "Un'erogazione è stata avviata sulla macchina."
 msgid "A cleaning warning is shown once either interval is reached; set an interval to 0 to turn it off. Running the cleaning profile to the end marks it complete."
 msgstr "Un avviso di pulizia viene mostrato al raggiungimento di uno dei due intervalli; imposta un intervallo a 0 per disattivarlo. Eseguire il profilo di pulizia fino alla fine lo segna come completato."
 
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "A fixed tank temperature, used instead of the estimate while the tank fill temperature is 0. Simpler, but wrong as the tank warms through a session."
+msgstr ""
+
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "A given alpha behaves faster in time at 80 SPS because it is applied more often. Tune the two alpha values independently for your installed sample rate. Changing sample rate resets both values to 0.80 at 10 SPS or 0.40 at 80 SPS as sensible starting points."
 msgstr "Un dato valore alfa agisce più rapidamente nel tempo a 80 SPS perché viene applicato più spesso. Regola i due valori alfa in modo indipendente per la frequenza di campionamento installata. Cambiare la frequenza di campionamento reimposta entrambi i valori a 0.80 a 10 SPS o 0.40 a 80 SPS come punti di partenza sensati."
@@ -1133,6 +1137,10 @@ msgstr "Guadagno di convergenza"
 #: src/pages/ProfileEdit/index.jsx
 msgid "Convert to Pro"
 msgstr "Converti in Pro"
+
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "Correction to the calculated flush volume for heat the simple model misses, mainly the group head. Lower it if flushes to target land under the brew temperature, raise it if they land over."
+msgstr ""
 
 #: src/components/PumpFlowCalibration/usePumpFlowCalibration.js
 msgid "Could not delete calibration profile: {message}"
@@ -2353,12 +2361,24 @@ msgid "How far above the fill temperature the tank settles after hours beside th
 msgstr ""
 
 #: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "How far above the fill temperature the tank water settles after hours beside the hot boiler: 25 °C fresh water ends up around 43 °C at 18 °C."
+msgstr ""
+
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "How long the heater stays off after a flush to target, so the flush's cooling reaches the slow sensor before the PID reacts and it doesn't heat into a dip that's already corrected."
+msgstr ""
+
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
 msgid "How long the heater stays off after a flush to target, until the flush's effect reaches the sensor. 0 uses 30 s."
 msgstr ""
 
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "How many ml/s to pump into the boiler during steaming"
 msgstr "Quanti ml/s pompare in caldaia durante l'erogazione di vapore"
+
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "How quickly the tank approaches that warmer temperature while the machine is on. It cools 1.5× slower in standby and resets to the fill temperature on a refill."
+msgstr ""
 
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "HX711 Sample Rate"
@@ -2386,6 +2406,10 @@ msgstr "Alfa filtro a riposo"
 
 #: src/pages/Settings/tune/TuneMachine.jsx
 msgid "If <0>Flush to brew target when hot</0> is toggled on (General → Flush), the flush button does this automatically if the boiler is 2 °C or more over target."
+msgstr ""
+
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "If the heater runs near full power this long with no water flowing and no 2 °C rise, it latches off until a restart: usually a sensor off the boiler. Raise it only for a very slow sensor."
 msgstr ""
 
 #: src/utils/warnings.js
@@ -4918,6 +4942,10 @@ msgid "Smart Grind Plugin"
 msgstr "Plugin Smart Grind"
 
 #: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "Smooths the D term (the part reacting to how fast the temperature changes) so the thermocouple's 0.25 °C steps don't flick the heater between 0 and 100 %. Longer calms it more but brakes a real rise later."
+msgstr ""
+
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
 msgid "Smooths the D term so thermocouple steps don't switch the heater. Try 2 s; long filters delay its braking."
 msgstr ""
 
@@ -5571,6 +5599,10 @@ msgstr "Il macinacaffè raggiunge GaggiMate a questo indirizzo, quindi entrambi 
 msgid "The heater stops (until a restart) after this long near full power with no water flowing and the temperature not rising: a sensor off the boiler. Raise it for a slow sensor. 0 uses 60 s."
 msgstr ""
 
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "The integral (the slow, building correction) only runs within this distance of the target, and pauses while water flows and for the dead time after, so a flush dip can't wind it up into an overshoot."
+msgstr ""
+
 #: src/pages/Settings/tune/TuneMachine.jsx
 msgid "The machine accepted the flush to target but no water flowed."
 msgstr ""
@@ -5594,6 +5626,10 @@ msgstr "La dose del profilo viene salvata nella cronologia shot."
 
 #: src/pages/Settings/tabs/LagCompensationSection.jsx
 msgid "The same at steam temperatures, where steaming milk holds the heater flat out. 0 uses 180 s."
+msgstr ""
+
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "The same check at steam temperatures, longer because steaming milk can hold the heater flat out without much rise."
 msgstr ""
 
 #: src/pages/Settings/tabs/BluetoothTab.jsx
@@ -6263,6 +6299,10 @@ msgstr "Serbatoio dell'acqua quasi vuoto"
 
 #: src/pages/Settings/tabs/LagCompensationSection.jsx
 msgid "Water the 3-way valve dumps into the drip tray when a flush or shot ends: weigh the tray after a flush. It leaves the boiler too. 0 counts none (about 5 ml on a Silvia)."
+msgstr ""
+
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "Water the 3-way valve releases into the drip tray each time a flush or shot ends. It leaves the boiler too, so it's counted as cold water drawn in. Tune this machine measures it from the drip tray weight."
 msgstr ""
 
 #: src/pages/Statistics/components/toolbar/constants.js

@@ -68,11 +68,17 @@ the sensor to 0.45 °C rms (old plant 1.09 °C) and puts the dip's low within ~6
 - **Flush water cools ~20 % more per ml than (boiler - tank setting) predicts**: sessions fit as if the tank were
   24-27 °C with the setting at 35. The same shortfall explains flush to target's 0.85 factor, and the full-power
   reheat being sized short on the bench.
-- **Not the flow reading** (weighed flushes, 2026-10-29, tank 32 °C measured): water out of the boiler = jug + drip
-  tray (the valve dumps 5-6 g each flush). 5 s: 44.2 g vs 42.3 ml read. Three 10 s: 89.7, 99.0, 84.5 g (mean 91.1)
-  vs 88.2, 88.3, 88.0 ml read. The reading is steady; the real volume varies ±8 % flush to flush and is ~3 % above the
-  reading on average, far short of 20 %. So the pump calibration stays, and the extra cooling is heat moving between
-  boiler and group head (the fitted plant's slow node). Keep the 0.85 factor as the empirical correction.
+- **Weighed flushes** (2026-10-29, tank 32 °C measured, jug + drip tray weighed separately): what reaches the cup
+  matches the flow reading (five 10 s flushes: 89.1 g mean in the jug vs 88.2 ml read, flush-to-flush spread ±9 %), so
+  the pump calibration is right for shots. Each flush also dumps 4.8-5.7 g into the drip tray when the valve releases;
+  that water has left the boiler too, so a flush takes ~5 g more than the reading: ~6 % of a 10 s flush, ~12 % of a 5 s
+  one, ~7 % of a 68 ml flush to target. That is about half of the extra cooling; the rest is heat moving between
+  boiler and group head (the fitted plant's slow node). Next: count ~5 g per flush for the valve dump in flush-to-target
+  sizing and the predictor, then re-check the 0.85 factor (expect ~0.92).
+- **Phantom flow after a stopped brew** (2026-10-29 13:01): a brew stopped within a second, in the profile's 5 ml/s
+  Fill phase, left the reported pump flow at 5.0 ml/s for over a minute with no water moving (pressure 0.3-0.6 bar,
+  boiler sealed). The predictor counted cold water that wasn't there and heated the boiler 93 -> 98 °C. Reproduce
+  (start and stop a brew within a second, display log over USB) and fix.
 - The fitted plant still flatters full-power reheat a little in closed loop; trust bench runs over it for timing.
 
 With the 12 s water delay the heater puts back about what the flush took (net −0.8 to +0.3 kJ), so an explicit heat

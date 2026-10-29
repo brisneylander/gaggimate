@@ -460,9 +460,18 @@ export function TuneMachine({ formData, setField }) {
                 After steaming, the boiler is far hotter than brewing needs. Flush to target works
                 out how much fresh tank water would bring it back down to the brew temperature, from
                 how far over it is, the boiler's size and the tank temperature, and flushes just
-                that much. The flush button does this by itself whenever the boiler is 2 °C or more
-                over target.
-              </Trans>
+                that much.
+              </Trans>{' '}
+              <Trans>
+                If <strong>Flush button flushes to target when hot</strong> is switched on in the
+                Machine Boiler Profile, the flush button does this by itself whenever the boiler is
+                2 °C or more over target.
+              </Trans>{' '}
+              {formData.flushButtonToTarget ? (
+                <Trans>It's on now.</Trans>
+              ) : (
+                <Trans>It's off now.</Trans>
+              )}
             </p>
             <p className='mt-2'>
               <Trans>

@@ -283,8 +283,12 @@ msgid "Advanced"
 msgstr "高级"
 
 #: src/pages/Settings/tune/TuneMachine.jsx
-msgid "After steaming, the boiler is far hotter than brewing needs. Flush to target works out how much fresh tank water would bring it back down to the brew temperature, from how far over it is, the boiler's size and the tank temperature, and flushes just that much. The flush button does this by itself whenever the boiler is 2 °C or more over target."
+msgid "After steaming, the boiler is far hotter than brewing needs. Flush to target works out how much fresh tank water would bring it back down to the brew temperature, from how far over it is, the boiler's size and the tank temperature, and flushes just that much."
 msgstr ""
+
+#: src/pages/Settings/tune/TuneMachine.jsx
+#~ msgid "After steaming, the boiler is far hotter than brewing needs. Flush to target works out how much fresh tank water would bring it back down to the brew temperature, from how far over it is, the boiler's size and the tank temperature, and flushes just that much. The flush button does this by itself whenever the boiler is 2 °C or more over target."
+#~ msgstr ""
 
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "Alba Settings"
@@ -2325,6 +2329,10 @@ msgstr "空闲颜色"
 msgid "Idle Filter Alpha"
 msgstr "空闲滤波 Alpha"
 
+#: src/pages/Settings/tune/TuneMachine.jsx
+msgid "If <0>Flush button flushes to target when hot</0> is switched on in the Machine Boiler Profile, the flush button does this by itself whenever the boiler is 2 °C or more over target."
+msgstr ""
+
 #: src/utils/warnings.js
 msgctxt "warning level"
 msgid "Ignore"
@@ -2487,6 +2495,14 @@ msgstr "{field} 的值无效：{valueError}"
 #: src/app/AppSettings.jsx
 msgid "iOS only lets GaggiMate stay connected to your machines while the app is open. Notifications stop a few seconds after you switch to another app or lock your phone."
 msgstr "iOS 仅允许 GaggiMate 在应用打开时与咖啡机保持连接。切换到其他应用或锁屏几秒后，通知将停止。"
+
+#: src/pages/Settings/tune/TuneMachine.jsx
+msgid "It's off now."
+msgstr ""
+
+#: src/pages/Settings/tune/TuneMachine.jsx
+msgid "It's on now."
+msgstr ""
 
 #: src/pages/Settings/PluginCard.jsx
 msgid "Keep selected profile"

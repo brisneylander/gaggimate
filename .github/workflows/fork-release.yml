@@ -4,10 +4,12 @@
 # (RELEASE_URL in src/display/plugins/WebUIPlugin.h). It leaves out upstream's steps
 # that push to the official update server.
 #
-# Tag format: v<current upstream version>-simonNNN, e.g. v1.9.0-simon001 (see FORK.md).
+# Tag format: v<current upstream version>-thermaltuneNNN, e.g. v1.9.0-thermaltune034 (see FORK.md); the first 33
+# releases were v1.9.0-simonNNN.
 on:
   push:
     tags:
+      - "v*-thermaltune*"
       - "v*-simon*"
 
 name: Fork Release
@@ -23,11 +25,11 @@ jobs:
         with:
           fetch-tags: true
           fetch-depth: 0
-          submodules: 'recursive'
+          submodules: "recursive"
       # The fork's own standby logo is kept out of the repository: the secret holds the generated
       # ui_image_logo.c, gzipped and base64-encoded. Without the secret the stock logo is built.
       # skip-worktree keeps `git describe --dirty` (firmware version, version.txt) clean, so OTA
-      # version comparison still sees v<release>-simonNNN.
+      # version comparison still sees v<release>-thermaltuneNNN.
       - name: Apply private standby logo
         env:
           STANDBY_LOGO: ${{ secrets.STANDBY_LOGO_C_GZ_B64 }}
@@ -48,13 +50,13 @@ jobs:
           key: ${{ runner.os }}-pio
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: "3.11"
       - name: Install PlatformIO Core
         run: pip install --upgrade platformio
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: 'npm'
+          cache: "npm"
           cache-dependency-path: web/package-lock.json
       - name: Add version
         run: |

@@ -9,7 +9,7 @@ firmware over Wi-Fi while staying in sync with upstream.
 | File                                        | Change                                                                                                                                                                                                                                                                                          |
 | ------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `src/display/plugins/WebUIPlugin.h`         | `RELEASE_URL` points at this fork's releases, so OTA updates come from here.                                                                                                                                                                                                                    |
-| `.github/workflows/fork-release.yml`        | Fork-only copy of `build.yml`: builds the firmware on `v*-simon*` tags and publishes a GitHub release here. It leaves out the steps that upload to the official update server.                                                                                                                  |
+| `.github/workflows/fork-release.yml`        | Fork-only copy of `build.yml`: builds the firmware on `v*-thermaltune*` (and the older `v*-simon*`) tags and publishes a GitHub release here. It leaves out the steps that upload to the official update server.                                                                                |
 | `.github/workflows/fork-nightly.yml`        | Same build on every push to `master`, published as the `nightly` pre-release for the Nightly update channel.                                                                                                                                                                                    |
 | `site/`, `.github/workflows/fork-pages.yml` | The fork's front page, published to GitHub Pages at https://brisneylander.github.io/gaggimate/ on pushes that change it.                                                                                                                                                                        |
 | Boiler control                              | Lag compensation, flush to target, tank estimate, heater safety layer, machine profiles and the Tune this machine routine: goal, bench observations and how the code addresses them in [docs/boiler-control.md](docs/boiler-control.md); bench data and open items in [ROADMAP.md](ROADMAP.md). |
@@ -20,48 +20,54 @@ Upstream's own `Build`, `Build Nightly` and `Deploy PR Preview` workflows are
 
 ## Releasing a build
 
+Releases are called **Thermal Tune N** (from 34; 1–33 were tagged `simonNNN`).
+
 1. Make the change on `master` and push.
 2. Tag it and push the tag:
    ```sh
-   git tag v1.9.0-simon002
-   git push origin v1.9.0-simon002
+   git tag v1.9.0-thermaltune035
+   git push fork v1.9.0-thermaltune035
    ```
-3. The **Fork Release** workflow builds everything (about 10–15 min) and publishes the release.
+3. The **Fork Release** workflow builds everything (about 10–15 min) and publishes the release. Set its title to
+   **Thermal Tune 35**.
 4. On the machine: **Settings → System & Updates**, channel **Stable**, then _Update Controller_
    and _Update Display_. The display checks for updates every 30 min, or straight away
    after _Save Channel & Refresh_.
 
-**Stable** installs the tagged simonNNN releases. **Nightly** installs the head of `master`: the
+**Stable** installs this fork's tagged releases. **Nightly** installs the head of `master`: the
 **Fork Nightly** workflow (`.github/workflows/fork-nightly.yml`) rebuilds the `nightly` pre-release on every push
-(docs-only pushes excepted), about 10–15 min after it. A head build reports e.g. `v1.9.0-simon033-3-g6bb7704`, newer
-than simon033 and older than simon034, so going back to Stable picks up the next release.
+(docs-only pushes excepted), about 10–15 min after it. A head build reports e.g. `v1.9.0-thermaltune034-3-g6bb7704`,
+newer than thermaltune034 and older than thermaltune035, so going back to Stable picks up the next release.
+**Upstream** installs the official GaggiMate release, even an older one (see below).
 
 ## Version numbering
 
 The OTA code (`lib/OTA/src/common.cpp` → `update_required`) installs a release only if its
-version is **strictly greater** than what's running. Its semver library treats a
-suffixed version as **newer** than the plain one (`1.9.0-simon001 > 1.9.0`), and it
-only reads the part up to the first `.` after the patch number.
+version is **strictly greater** than what's running (the Upstream channel excepted). Its semver library treats a
+suffixed version as **newer** than the plain one (`1.9.0-thermaltune034 > 1.9.0`), compares suffixes letter by
+letter with runs of digits compared as numbers, and only reads the part up to the first `.` after the patch number.
 
-So tag builds as **`v<current upstream release>-simon<3 digits>`**:
+So tag builds as **`v<current upstream release>-thermaltune<3 digits>`**:
 
-- `v1.9.0-simon001`, `v1.9.0-simon002`, … each installs over the previous one.
-  Zero-pad the number: suffixes compare as text, and `simon10` would sort before `simon9`.
-- Don't put a dot in the suffix (`-simon.1`). Everything after the dot is ignored.
-- When upstream releases a new version (e.g. `v1.9.1`), sync the fork and restart at
-  `v1.9.1-simon001`.
+- `v1.9.0-thermaltune034`, `v1.9.0-thermaltune035`, … each installs over the previous one.
+- A new suffix must sort **after** the old one letter by letter: "thermaltune" follows "simon" because t > s, so
+  machines on simonNNN take thermaltune034 as newer. A name starting with a–s (e.g. "silvia": sil < sim) would never be
+  offered to them.
+- Don't put a dot in the suffix (`-thermaltune.35`). Everything after the dot is ignored.
+- When upstream releases a new version (e.g. `v1.9.1`), sync the fork and continue at
+  `v1.9.1-thermaltune<next number>`.
 
 ## Staying in sync with upstream
 
 On GitHub, use **Sync fork → Update branch** on this repo's front page. That brings in
 upstream `master` (= official nightly). The changes here are small, so merges should
-normally be clean. After syncing, tag a new `-simonNNN` build to install it.
+normally be clean. After syncing, tag a new `-thermaltuneNNN` build to install it.
 
 ## Going back to official firmware
 
-- **Over Wi-Fi:** once upstream has a release newer than your build (e.g. `v1.9.1`
-  vs `v1.9.0-simon00x`), create a release on this fork with that tag and upload upstream's
-  release `.bin` files. The machine installs it, and from then on it follows upstream's releases.
+- **Over Wi-Fi:** choose the **Upstream** update channel under Settings → System & Updates, save, then update the
+  controller and the display. It installs upstream's latest release even when its version is lower, and from then on
+  the machine follows upstream's releases. Coming back to this fork afterwards needs a USB flash.
 - **Over USB (always works):** flash upstream's release `.bin` files (bootloader, partitions,
   firmware and filesystem for both the display and the controller board) with esptool or
   the official web flasher. Export profiles first.

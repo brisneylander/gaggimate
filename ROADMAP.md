@@ -25,7 +25,7 @@ on 2026-10-28 left open. See [FORK.md](FORK.md) for building and releasing.
 5. **Safety separate from control.** _Done in simon020:_ `HeaterSafety` sits at the one place the heater pin is driven
    (`Heater::writeOutput`), so no control path can bypass it, and latches off until a restart with its own error
    code and display message. It stops the heater for: near full power with no water flowing and the reading not up
-   2 °C in 60 s (180 s at steam setpoints, for steaming milk) - the loose-thermocouple case the sensor's own checks
+   2 °C in 60 s (300 s at steam setpoints, for steaming milk; 180 s until the heat-up boost, 2026-10-30) - the loose-thermocouple case the sensor's own checks
    can't see; three >5 °C/s jumps within 30 s; continuous full power over 10 min. Replayed over all 52 bench logs of
    2026-10-28/29 it never trips; the longest "full power, no rise" stretch was under 30 s. Steaming milk isn't in the
    logs yet: watch for a false stop the first time. Kept as they were: the hardware fuse, the sensor's over-170 °C and

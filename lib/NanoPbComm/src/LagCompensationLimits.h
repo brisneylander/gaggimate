@@ -28,7 +28,7 @@ constexpr Range TANK_FILL_C{5.0f, 40.0f};         // display only: fresh tank wa
 // water a 3-way valve dumps into the drip tray when a flush or shot ends. It has left the boiler too, but the pump flow
 // reading doesn't include it (4.8-5.7 g on a Silvia over six weighed flushes, 2026-10-29). 0 = none counted.
 constexpr Range VALVE_DUMP_ML{0.5f, 30.0f};
-// Heater safety: how long near full power with no rise may last (HeaterSafety.h; 0 = its 60 / 180 s defaults).
+// Heater safety: how long near full power with no rise may last (HeaterSafety.h; 0 = its 60 / 300 s defaults).
 constexpr Range NO_RISE_BREW_S{30.0f, 300.0f};
 constexpr Range NO_RISE_STEAM_S{60.0f, 900.0f};
 // Display only: flush to target's share of the shown surplus (0 = 1.0) and heater hold after it (0 = 30 s); the tank

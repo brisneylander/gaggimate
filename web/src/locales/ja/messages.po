@@ -5641,7 +5641,11 @@ msgid "The profile's dose is saved to the shot history."
 msgstr "プロファイルのドーズがショット履歴に保存されます。"
 
 #: src/pages/Settings/tabs/LagCompensationSection.jsx
-msgid "The same at steam temperatures, where steaming milk holds the heater flat out. 0 uses 180 s."
+#~ msgid "The same at steam temperatures, where steaming milk holds the heater flat out. 0 uses 180 s."
+#~ msgstr ""
+
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "The same at steam temperatures, where steaming milk holds the heater flat out. 0 uses 300 s."
 msgstr ""
 
 #: src/pages/Settings/tabs/LagCompensationSection.jsx

@@ -43,7 +43,7 @@ export const BUILT_IN_PROFILES = [
       tankRiseC: 18,
       tankWarmMin: 120,
       noRiseBrewS: 60,
-      noRiseSteamS: 180,
+      noRiseSteamS: 300,
       temperatureOffset: 5,
       pid: '60,0.658,1500',
       kf: 0,

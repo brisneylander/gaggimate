@@ -60,11 +60,11 @@ void test_steaming_milk_does_not_trip() {
     }
 }
 
-// ... but a detached sensor in steam mode still trips, after 180 s.
+// ... but a detached sensor in steam mode still trips, after 300 s.
 void test_detached_sensor_at_steam_trips() {
     HeaterSafety s;
     uint32_t t = 0;
-    for (; t < 179000; t += 1000)
+    for (; t < 299000; t += 1000)
         TEST_ASSERT_TRUE(s.observe(t, 30.0f, 1.0f, false, 145.0f));
     TEST_ASSERT_FALSE(s.observe(t + 1000, 30.0f, 1.0f, false, 145.0f));
 }

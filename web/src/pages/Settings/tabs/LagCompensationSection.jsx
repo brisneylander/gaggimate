@@ -89,7 +89,7 @@ export function LagCompensationSection({ formData, onChange, setField }) {
     tankRiseC: t`How far above the fill temperature the tank settles after hours beside the hot boiler. 0 uses 18 °C.`,
     tankWarmMin: t`Time constant of that warming while the machine is on. 0 uses 120 minutes.`,
     noRiseBrewS: t`The heater stops (until a restart) after this long near full power with no water flowing and the temperature not rising: a sensor off the boiler. Raise it for a slow sensor. 0 uses 60 s.`,
-    noRiseSteamS: t`The same at steam temperatures, where steaming milk holds the heater flat out. 0 uses 180 s.`,
+    noRiseSteamS: t`The same at steam temperatures, where steaming milk holds the heater flat out. 0 uses 300 s.`,
   };
   // What each advanced setting does, on hover (or tap: the icon takes focus) beside its label.
   const tips = {

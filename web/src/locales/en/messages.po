@@ -5641,8 +5641,12 @@ msgid "The profile's dose is saved to the shot history."
 msgstr "The profile's dose is saved to the shot history."
 
 #: src/pages/Settings/tabs/LagCompensationSection.jsx
-msgid "The same at steam temperatures, where steaming milk holds the heater flat out. 0 uses 180 s."
-msgstr "The same at steam temperatures, where steaming milk holds the heater flat out. 0 uses 180 s."
+#~ msgid "The same at steam temperatures, where steaming milk holds the heater flat out. 0 uses 180 s."
+#~ msgstr "The same at steam temperatures, where steaming milk holds the heater flat out. 0 uses 180 s."
+
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "The same at steam temperatures, where steaming milk holds the heater flat out. 0 uses 300 s."
+msgstr "The same at steam temperatures, where steaming milk holds the heater flat out. 0 uses 300 s."
 
 #: src/pages/Settings/tabs/LagCompensationSection.jsx
 msgid "The same check at steam temperatures, longer because steaming milk can hold the heater flat out without much rise."

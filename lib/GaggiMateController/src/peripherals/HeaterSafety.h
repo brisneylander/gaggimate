@@ -15,8 +15,9 @@
 // And the failure the sensor's checks can't see: a thermocouple that has come off the boiler reads room temperature or
 // a slow fall, so the PID heats flat out and only the machine's thermal fuse would stop it.
 //   - No rise: near full power for a while, no water flowing, and the reading hasn't gone up. Brew temperatures allow
-//     60 s (a Silvia's sensor reacts ~20 s after the heater, then rises ~0.6 °C/s); steam temperatures allow 180 s,
-//     since steaming milk holds the heater flat out while the reading holds or falls.
+//     60 s (a Silvia's sensor reacts ~20 s after the heater, then rises ~0.6 °C/s); steam temperatures allow 300 s,
+//     since steaming milk holds the heater flat out (HeatUpBoost) while the reading holds or falls; a long steam
+//     with a big jug runs 3-4 minutes.
 //   - Jumps: three readings within 30 s that moved more than 5 °C in a second (a loose junction, interference).
 //   - Continuous full power longer than 10 minutes (a cold start to steam takes ~4).
 class HeaterSafety {
@@ -29,7 +30,7 @@ class HeaterSafety {
     static constexpr float HIGH_DUTY = 0.8f;
     static constexpr float NO_RISE_C = 2.0f;
     static constexpr uint32_t NO_RISE_BREW_MS = 60000;
-    static constexpr uint32_t NO_RISE_STEAM_MS = 180000;
+    static constexpr uint32_t NO_RISE_STEAM_MS = 300000;
     static constexpr float STEAM_SETPOINT_C = 110.0f; // setpoints from here up count as steam
     static constexpr float JUMP_C = 5.0f;
     static constexpr int JUMPS_TO_TRIP = 3;

@@ -416,7 +416,7 @@ class Settings {
     Property<float> tankRiseC{registry, "tk_rise", 0.0f};        // tank warming above the fill temperature (°C), 0 = 18
     Property<float> tankWarmMin{registry, "tk_warm", 0.0f};      // tank warming time constant (min), 0 = 120
     Property<float> noRiseBrewS{registry, "sf_nrb", 0.0f};       // heater safety window at brew setpoints (s), 0 = 60
-    Property<float> noRiseSteamS{registry, "sf_nrs", 0.0f};      // heater safety window at steam setpoints (s), 0 = 180
+    Property<float> noRiseSteamS{registry, "sf_nrs", 0.0f};      // heater safety window at steam setpoints (s), 0 = 300
     Property<float> waterDeadTimeS{registry, "lc_wd", 0.0f};
     Property<bool> flushButtonToTarget{registry, "fl_tt", true};
 

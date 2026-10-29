@@ -1947,8 +1947,8 @@ msgid "File export failed."
 msgstr "Esportazione del file non riuscita."
 
 #: src/pages/Settings/tabs/MachineProfilePicker.jsx
-msgid "Fills in the machine-specific values below (boiler model, delays, PID gains, pump calibration, flush to target, tank warming, safety times, temperature offset). Tank temperatures are left as they are."
-msgstr ""
+#~ msgid "Fills in the machine-specific values below (boiler model, delays, PID gains, pump calibration, flush to target, tank warming, safety times, temperature offset). Tank temperatures are left as they are."
+#~ msgstr ""
 
 #: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
 msgid "Filter library source"
@@ -2087,8 +2087,8 @@ msgid "Flushing and logging for {FLUSH_RECORD_S} s…"
 msgstr ""
 
 #: src/pages/Settings/tabs/LagCompensationSection.jsx
-msgid "For boilers where the temperature sensor reacts long after the heater. Heater power, heat-up rate and dead time together enable a heat-balance predictor, so the PID backs off before the overshoot shows. Leave a field at 0 to disable it."
-msgstr ""
+#~ msgid "For boilers where the temperature sensor reacts long after the heater. Heater power, heat-up rate and dead time together enable a heat-balance predictor, so the PID backs off before the overshoot shows. Leave a field at 0 to disable it."
+#~ msgstr ""
 
 #: src/pages/Settings/tabs/BluetoothTab.jsx
 msgid "Forget"

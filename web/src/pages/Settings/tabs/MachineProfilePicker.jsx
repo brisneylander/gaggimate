@@ -20,7 +20,7 @@ export function MachineProfilePicker({ formData, setField }) {
   useEffect(() => {
     if (inUse.name && selected === '' && BUILT_IN_PROFILES.some(p => p.name === inUse.name))
       setSelected(inUse.name);
-  }, [inUse.name]);
+  }, [inUse.name, selected]);
 
   const apply = (values, label) => {
     for (const [key, value] of Object.entries(values)) setField(key, value);
@@ -117,13 +117,6 @@ export function MachineProfilePicker({ formData, setField }) {
           onChange={onImportFile}
         />
       </div>
-      <p className='text-sm opacity-70'>
-        <Trans>
-          Fills in the machine-specific values below (boiler model, delays, PID gains, pump
-          calibration, flush to target, tank warming, safety times, temperature offset). Tank
-          temperatures are left as they are.
-        </Trans>
-      </p>
       <p className='text-sm'>
         {inUse.name ? (
           <Trans>In use: {inUse.name}</Trans>

@@ -5,13 +5,13 @@ on 2026-10-28 left open. See [FORK.md](FORK.md) for building and releasing.
 
 ## Planned
 
-1. **A small thermal model at the centre.** *Tried and rolled back, 2026-10-29:* an observer on the fitted three-node
+1. **A small thermal model at the centre.** _Tried and rolled back, 2026-10-29:_ an observer on the fitted three-node
    plant, controlling on where the water is heading, settled the simulated water 30-40 % faster at Kp 100, but on the
    bench (alternating 5 s flushes, simon016) it was no different from the predictor on the sensor (+0.69 vs +0.66 °C,
    120 vs 116 s within 0.3 °C). Any gain is in the water, which needs a probe in the boiler to see. Removed in
    simon017 (reverts of d7fce759 and 17f3a8e8). Original idea: Three heat stores (element and wall, water, group head), driven by
    heater duty, pump flow and inlet temperature. A Kalman-filter state estimator, corrected by the sensor, gives the
-   water temperature *now*; the controller acts on that instead of a reading ~20 s old. The heat-balance predictor
+   water temperature _now_; the controller acts on that instead of a reading ~20 s old. The heat-balance predictor
    (`lib/GaggiMateController/src/peripherals/HeatBalancePredictor.*`) is the minimal version.
 2. **Plan heat for known disturbances.** The display knows when a shot or flush starts and roughly how much water
    the profile will move: pre-heat slightly before a shot, supply the energy the water takes as it flows, put back
@@ -19,17 +19,17 @@ on 2026-10-28 left open. See [FORK.md](FORK.md) for building and releasing.
 3. **Calibrate from normal use, with the user in control.** Identify heat-up rate, dead time and losses from
    ordinary warm-ups; keep them per machine within sane limits (`lib/NanoPbComm/src/LagCompensationLimits.h`) and show
    them for approval. Machine presets (heater power, boiler size); raw PID numbers in an advanced section.
-4. **Finer heater control.** *Not pursued (2026-10-29):* at a Silvia's ~4 % holding duty a 1 s window puts ~44 J into
+4. **Finer heater control.** _Not pursued (2026-10-29):_ at a Silvia's ~4 % holding duty a 1 s window puts ~44 J into
    ~1833 J/°C, ~0.02 °C of ripple the ~20 s sensor can't see, and the PID updates once a second anyway. Switch the SSR on mains half-cycles (10 ms at 50 Hz, ~100 levels per second) instead of
    the 1 s window, so output is smoother and sensor noise doesn't become heater chatter.
-5. **Safety separate from control.** *Done in simon020:* `HeaterSafety` sits at the one place the heater pin is driven
+5. **Safety separate from control.** _Done in simon020:_ `HeaterSafety` sits at the one place the heater pin is driven
    (`Heater::writeOutput`), so no control path can bypass it, and latches off until a restart with its own error
    code and display message. It stops the heater for: near full power with no water flowing and the reading not up
    2 °C in 60 s (180 s at steam setpoints, for steaming milk) - the loose-thermocouple case the sensor's own checks
    can't see; three >5 °C/s jumps within 30 s; continuous full power over 10 min. Replayed over all 52 bench logs of
    2026-10-28/29 it never trips; the longest "full power, no rise" stretch was under 30 s. Steaming milk isn't in the
    logs yet: watch for a false stop the first time. Kept as they were: the hardware fuse, the sensor's over-170 °C and
-   read-failure checks, the link watchdog. *simon021:* the over-170 °C and sensor-fault limits moved into the module too (codes
+   read-failure checks, the link watchdog. _simon021:_ the over-170 °C and sensor-fault limits moved into the module too (codes
    10, 11); the sensors keep their own shutdown on their own task as an independent backstop, with the same limit.
 6. **Simulation and logging from day one.** Keep the plant model in the repo (`test/test_heat_balance_predictor`
    flush replay) and check every change against it. Log temperature, duty and flow at a few Hz into shot history so
@@ -39,11 +39,11 @@ on 2026-10-28 left open. See [FORK.md](FORK.md) for building and releasing.
 
 5 s flush from 93 °C, Kp 60 / Ki 0.658 / Kd 1500, 40 °C tank, calibrated pump (8.644, 4.676):
 
-| Configuration (runs) | Overshoot | Settled ±0.3 °C |
-|---|---|---|
-| Compensation off (3) | +2.23, +3.75, +2.75 — avg +2.91 °C | avg 318 s |
-| On, single 20 s delay (5) | +1.75, +1.89, +1.50, +1.79, +1.47 — avg +1.68 °C | avg 174 s |
-| **On, 12 s water delay (2), simon006** | **+0.75, +0.50 — avg +0.63 °C** | **avg 126 s** |
+| Configuration (runs)                   | Overshoot                                        | Settled ±0.3 °C |
+| -------------------------------------- | ------------------------------------------------ | --------------- |
+| Compensation off (3)                   | +2.23, +3.75, +2.75 — avg +2.91 °C               | avg 318 s       |
+| On, single 20 s delay (5)              | +1.75, +1.89, +1.50, +1.79, +1.47 — avg +1.68 °C | avg 174 s       |
+| **On, 12 s water delay (2), simon006** | **+0.75, +0.50 — avg +0.63 °C**                  | **avg 126 s**   |
 
 **Full-power reheat (simon007) does not help on the Silvia; removed in simon017.** Flush pairs on 2026-10-29: with reheat the sensor took
 124–129 s back to 93 °C (overshoot +0.40–0.45 °C) against 62–100 s without (+0.49–1.25 °C). Energy is delivered in
@@ -55,15 +55,15 @@ switching reheat on → off should be re-checked with a single flush.)
 **"Flush to target" after steaming** (heat to 100 °C in Steam, back to Brew, flush at the peak; target 93 °C, tank
 ~35 °C), 2026-10-29:
 
-| Run | Release | Start | Flush | Lowest | Within 0.5 °C from |
-| --- | --- | --- | --- | --- | --- |
-| 1 | simon007 (PID heats during the flush) | 105.75 °C | 79 ml | 90.66 °C, rebound to 97 | 287 s |
-| 2 | simon008 (heater held off) | 106.5 °C | 86 ml | 90.85 °C | 317 s |
-| 3 | simon009 (+ standing-loss allowance) | 108.0 °C | 88–90 ml | 90.83 °C | 291 s |
-| **4** | **simon010 (counts 85 % of the shown surplus)** | **106.56 °C** | **68 ml, 7.8 s** | **92.24 °C** | **146 s** |
-| **5** | **simon010** | **106.73 °C** | **68 ml** | **91.85 °C** | **149 s** |
-| **6** | **simon010** | **108.13 °C** | **74 ml** | **92.18 °C** | **157 s** |
-| **7** | **simon014 (+ 5 g valve dump, factor 0.91), target 88 °C (Londonium)** | **106.64 °C** | **92 ml, 10.8 s** | **87.70 °C** | **169 s** |
+| Run   | Release                                                                | Start         | Flush             | Lowest                  | Within 0.5 °C from |
+| ----- | ---------------------------------------------------------------------- | ------------- | ----------------- | ----------------------- | ------------------ |
+| 1     | simon007 (PID heats during the flush)                                  | 105.75 °C     | 79 ml             | 90.66 °C, rebound to 97 | 287 s              |
+| 2     | simon008 (heater held off)                                             | 106.5 °C      | 86 ml             | 90.85 °C                | 317 s              |
+| 3     | simon009 (+ standing-loss allowance)                                   | 108.0 °C      | 88–90 ml          | 90.83 °C                | 291 s              |
+| **4** | **simon010 (counts 85 % of the shown surplus)**                        | **106.56 °C** | **68 ml, 7.8 s**  | **92.24 °C**            | **146 s**          |
+| **5** | **simon010**                                                           | **106.73 °C** | **68 ml**         | **91.85 °C**            | **149 s**          |
+| **6** | **simon010**                                                           | **108.13 °C** | **74 ml**         | **92.18 °C**            | **157 s**          |
+| **7** | **simon014 (+ 5 g valve dump, factor 0.91), target 88 °C (Londonium)** | **106.64 °C** | **92 ml, 10.8 s** | **87.70 °C**            | **169 s**          |
 
 Run 4 was within 1 °C 56 s after the flush, bottomed out 2 min later, and held 93.0 °C from ~4 min. The remaining
 −0.8 °C dip is the heater's dead time after the 30 s hold, not the volume. The 0.85 factor held over three runs (lowest 91.85–92.24 °C, within 0.5 °C after 146–157 s). Run 7, with the valve dump counted, came down from above with no undershoot (within 1 °C after 145 s, settled 87.7-88.0 °C) on a bigger 19 °C drop to a different target.
@@ -78,6 +78,7 @@ closing flush starts a second recovery. `flushBoostC` stays 0; candidate for rem
 ~21 s time constant; the group head (819 J/°C, ~2.4 min to the water) carries the standing loss and keeps pulling the
 water down after a flush; the sensor sees the water through 4.6 s + 15 s. On flushes left out of the fit it tracks
 the sensor to 0.45 °C rms (old plant 1.09 °C) and puts the dip's low within ~6 s (old: 7-18 s early). Two findings:
+
 - **Flush water cools ~20 % more per ml than (boiler - tank setting) predicts**: sessions fit as if the tank were
   24-27 °C with the setting at 35. The same shortfall explains flush to target's 0.85 factor, and the full-power
   reheat being sized short on the bench.
@@ -114,9 +115,9 @@ budget for flushes looks unnecessary; recovery to 93 °C is a little slower (69�
   dead time for both. The heater ran at full power for only ~10–20 s and the whole overshoot is heat put in during
   the first ~25 s. Next experiment: a higher model heat-up rate (0.8–0.9 °C/s) so the predictor backs off sooner.
 - **Tank water temperature drifts** (~25 °C fresh, 40 °C after hours beside the boiler; 15-45 °C over a year).
-  *Estimated from simon018:* `TankTemperature` warms from a seasonal fill temperature (tankFillC) towards fill + 18 °C
+  _Estimated from simon018:_ `TankTemperature` warms from a seasonal fill temperature (tankFillC) towards fill + 18 °C
   while on (~2 h), cools in standby, and resets on a refill (Tank refilled button, or the Alba level back to full).
-  *simon019:* after each plain flush from near target, the display replays the fitted plant over 3 min to find the tank
+  _simon019:_ after each plain flush from near target, the display replays the fitted plant over 3 min to find the tank
   temperature the flush implies (`FlushTankCheck.h`; today's flushes: 31.0, 39.5, 32.5 °C with 32 measured, ±7 °C
   each, ~4 °C low before the bias correction). Two flushes in a row 8 °C under the estimate count as a refill. The
   constants are first guesses: refine with thermometer readings after ~1 h and ~3 h on.
@@ -131,7 +132,7 @@ budget for flushes looks unnecessary; recovery to 93 °C is a little slower (69�
   the Silvia's illuminated switch keeping the input partly on. Check the wiring against the GaggiMate Silvia guide.
   Workaround in place: button behaviour `brew,none,water` (steam switch ignored; steam from the screen or web UI).
   Restore with `brew,steam,water`. The display's "steam switch is on" warning only clears after a restart.
-- **Autotune.** *simon021:* the predictive cutoff is done: at full power it stops once the reading plus rate x measured
+- **Autotune.** _simon021:_ the predictive cutoff is done: at full power it stops once the reading plus rate x measured
   dead time (20 s before the reaction) would pass 125 °C, ending like a timeout (gains kept, no error state) instead
   of coasting past (a run once reached 131 °C). The heater wattage field defaults to the set heater power. Still open:
   offset-aware limits; it already stops at the inflection once dead time and k' are found.

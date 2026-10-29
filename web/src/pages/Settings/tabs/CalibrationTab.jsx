@@ -8,7 +8,7 @@ import PumpFlowCalibration from '../../../components/PumpFlowCalibration/index.j
 import { TuneMachine } from '../tune/TuneMachine.jsx';
 import { SettingsFormField } from '../../../components/SettingsFormField.jsx';
 
-export function CalibrationTab({ formData, onChange, setField }) {
+export function CalibrationTab({ formData, setField }) {
   const { t } = useLingui();
   const apiService = useContext(ApiServiceContext);
 

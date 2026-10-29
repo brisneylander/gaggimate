@@ -194,13 +194,6 @@ export function LagCompensationSection({ formData, onChange, setField }) {
   return (
     <Section title={t`Machine Boiler Profile`} className='h-full'>
       {setField && <MachineProfilePicker formData={formData} setField={setField} />}
-      <p className='mb-4 text-sm opacity-70'>
-        <Trans>
-          For boilers where the temperature sensor reacts long after the heater. Heater power,
-          heat-up rate and dead time together enable a heat-balance predictor, so the PID backs off
-          before the overshoot shows. Leave a field at 0 to disable it.
-        </Trans>
-      </p>
       {groupHeading(t`Boiler (measured)`)}
       <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
         {mainFields.filter(f => f.key !== 'tankFillC').map(renderField)}

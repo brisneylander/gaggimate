@@ -715,6 +715,12 @@ void Controller::loopControl() {
             comms.sendPing();
             lastPing = now;
         }
+        // Dual boilers refill with the pump while idle, so flow without a process is normal there.
+        if (!systemInfo.capabilities.dualBoiler && strayFlowGuard.check(now, isActive(), currentPumpFlow)) {
+            ESP_LOGW(LOG_TAG, "Pump reports %.1f ml/s with nothing running: re-sending the control state (pump off)",
+                     currentPumpFlow);
+            controlStateSent = false;
+        }
 
         updateControl();
     }

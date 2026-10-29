@@ -5,6 +5,7 @@
 #include "GaggiMateClient.h"
 #include "PluginManager.h"
 #include "Settings.h"
+#include "StrayFlowGuard.h"
 #include "SystemInfo.h"
 #include <WiFi.h>
 #include <atomic>
@@ -299,6 +300,7 @@ class Controller {
     // Heater held off until this millis() after a flush to target; 0 = no hold.
     static constexpr float FLUSH_TO_TARGET_HOLD_S = 30.0f;
     unsigned long flushToTargetHoldUntil = 0;
+    StrayFlowGuard strayFlowGuard; // see StrayFlowGuard.h
     bool processCompleted = false;
     bool steamReady = false;
     bool steamSwitchOn = false;

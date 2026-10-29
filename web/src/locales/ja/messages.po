@@ -4100,6 +4100,10 @@ msgid "Rules are separated with <0>;</0>. Visual filters and DSL are combined wi
 msgstr "ルールは <0>;</0> で区切ります。ビジュアルフィルターと DSL は AND で結合されます。"
 
 #: src/pages/Settings/tune/TuneMachine.jsx
+msgid "Run again (empty the cup and drip tray first)"
+msgstr ""
+
+#: src/pages/Settings/tune/TuneMachine.jsx
 msgid "Run Autotune above with the machine cold and the heater wattage from its rating plate: it saves the heat-up rate, dead time and heater power."
 msgstr ""
 

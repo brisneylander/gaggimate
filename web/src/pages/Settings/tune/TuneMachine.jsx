@@ -262,14 +262,30 @@ export function TuneMachine({ formData, setField }) {
                 )}
               </span>
             )}{' '}
-            <button
-              type='button'
-              className='btn btn-primary btn-sm'
-              disabled={!ready || !isSteady || busy || !modelSet}
-              onClick={startFlushTest}
-            >
-              <Trans>Start flush</Trans>
-            </button>
+            {/* One flush per weighing: a second press would add to the cup already being measured. */}
+            {flushResult ? (
+              <button
+                type='button'
+                className='btn btn-sm'
+                disabled={busy}
+                onClick={() => {
+                  setFlushResult(null);
+                  setCupG('');
+                  setTrayG('');
+                }}
+              >
+                <Trans>Run again (empty the cup and drip tray first)</Trans>
+              </button>
+            ) : (
+              <button
+                type='button'
+                className='btn btn-primary btn-sm'
+                disabled={!ready || !isSteady || busy || !modelSet}
+                onClick={startFlushTest}
+              >
+                <Trans>Start flush</Trans>
+              </button>
+            )}
           </div>
           {phase === 'flushing' && (
             <p className='mt-2'>
@@ -316,6 +332,7 @@ export function TuneMachine({ formData, setField }) {
                   />
                 </label>
               </div>
+              {weighed?.error && cupG !== '' && <p className='text-warning'>{weighed.error}</p>}
               {weighed && !weighed.error && (
                 <p>
                   <Trans>

@@ -80,3 +80,8 @@ test('scale gain: before the flow against the settled end; none without a scale'
   assert.equal(scaleGain(s), 43.8);
   assert.equal(scaleGain(s.map(x => ({ ...x, w: NaN }))), null); // no scale: typed in instead
 });
+
+test('weighed flush: two flushes in one cup are refused', () => {
+  const r = weighedFlush({ cupG: 81, trayG: 11, readingMl: 45.1 });
+  assert.ok(r.error && r.error.includes('180'));
+});

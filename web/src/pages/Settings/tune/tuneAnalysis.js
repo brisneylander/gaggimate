@@ -50,6 +50,12 @@ export function weighedFlush({ cupG, trayG, readingMl }) {
   if (!(cupG > 0) || !(readingMl > 0)) return { error: 'enter the cup weight' };
   const tray = trayG > 0 ? trayG : 0;
   const ratio = cupG / readingMl;
+  // Far outside one flush's spread: the wrong cup weight, or more than one flush in it (two flushes read 180 % on the
+  // first try of this routine). Nothing is offered then.
+  if (ratio < 0.6 || ratio > 1.4)
+    return {
+      error: `the cup holds ${Math.round(ratio * 100)} % of the pump reading: more than one flush, or the cup's own weight included?`,
+    };
   return {
     valveDumpMl: Math.round(tray * 10) / 10,
     pumpRatio: ratio,

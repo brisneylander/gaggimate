@@ -164,6 +164,17 @@ void Settings::setModelHeatRate(float degreesPerSecond) {
 
 void Settings::setModelLossW(float watts) { modelLossW.set(lag_limits::clampOrOff(watts, lag_limits::STANDING_LOSS_W)); }
 
+void Settings::setValveDumpMl(float value) { valveDumpMl.set(lag_limits::clampOrOff(value, lag_limits::VALVE_DUMP_ML)); }
+void Settings::setFlushTargetFactor(float value) {
+    flushTargetFactor.set(lag_limits::clampOrOff(value, lag_limits::FLUSH_TARGET_FACTOR));
+}
+void Settings::setFlushTargetHoldS(float value) {
+    flushTargetHoldS.set(lag_limits::clampOrOff(value, lag_limits::FLUSH_TARGET_HOLD_S));
+}
+void Settings::setTankRiseC(float value) { tankRiseC.set(lag_limits::clampOrOff(value, lag_limits::TANK_RISE_C)); }
+void Settings::setTankWarmMin(float value) { tankWarmMin.set(lag_limits::clampOrOff(value, lag_limits::TANK_WARM_MIN)); }
+void Settings::setNoRiseBrewS(float value) { noRiseBrewS.set(lag_limits::clampOrOff(value, lag_limits::NO_RISE_BREW_S)); }
+void Settings::setNoRiseSteamS(float value) { noRiseSteamS.set(lag_limits::clampOrOff(value, lag_limits::NO_RISE_STEAM_S)); }
 void Settings::setTankFillC(float degrees) { tankFillC.set(lag_limits::clampOrOff(degrees, lag_limits::TANK_FILL_C)); }
 void Settings::setInletTempC(float degrees) { inletTempC.set(lag_limits::clampOrOff(degrees, lag_limits::INLET_TEMP_C)); }
 

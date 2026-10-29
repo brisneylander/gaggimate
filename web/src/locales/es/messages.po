@@ -75,6 +75,10 @@ msgstr "{diffYears, plural, one {hace # año} other {hace # años}}"
 msgid "{host} isn't answering. Make sure the machine is on and your phone is on the same Wi-Fi network."
 msgstr "{host} no responde. Asegúrate de que la máquina esté encendida y de que tu teléfono esté en la misma red Wi-Fi."
 
+#: src/pages/Settings/tabs/MachineProfilePicker.jsx
+msgid "{label} applied to the form: review, then Save."
+msgstr ""
+
 #: src/pages/Settings/tabs/GeneralTab.jsx
 msgid "{label} severity"
 msgstr "Gravedad de {label}"
@@ -334,6 +338,10 @@ msgstr "Ajustes de la app"
 #: src/app/AppSettings.jsx
 msgid "Appearance"
 msgstr "Apariencia"
+
+#: src/pages/Settings/tabs/MachineProfilePicker.jsx
+msgid "Apply"
+msgstr ""
 
 #: src/pages/Settings/tabs/CalibrationTab.jsx
 msgid "Apply suggested gains"
@@ -759,6 +767,10 @@ msgstr "Elegir otra máquina"
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "Choose which source to prefer when both hardware and Bluetooth scales are available."
 msgstr "Elige qué fuente preferir cuando hay disponibles tanto básculas de hardware como Bluetooth."
+
+#: src/pages/Settings/tabs/MachineProfilePicker.jsx
+msgid "Choose…"
+msgstr ""
 
 #: src/pages/Settings/tabs/CleaningSection.jsx
 msgid "Cleaning & Maintenance"
@@ -1733,6 +1745,10 @@ msgstr "Error al exportar: {message}"
 msgid "Export File"
 msgstr "Exportar archivo"
 
+#: src/pages/Settings/tabs/MachineProfilePicker.jsx
+msgid "Export JSON"
+msgstr ""
+
 #: src/pages/ProfileList/index.jsx
 msgid "Export profile"
 msgstr "Exportar perfil"
@@ -1799,6 +1815,10 @@ msgstr "Campos"
 #: src/pages/ShotAnalyzer/components/shotChart/single/useShotChartReplayExport.js
 msgid "File export failed."
 msgstr "Error al exportar el archivo."
+
+#: src/pages/Settings/tabs/MachineProfilePicker.jsx
+msgid "Fills in the machine-specific values below (boiler model, delays, PID gains, pump calibration, flush to target, tank warming, safety times, temperature offset). Tank temperatures are left as they are."
+msgstr ""
 
 #: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
 msgid "Filter library source"
@@ -1898,6 +1918,14 @@ msgstr "Duración del enjuague"
 #: src/utils/warnings.js
 msgid "Flush recommended"
 msgstr "Enjuague recomendado"
+
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "Flush to target factor"
+msgstr ""
+
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "Flush to target heater hold"
+msgstr ""
 
 #: src/pages/Home/FlushButton.jsx
 msgid "Flush water"
@@ -2148,6 +2176,14 @@ msgstr "Código de configuración de HomeKit"
 msgid "Hostname"
 msgstr "Nombre de host"
 
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "How far above the fill temperature the tank settles after hours beside the hot boiler. 0 uses 18 °C."
+msgstr ""
+
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "How long the heater stays off after a flush to target, until the flush's effect reaches the sensor. 0 uses 30 s."
+msgstr ""
+
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "How many ml/s to pump into the boiler during steaming"
 msgstr "Cuántos ml/s bombear a la caldera mientras se vaporiza"
@@ -2199,6 +2235,10 @@ msgstr "Importa un archivo de extracción o selecciona uno de tu biblioteca para
 msgid "Import failed. Please check the file format."
 msgstr "Error al importar. Comprueba el formato del archivo."
 
+#: src/pages/Settings/tabs/MachineProfilePicker.jsx
+msgid "Import JSON"
+msgstr ""
+
 #: src/pages/ProfileList/index.jsx
 msgid "Import profiles"
 msgstr "Importar perfiles"
@@ -2214,6 +2254,11 @@ msgstr "Importar ajustes"
 #: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarButtons.jsx
 msgid "Import shot or profile"
 msgstr "Importar extracción o perfil"
+
+#. placeholder {0}: errors.join('; ')
+#: src/pages/Settings/tabs/MachineProfilePicker.jsx
+msgid "Imported with warnings: {0}. Review, then Save."
+msgstr ""
 
 #: src/pages/ShotAnalyzer/components/analyzerActionBar/MobileStatusActionsMenu.jsx
 msgid "Importing"
@@ -2501,6 +2546,10 @@ msgstr "La máquina está lista, despiértala para usarla"
 msgid "Machine preheated"
 msgstr "Máquina precalentada"
 
+#: src/pages/Settings/tabs/MachineProfilePicker.jsx
+msgid "Machine profile"
+msgstr ""
+
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "Machine Settings"
 msgstr "Ajustes de la máquina"
@@ -2742,6 +2791,10 @@ msgstr "Varias tarjetas"
 msgid "Must match the physical RATE-jumper configuration on the HX711 board. This setting does not switch the RATE pin."
 msgstr "Debe coincidir con la configuración física del puente RATE en la placa HX711. Este ajuste no conmuta el pin RATE."
 
+#: src/pages/Settings/tabs/MachineProfilePicker.jsx
+msgid "My machine"
+msgstr ""
+
 #: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
 msgid "Name"
 msgstr "Nombre"
@@ -2765,6 +2818,10 @@ msgstr "Nombre para {host}"
 #: src/pages/ShotAnalyzer/components/analysisTable/ColumnControls.jsx
 msgid "Name for new Preset:"
 msgstr "Nombre del nuevo preajuste:"
+
+#: src/pages/Settings/tabs/MachineProfilePicker.jsx
+msgid "Name for this machine profile"
+msgstr ""
 
 #: src/pages/ProfileEdit/ExtendedPhase.jsx
 #: src/pages/ProfileEdit/StandardProfileForm.jsx
@@ -2928,6 +2985,10 @@ msgctxt "relay function"
 msgid "None"
 msgstr "Ninguna"
 
+#: src/pages/Settings/tabs/MachineProfilePicker.jsx
+msgid "Not a valid JSON file."
+msgstr ""
+
 #: src/components/PumpFlowCalibration/Footer.jsx
 msgid "Not connected to the machine"
 msgstr "Sin conexión con la máquina"
@@ -2961,6 +3022,11 @@ msgstr "No registrado"
 #: src/pages/ShotHistory/ShotNotesCard.jsx
 msgid "Notes"
 msgstr "Notas"
+
+#. placeholder {0}: errors.join('; ') || 'no settings in the file'
+#: src/pages/Settings/tabs/MachineProfilePicker.jsx
+msgid "Nothing imported: {0}."
+msgstr ""
 
 #: src/app/AppSettings.jsx
 msgid "Notifications"
@@ -3954,6 +4020,14 @@ msgstr "Tiempo límite de seguridad"
 msgid "Safety Timeout"
 msgstr "Tiempo límite de seguridad"
 
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "Safety: no-rise time (brew)"
+msgstr ""
+
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "Safety: no-rise time (steam)"
+msgstr ""
+
 #: src/pages/ShotAnalyzer/components/analysisTable/AnalysisTableCells.jsx
 msgid "Sample {sampleNumber}"
 msgstr "Muestra {sampleNumber}"
@@ -4265,6 +4339,10 @@ msgstr "Los ajustes aún no se han cargado."
 #: src/pages/ShotAnalyzer/components/shotChart/controls/chartReplayControls.jsx
 msgid "Share"
 msgstr "Compartir"
+
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "Share of the shown surplus a flush to target takes off. Lower it if flushes to target land under the target. 0 uses 1.0 (0.91 on a Silvia)."
+msgstr ""
 
 #: src/pages/Statistics/components/StatisticsMultiSelectDropdown.jsx
 msgid "Shift = Range"
@@ -4681,7 +4759,11 @@ msgid "Std Dev"
 msgstr "Desv. est."
 
 #: src/pages/Settings/tabs/LagCompensationSection.jsx
-msgid "Steady rise at full power, measured mid-warm-up (autotune logs it as k')."
+#~ msgid "Steady rise at full power, measured mid-warm-up (autotune logs it as k')."
+#~ msgstr ""
+
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "Steady rise at full power, measured mid-warm-up (k'). Autotune measures and saves it, with the dead time and heater power."
 msgstr ""
 
 #: src/app/machineStatus.js
@@ -4887,6 +4969,14 @@ msgstr ""
 
 #: src/pages/Settings/tabs/LagCompensationSection.jsx
 msgid "Tank refilled"
+msgstr ""
+
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "Tank warming"
+msgstr ""
+
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "Tank warming time"
 msgstr ""
 
 #: src/pages/Settings/tabs/LagCompensationSection.jsx
@@ -5130,6 +5220,10 @@ msgstr "Los siguientes avisos están activos:"
 msgid "The grinder reaches GaggiMate at this address, so both need to share a network (the E64 WS is 2.4 GHz only) and the address must not change: reserve it for GaggiMate in your router."
 msgstr "El molino accede a GaggiMate a través de esta dirección, así que ambos deben compartir red (el E64 WS solo usa 2.4 GHz) y la dirección no debe cambiar: resérvala para GaggiMate en tu router."
 
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "The heater stops (until a restart) after this long near full power with no water flowing and the temperature not rising: a sensor off the boiler. Raise it for a slow sensor. 0 uses 60 s."
+msgstr ""
+
 #: src/app/appSettings.js
 msgid "The machine has been in steam mode for 5 minutes."
 msgstr "La máquina lleva 5 minutos en modo vapor."
@@ -5137,6 +5231,10 @@ msgstr "La máquina lleva 5 minutos en modo vapor."
 #: src/pages/Settings/PluginCard.jsx
 msgid "The profile's dose is saved to the shot history."
 msgstr "La dosis del perfil se guarda en el historial de extracciones."
+
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "The same at steam temperatures, where steaming milk holds the heater flat out. 0 uses 180 s."
+msgstr ""
 
 #: src/pages/Settings/tabs/BluetoothTab.jsx
 msgid "The scale was found, but the Bluetooth connection failed. Try again or restart the scale."
@@ -5209,6 +5307,10 @@ msgstr "Tiempo"
 #: src/pages/ShotHistory/HistoryChart.jsx
 msgid "Time (s)"
 msgstr "Tiempo (s)"
+
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "Time constant of that warming while the machine is on. 0 uses 120 minutes."
+msgstr ""
 
 #: src/pages/Settings/tabs/LagCompensationSection.jsx
 msgid "Time from water starting to flow until the temperature has dropped about half way; often shorter than the heater's (about 12 s on a Silvia). 0 uses the sensor dead time."
@@ -5578,6 +5680,10 @@ msgstr "Válvula"
 msgid "Valve closed"
 msgstr "Válvula cerrada"
 
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "Valve dump per flush"
+msgstr ""
+
 #: src/pages/ProfileEdit/ExtendedPhase.jsx
 #: src/pages/ProfileEdit/StandardProfileForm.jsx
 msgid "Valve open"
@@ -5732,6 +5838,10 @@ msgstr "Depósito de agua"
 #: src/utils/warnings.js
 msgid "Water tank low"
 msgstr "Depósito de agua bajo"
+
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "Water the 3-way valve dumps into the drip tray when a flush or shot ends: weigh the tray after a flush. It leaves the boiler too. 0 counts none (about 5 ml on a Silvia)."
+msgstr ""
 
 #: src/pages/Statistics/components/toolbar/constants.js
 msgctxt "shot source: browser storage"

@@ -4,7 +4,12 @@
 
 #include "display/core/FlushToTarget.h"
 
-using flush_to_target::plan;
+// Sized as on the Silvia (its profile): 0.91 of the surplus, 5 ml valve dump.
+constexpr float REAL = flush_to_target::SILVIA_SURPLUS_REALISED, DUMP = 5.0f;
+static flush_to_target::Plan plan(float shown, float target, float offset, float w, float rate, float tank, float flow,
+                                  float loss = 0.0f, float hold = 0.0f) {
+    return flush_to_target::plan(shown, target, offset, w, rate, tank, flow, loss, hold, REAL, DUMP);
+}
 
 void setUp() {}
 void tearDown() {}
@@ -12,7 +17,6 @@ void tearDown() {}
 // Silvia on the bench: 1100 W at 0.6 °C/s (1833 J/°C), +5 °C display offset, 30 °C tank, 8.644 ml/s into an open group.
 constexpr float W = 1100.0f, RATE = 0.6f, OFFSET = 5.0f, TANK = 30.0f, FLOW = 8.644f;
 constexpr float NO_LOSS = 1e-6f; // isolates the heat sums from the standing-loss allowance
-constexpr float REAL = flush_to_target::SURPLUS_REALISED, DUMP = lag_limits::VALVE_DUMP_ML;
 
 void test_two_degrees_over_needs_a_short_flush() {
     const auto p = plan(95.0f, 93.0f, OFFSET, W, RATE, TANK, FLOW, NO_LOSS);

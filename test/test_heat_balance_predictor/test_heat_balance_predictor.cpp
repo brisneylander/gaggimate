@@ -241,6 +241,8 @@ struct Result {
     float waterLow;  // lowest boiler water temperature (not the sensor) from the flush/shot start to 2 min after
 };
 
+static constexpr float SILVIA_VALVE_DUMP_ML = 5.0f; // weighed on the bench, 2026-10-29
+
 static Result simulate(const Tuning &tu) {
     const float dt = 0.25f, setpoint = tu.setpointC, room = 22.0f, lossPerK = 0.59f; // ~45 W at 98 °C
     const float plantW = 1100.0f, wallC = 200.0f, waterC = 1296.0f, wallToWater = 9.6f;
@@ -272,6 +274,7 @@ static Result simulate(const Tuning &tu) {
     bool predictorStarted = false;
     const auto startPredictor = [&] {
         predictor.configure(tu.modelW, tu.modelRate, tu.modelDeadS, tu.predictorInletC, tu.waterDeadS);
+        predictor.setValveDump(SILVIA_VALVE_DUMP_ML);
         if (tu.lossSeedW >= 0.0f)
             predictor.seedLoss(tu.lossSeedW);
         predictorStarted = true;
@@ -365,7 +368,7 @@ static Result simulate(const Tuning &tu) {
         boiler += (toWater - water - toGroup) * dt / waterC;
         // As the flush ends the valve dumps the group's water (~5 g of boiler water) into the drip tray.
         if (t < flushEnd && t + dt >= flushEnd)
-            boiler -= lag_limits::VALVE_DUMP_ML * 4.18f * (boiler - inletC) / waterC;
+            boiler -= SILVIA_VALVE_DUMP_ML * 4.18f * (boiler - inletC) / waterC;
         if (t >= flushStart && t < flushStart + 120.0f)
             r.waterLow = std::min(r.waterLow, boiler);
         pipe.push_back(boiler);

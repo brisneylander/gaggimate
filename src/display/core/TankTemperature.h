@@ -19,8 +19,12 @@ class TankTemperature {
     static constexpr int REFILL_LOW_PERCENT = 90;   // the level must have been below this ...
     static constexpr int REFILL_FULL_PERCENT = 100; // ... and reach this again to count as a refill
 
-    // Fill temperature (°C); <= 0 turns the estimate off (the caller keeps its fixed tank setting).
-    void configure(float fillC) {
+    // Fill temperature (°C); <= 0 turns the estimate off (the caller keeps its fixed tank setting). riseC and warmTauS
+    // (<= 0: the Silvia guesses above) are machine-specific; it cools in standby 1.5x slower than it warms.
+    void configure(float fillC, float riseC = 0.0f, float warmTauS = 0.0f) {
+        rise = riseC > 0.0f ? riseC : WARM_RISE_C;
+        warmTau = warmTauS > 0.0f ? warmTauS : WARM_TAU_S;
+        coolTau = warmTau * (COOL_TAU_S / WARM_TAU_S);
         const float f = std::isfinite(fillC) && fillC > 0.0f ? fillC : 0.0f;
         if (f == fill)
             return;
@@ -43,8 +47,8 @@ class TankTemperature {
     void update(float dt, bool machineOn) {
         if (!isEnabled() || !(dt > 0.0f))
             return;
-        const float target = machineOn ? fill + WARM_RISE_C : fill;
-        const float tau = machineOn ? WARM_TAU_S : COOL_TAU_S;
+        const float target = machineOn ? fill + rise : fill;
+        const float tau = machineOn ? warmTau : coolTau;
         temp += (target - temp) * std::min(dt / tau, 1.0f);
     }
 
@@ -63,6 +67,7 @@ class TankTemperature {
   private:
     float fill = 0.0f;
     float temp = 0.0f;
+    float rise = WARM_RISE_C, warmTau = WARM_TAU_S, coolTau = COOL_TAU_S;
     bool primed = false;
     bool wasLow = false;
 };

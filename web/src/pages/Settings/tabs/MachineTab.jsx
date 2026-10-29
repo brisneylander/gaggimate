@@ -358,7 +358,7 @@ export function MachineTab({ formData, onChange, setField }) {
         </div>
       </Section>
 
-      <LagCompensationSection formData={formData} onChange={onChange} />
+      <LagCompensationSection formData={formData} onChange={onChange} setField={setField} />
       <HeaterCoordinationSection formData={formData} onChange={onChange} />
       {hardwareScaleAvailable.value && (
         <Section title={t`Scales`}>

@@ -3,6 +3,7 @@ import { useContext } from 'preact/hooks';
 import { ApiServiceContext } from '../../../services/ApiService.js';
 import Section from '../../../components/Card.jsx';
 import { InputGroupField } from '../../../components/SettingsFormField.jsx';
+import { MachineProfilePicker } from './MachineProfilePicker.jsx';
 
 // Brew-boiler lag compensation; every field 0 keeps the plain PID loop. Each value is 0 (off) or within
 // [min, max]: the same ranges as lag_limits in lib/NanoPbComm/src/LagCompensationLimits.h, which the display and
@@ -16,6 +17,13 @@ const FIELDS = [
   { key: 'modelHeatRate', unit: '°C/s', min: 0.05, max: 3 },
   { key: 'inletTempC', unit: '°C', min: 5, max: 70 },
   { key: 'tankFillC', unit: '°C', min: 5, max: 40 },
+  { key: 'valveDumpMl', unit: 'ml', min: 0.5, max: 30 },
+  { key: 'flushTargetFactor', unit: '×', min: 0.5, max: 1.2 },
+  { key: 'flushTargetHoldS', unit: 's', min: 1, max: 120 },
+  { key: 'tankRiseC', unit: '°C', min: 1, max: 40 },
+  { key: 'tankWarmMin', unit: 'min', min: 10, max: 600 },
+  { key: 'noRiseBrewS', unit: 's', min: 30, max: 300 },
+  { key: 'noRiseSteamS', unit: 's', min: 60, max: 900 },
 ];
 
 const inRangeOrOff = (value, min, max) => {
@@ -23,7 +31,7 @@ const inRangeOrOff = (value, min, max) => {
   return value === '' || v === 0 || (v >= min && v <= max);
 };
 
-export function LagCompensationSection({ formData, onChange }) {
+export function LagCompensationSection({ formData, onChange, setField }) {
   const { t } = useLingui();
   const labels = {
     derivativeFilterS: t`Derivative filter`,
@@ -34,6 +42,13 @@ export function LagCompensationSection({ formData, onChange }) {
     modelHeatRate: t`Full-power heat-up rate`,
     inletTempC: t`Tank water temperature`,
     tankFillC: t`Tank fill temperature`,
+    valveDumpMl: t`Valve dump per flush`,
+    flushTargetFactor: t`Flush to target factor`,
+    flushTargetHoldS: t`Flush to target heater hold`,
+    tankRiseC: t`Tank warming`,
+    tankWarmMin: t`Tank warming time`,
+    noRiseBrewS: t`Safety: no-rise time (brew)`,
+    noRiseSteamS: t`Safety: no-rise time (steam)`,
   };
   const help = {
     derivativeFilterS: t`Smooths the D term so thermocouple steps don't switch the heater. Try 2 s; long filters delay its braking.`,
@@ -41,9 +56,16 @@ export function LagCompensationSection({ formData, onChange }) {
     sensorDeadTimeS: t`Delay from heater on to the temperature starting to rise.`,
     waterDeadTimeS: t`Time from water starting to flow until the temperature has dropped about half way; often shorter than the heater's (about 12 s on a Silvia). 0 uses the sensor dead time.`,
     modelHeaterW: t`Element power, e.g. 1100 W for a 230 V Rancilio Silvia.`,
-    modelHeatRate: t`Steady rise at full power, measured mid-warm-up (autotune logs it as k').`,
+    modelHeatRate: t`Steady rise at full power, measured mid-warm-up (k'). Autotune measures and saves it, with the dead time and heater power.`,
     inletTempC: t`Temperature of the water drawn in by a shot or flush. A tank beside the boiler warms up; 0 assumes 23 °C. Used while the tank fill temperature is 0.`,
     tankFillC: t`Temperature of fresh tank water (lower in winter). Set it to estimate the tank instead: it warms while the machine is on and resets on a refill. 0 uses the fixed tank water temperature.`,
+    valveDumpMl: t`Water the 3-way valve dumps into the drip tray when a flush or shot ends: weigh the tray after a flush. It leaves the boiler too. 0 counts none (about 5 ml on a Silvia).`,
+    flushTargetFactor: t`Share of the shown surplus a flush to target takes off. Lower it if flushes to target land under the target. 0 uses 1.0 (0.91 on a Silvia).`,
+    flushTargetHoldS: t`How long the heater stays off after a flush to target, until the flush's effect reaches the sensor. 0 uses 30 s.`,
+    tankRiseC: t`How far above the fill temperature the tank settles after hours beside the hot boiler. 0 uses 18 °C.`,
+    tankWarmMin: t`Time constant of that warming while the machine is on. 0 uses 120 minutes.`,
+    noRiseBrewS: t`The heater stops (until a restart) after this long near full power with no water flowing and the temperature not rising: a sensor off the boiler. Raise it for a slow sensor. 0 uses 60 s.`,
+    noRiseSteamS: t`The same at steam temperatures, where steaming milk holds the heater flat out. 0 uses 180 s.`,
   };
   const learnedLoss = Math.round(Number(formData.modelLossW) || 0);
   const tankEstimate = Math.round(Number(formData.tankEstimateC) || 0);
@@ -51,6 +73,7 @@ export function LagCompensationSection({ formData, onChange }) {
   const onTankRefilled = () => apiService.send({ tp: 'req:tank:refilled' });
   return (
     <Section title={t`Boiler Lag Compensation`} className='h-full'>
+      {setField && <MachineProfilePicker formData={formData} setField={setField} />}
       <p className='mb-4 text-sm opacity-70'>
         <Trans>
           For boilers where the temperature sensor reacts long after the heater. Heater power,

@@ -294,7 +294,9 @@ void GaggiMateController::setup() {
             derivativeFilterS, integralZone, clampOrOff(settings.sensor_dead_time_s, SENSOR_DEAD_TIME_S),
             clampOrOff(settings.model_heater_w, HEATER_W), clampOrOff(settings.model_heat_rate, HEAT_RATE_C_PER_S),
             clampOrOff(settings.model_loss_w, STANDING_LOSS_W), clampOrOff(settings.inlet_temp_c, INLET_TEMP_C),
-            clampOrOff(settings.water_dead_time_s, WATER_DEAD_TIME_S));
+            clampOrOff(settings.water_dead_time_s, WATER_DEAD_TIME_S), clampOrOff(settings.valve_dump_ml, VALVE_DUMP_ML),
+            clampOrOff(settings.safety_no_rise_brew_s, NO_RISE_BREW_S),
+            clampOrOff(settings.safety_no_rise_steam_s, NO_RISE_STEAM_S));
         if (heater2 != nullptr) {
             heater2->setTunings(settings.kp, settings.ki, settings.kd);
             // The heat-balance model describes the brew boiler only; the steam boiler keeps the plain loop.

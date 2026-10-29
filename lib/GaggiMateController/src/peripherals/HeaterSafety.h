@@ -60,6 +60,12 @@ class HeaterSafety {
         return tripped == Reason::None;
     }
 
+    // Machine-specific "no rise" windows in seconds (<= 0 keeps the defaults): longer for a slower sensor.
+    void setNoRiseLimits(float brewS, float steamS) {
+        noRiseBrewMs = brewS > 0.0f ? static_cast<uint32_t>(brewS * 1000.0f) : NO_RISE_BREW_MS;
+        noRiseSteamMs = steamS > 0.0f ? static_cast<uint32_t>(steamS * 1000.0f) : NO_RISE_STEAM_MS;
+    }
+
     bool permits() const { return tripped == Reason::None; }
     Reason reason() const { return tripped; }
     static const char *describe(Reason r) {
@@ -119,7 +125,7 @@ class HeaterSafety {
             noRiseLowest = temperature;
             return;
         }
-        const uint32_t limit = setpoint >= STEAM_SETPOINT_C ? NO_RISE_STEAM_MS : NO_RISE_BREW_MS;
+        const uint32_t limit = setpoint >= STEAM_SETPOINT_C ? noRiseSteamMs : noRiseBrewMs;
         if (nowMs - noRiseStartMs >= limit)
             trip(Reason::NoRise);
     }
@@ -138,6 +144,8 @@ class HeaterSafety {
     }
 
     Reason tripped = Reason::None;
+    uint32_t noRiseBrewMs = NO_RISE_BREW_MS;
+    uint32_t noRiseSteamMs = NO_RISE_STEAM_MS;
     int faultSteps = 0;
     bool haveLast = false;
     float lastTemp = 0.0f;

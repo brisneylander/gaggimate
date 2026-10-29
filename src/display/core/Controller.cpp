@@ -764,7 +764,7 @@ void Controller::loopTank() {
         return;
     const float dt = lastTankMs != 0 ? static_cast<float>(now - lastTankMs) / 1000.0f : 0.0f;
     lastTankMs = now != 0 ? now : 1;
-    tank.configure(settings.getTankFillC());
+    tank.configure(settings.getTankFillC(), settings.getTankRiseC(), settings.getTankWarmMin() * 60.0f);
     tank.update(dt, mode != MODE_STANDBY);
     if (systemInfo.capabilities.tof && tank.onWaterLevel(getWaterLevel()))
         ESP_LOGI(LOG_TAG, "Water level back to full: tank estimate reset to %.0f°C", tank.get());
@@ -1035,6 +1035,9 @@ void Controller::setHeaterSettings() {
     lag.inletTempC = getTankTempC();
     tankSentC = lag.inletTempC;
     lag.waterDeadTimeS = settings.getWaterDeadTimeS();
+    lag.valveDumpMl = settings.getValveDumpMl();
+    lag.noRiseBrewS = settings.getNoRiseBrewS();
+    lag.noRiseSteamS = settings.getNoRiseSteamS();
     comms.sendHeaterSettings(pid[0], pid[1], pid[2], pid[3], settings.isHeaterCoordinationEnabled(),
                              static_cast<uint32_t>(settings.getHeaterHandoverMs()), lag);
 }
@@ -1703,7 +1706,8 @@ flush_to_target::Plan Controller::flushToTarget() {
     const float target = profileManager->getSelectedProfile().temperature;
     flush_to_target::Plan plan = flush_to_target::plan(
         getCurrentTemp(), target, static_cast<float>(settings.getTemperatureOffset()), settings.getModelHeaterW(),
-        settings.getModelHeatRate(), getTankTempC(), coeffs[0], settings.getModelLossW(), FLUSH_TO_TARGET_HOLD_S);
+        settings.getModelHeatRate(), getTankTempC(), coeffs[0], settings.getModelLossW(), flushTargetHoldS(),
+        settings.getFlushTargetFactor() > 0.0f ? settings.getFlushTargetFactor() : 1.0f, settings.getValveDumpMl());
     if (plan.reason == nullptr && mode != MODE_BREW)
         plan.reason = "only in Brew mode";
     if (plan.reason == nullptr && isActive())
@@ -1717,7 +1721,7 @@ flush_to_target::Plan Controller::flushToTarget() {
     // The flush is sized so the boiler lands on target with only its standing loss after it. Left alone, the predictor
     // sees the cold water and the PID heats at full power (17.7 kJ, ~10 °C of rebound, on the first bench run), so the
     // heater stays off for the flush and until its effect has reached the sensor.
-    flushToTargetHoldUntil = millis() + static_cast<unsigned long>((plan.seconds + FLUSH_TO_TARGET_HOLD_S) * 1000.0f);
+    flushToTargetHoldUntil = millis() + static_cast<unsigned long>((plan.seconds + flushTargetHoldS()) * 1000.0f);
     if (flushToTargetHoldUntil == 0)
         flushToTargetHoldUntil = 1;
     startFlush(plan.seconds);

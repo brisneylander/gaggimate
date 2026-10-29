@@ -58,7 +58,8 @@ class Heater {
     //   inletTempC: tank water temperature for the predictor and the thermal feedforward (<= 0: keep 23 °C)
     //   waterDeadTimeS: delay from water flowing to the sensor reacting (<= 0: same as sensorDeadTimeS)
     void setLagCompensation(float derivativeFilterS, float integralZoneC, float sensorDeadTimeS, float modelHeaterW,
-                            float modelHeatRate, float modelLossW = 0.0f, float inletTempC = 0.0f, float waterDeadTimeS = 0.0f);
+                            float modelHeatRate, float modelLossW = 0.0f, float inletTempC = 0.0f, float waterDeadTimeS = 0.0f,
+                            float valveDumpMl = 0.0f, float noRiseBrewS = 0.0f, float noRiseSteamS = 0.0f);
     float getControlTemperature() const { return controlTemperature; }
     // Predictor's learned standing loss (W), 0 while the predictor is off.
     float getLearnedLossWatts();

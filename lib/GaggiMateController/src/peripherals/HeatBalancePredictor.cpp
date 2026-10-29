@@ -1,5 +1,4 @@
 #include "HeatBalancePredictor.h"
-#include "LagCompensationLimits.h"
 #include <algorithm>
 #include <cmath>
 #include <numeric>
@@ -57,7 +56,7 @@ float HeatBalancePredictor::update(float dt, float duty, float flow, float measu
     // When the water stops the valve dumps the group's water into the drip tray: boiler water the flow didn't count.
     float waterJ = waterPower * dt;
     if (flow == 0.0f && lastFlow > 0.0f)
-        waterJ += lag_limits::VALVE_DUMP_ML * WATER_SPECIFIC_HEAT * std::max(measuredTemp - inletTemp, 0.0f);
+        waterJ += valveDumpMl * WATER_SPECIFIC_HEAT * std::max(measuredTemp - inletTemp, 0.0f);
     lastFlow = flow;
 
     // Standing losses: at rest near setpoint the heater power that holds temperature is the loss. Learning it

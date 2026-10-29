@@ -375,6 +375,20 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
                 settings->setModelHeatRate(request->arg("modelHeatRate").toFloat());
             if (request->hasArg("modelLossW")) // 0 = forget the learned value (controller reseeds on its next boot)
                 settings->setModelLossW(request->arg("modelLossW").toFloat());
+            if (request->hasArg("valveDumpMl"))
+                settings->setValveDumpMl(request->arg("valveDumpMl").toFloat());
+            if (request->hasArg("flushTargetFactor"))
+                settings->setFlushTargetFactor(request->arg("flushTargetFactor").toFloat());
+            if (request->hasArg("flushTargetHoldS"))
+                settings->setFlushTargetHoldS(request->arg("flushTargetHoldS").toFloat());
+            if (request->hasArg("tankRiseC"))
+                settings->setTankRiseC(request->arg("tankRiseC").toFloat());
+            if (request->hasArg("tankWarmMin"))
+                settings->setTankWarmMin(request->arg("tankWarmMin").toFloat());
+            if (request->hasArg("noRiseBrewS"))
+                settings->setNoRiseBrewS(request->arg("noRiseBrewS").toFloat());
+            if (request->hasArg("noRiseSteamS"))
+                settings->setNoRiseSteamS(request->arg("noRiseSteamS").toFloat());
             if (request->hasArg("tankFillC"))
                 settings->setTankFillC(request->arg("tankFillC").toFloat());
             if (request->hasArg("inletTempC"))
@@ -588,6 +602,13 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
     doc["modelLossW"] = settings.getModelLossW();
     doc["inletTempC"] = settings.getInletTempC();
     doc["tankFillC"] = settings.getTankFillC();
+    doc["valveDumpMl"] = settings.getValveDumpMl();
+    doc["flushTargetFactor"] = settings.getFlushTargetFactor();
+    doc["flushTargetHoldS"] = settings.getFlushTargetHoldS();
+    doc["tankRiseC"] = settings.getTankRiseC();
+    doc["tankWarmMin"] = settings.getTankWarmMin();
+    doc["noRiseBrewS"] = settings.getNoRiseBrewS();
+    doc["noRiseSteamS"] = settings.getNoRiseSteamS();
     doc["tankEstimateC"] = controller->getTankEstimateC();         // read-only: 0 while the estimate is off
     doc["tankFlushImpliedC"] = controller->getFlushImpliedTankC(); // read-only: last plain flush, 0 = none
     doc["waterDeadTimeS"] = settings.getWaterDeadTimeS();

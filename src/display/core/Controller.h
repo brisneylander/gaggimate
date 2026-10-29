@@ -311,7 +311,10 @@ class Controller {
     static const unsigned long LOSS_SAVE_INTERVAL_MS = 10UL * 60UL * 1000UL;
     unsigned long lastLossSaveMs = 0;
     // Heater held off until this millis() after a flush to target; 0 = no hold.
-    static constexpr float FLUSH_TO_TARGET_HOLD_S = 30.0f;
+    static constexpr float FLUSH_TO_TARGET_HOLD_S = 30.0f; // default heater hold after a flush to target
+    float flushTargetHoldS() const {
+        return settings.getFlushTargetHoldS() > 0.0f ? settings.getFlushTargetHoldS() : FLUSH_TO_TARGET_HOLD_S;
+    }
     static constexpr unsigned long TANK_UPDATE_MS = 10000;
     unsigned long flushToTargetHoldUntil = 0;
     StrayFlowGuard strayFlowGuard; // see StrayFlowGuard.h

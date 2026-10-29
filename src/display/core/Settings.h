@@ -108,6 +108,13 @@ class Settings {
     float getModelLossW() const { return modelLossW.get(); } // learned by the controller, saved here
     float getInletTempC() const { return inletTempC.get(); }
     float getTankFillC() const { return tankFillC.get(); }
+    float getValveDumpMl() const { return valveDumpMl.get(); }
+    float getFlushTargetFactor() const { return flushTargetFactor.get(); }
+    float getFlushTargetHoldS() const { return flushTargetHoldS.get(); }
+    float getTankRiseC() const { return tankRiseC.get(); }
+    float getTankWarmMin() const { return tankWarmMin.get(); }
+    float getNoRiseBrewS() const { return noRiseBrewS.get(); }
+    float getNoRiseSteamS() const { return noRiseSteamS.get(); }
     float getWaterDeadTimeS() const { return waterDeadTimeS.get(); }
     bool isFlushButtonToTarget() const { return flushButtonToTarget.get(); }
     String getPid() const { return pid.get(); }
@@ -233,6 +240,13 @@ class Settings {
     void setModelLossW(float watts);
     void setInletTempC(float degrees);
     void setTankFillC(float degrees);
+    void setValveDumpMl(float value);
+    void setFlushTargetFactor(float value);
+    void setFlushTargetHoldS(float value);
+    void setTankRiseC(float value);
+    void setTankWarmMin(float value);
+    void setNoRiseBrewS(float value);
+    void setNoRiseSteamS(float value);
     void setWaterDeadTimeS(float seconds);
     void setFlushButtonToTarget(bool enabled);
     void setPumpModelCoeffs(const String &pumpModelCoeffs);
@@ -391,7 +405,14 @@ class Settings {
     Property<float> modelHeatRate{registry, "lc_hr", 0.0f};
     Property<float> modelLossW{registry, "lc_lw", 0.0f};
     Property<float> inletTempC{registry, "lc_it", 0.0f};
-    Property<float> tankFillC{registry, "tk_fill", 0.0f}; // fresh tank water (°C) for the tank estimate, 0 = off
+    Property<float> tankFillC{registry, "tk_fill", 0.0f};        // fresh tank water (°C) for the tank estimate, 0 = off
+    Property<float> valveDumpMl{registry, "lc_vd", 0.0f};        // ml the valve dumps after a flush or shot, 0 = none
+    Property<float> flushTargetFactor{registry, "ft_fac", 0.0f}; // flush to target's share of the surplus, 0 = 1.0
+    Property<float> flushTargetHoldS{registry, "ft_hold", 0.0f}; // heater off after a flush to target (s), 0 = 30
+    Property<float> tankRiseC{registry, "tk_rise", 0.0f};        // tank warming above the fill temperature (°C), 0 = 18
+    Property<float> tankWarmMin{registry, "tk_warm", 0.0f};      // tank warming time constant (min), 0 = 120
+    Property<float> noRiseBrewS{registry, "sf_nrb", 0.0f};       // heater safety window at brew setpoints (s), 0 = 60
+    Property<float> noRiseSteamS{registry, "sf_nrs", 0.0f};      // heater safety window at steam setpoints (s), 0 = 180
     Property<float> waterDeadTimeS{registry, "lc_wd", 0.0f};
     Property<bool> flushButtonToTarget{registry, "fl_tt", true};
 

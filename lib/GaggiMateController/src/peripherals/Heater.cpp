@@ -98,7 +98,8 @@ void Heater::setFeedforwardScale(float combinedKff) {
 }
 
 void Heater::setLagCompensation(float derivativeFilterS, float integralZoneC, float sensorDeadTimeS, float modelHeaterW,
-                                float modelHeatRate, float modelLossW, float inletTempC, float waterDeadTimeS) {
+                                float modelHeatRate, float modelLossW, float inletTempC, float waterDeadTimeS, float valveDumpMl,
+                                float noRiseBrewS, float noRiseSteamS) {
     std::lock_guard<std::mutex> lock(lagMutex);
     simplePid->setDerivativeFilterTime(derivativeFilterS);
     simplePid->setIntegralZone(integralZoneC);
@@ -111,6 +112,8 @@ void Heater::setLagCompensation(float derivativeFilterS, float integralZoneC, fl
     incomingWaterTemp = inletTempC > 0.0f ? inletTempC : 23.0f;
     predictor.configure(modelHeaterW, modelHeatRate, sensorDeadTimeS, incomingWaterTemp, waterDeadTimeS);
     predictor.seedLoss(modelLossW);
+    predictor.setValveDump(valveDumpMl);
+    safety.setNoRiseLimits(noRiseBrewS, noRiseSteamS);
     ESP_LOGI(LOG_TAG,
              "Lag compensation: D filter %.1fs, I zone %.2f°C, dead time %.1fs, predictor %s (%.0fW, %.3f°C/s, water %.1fs), "
              "inlet %.1f°C",

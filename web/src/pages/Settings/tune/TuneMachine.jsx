@@ -182,6 +182,29 @@ export function TuneMachine({ formData, setField }) {
   const busy = phase === 'flushing' || phase === 'steam' || phase === 'peak' || phase === 'target';
   const modelSet = Number(formData.modelHeaterW) > 0 && Number(formData.modelHeatRate) > 0;
   const connected = Number.isFinite(live.ct);
+  const stepThreeRunning = phase === 'steam' || phase === 'peak' || phase === 'target';
+  // Brew mode and the steady-temperature wait: shown under whichever step is about to start.
+  const steadyLine =
+    live.mode !== 1 ? (
+      <button
+        type='button'
+        className='btn btn-sm'
+        onClick={() => api.send({ tp: 'req:change-mode', mode: 1 })}
+      >
+        <Trans>Switch to Brew</Trans>
+      </button>
+    ) : (
+      <span className='opacity-70'>
+        {isSteady ? (
+          <Trans>Steady at {live.ct?.toFixed(1)} °C</Trans>
+        ) : (
+          <Trans>
+            Waiting for a steady {live.tt} °C ({live.ct?.toFixed(1)} °C now, {Math.round(steadyFor)}{' '}
+            of {STEADY_S} s)
+          </Trans>
+        )}
+      </span>
+    );
   // Why a step can't start yet (the first unmet condition), or null when it can.
   const commonBlock = () => {
     if (!connected) return t`waiting for the machine's readings`;
@@ -258,26 +281,7 @@ export function TuneMachine({ formData, setField }) {
             <Trans>Portafilter out, cup in place, drip tray empty</Trans>
           </label>
           <div className='mt-2'>
-            {live.mode !== 1 ? (
-              <button
-                type='button'
-                className='btn btn-sm'
-                onClick={() => api.send({ tp: 'req:change-mode', mode: 1 })}
-              >
-                <Trans>Switch to Brew</Trans>
-              </button>
-            ) : (
-              <span className='opacity-70'>
-                {isSteady ? (
-                  <Trans>Steady at {live.ct?.toFixed(1)} °C</Trans>
-                ) : (
-                  <Trans>
-                    Waiting for a steady {live.tt} °C ({live.ct?.toFixed(1)} °C now,{' '}
-                    {Math.round(steadyFor)} of {STEADY_S} s)
-                  </Trans>
-                )}
-              </span>
-            )}{' '}
+            {!flushResult && !stepThreeRunning && steadyLine}{' '}
             {/* One flush per weighing: a second press would add to the cup already being measured. */}
             {flushResult ? (
               <button
@@ -394,6 +398,9 @@ export function TuneMachine({ formData, setField }) {
           >
             <Trans>Start</Trans>
           </button>
+          {flushResult && !stepThreeRunning && !targetResult && (
+            <div className='mt-2'>{steadyLine}</div>
+          )}
           {targetBlock && phase !== 'steam' && phase !== 'peak' && phase !== 'target' && (
             <span className='ml-2 opacity-70'>({targetBlock})</span>
           )}

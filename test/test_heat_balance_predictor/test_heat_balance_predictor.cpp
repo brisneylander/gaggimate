@@ -21,6 +21,7 @@ static uint32_t millis() { return fakeNow; }
 
 #include "SimplePID/SimplePID.cpp"
 #include "peripherals/HeatBalancePredictor.cpp"
+#include "peripherals/ThermalObserver.cpp"
 
 void setUp() {}
 void tearDown() {}
@@ -214,6 +215,10 @@ struct Tuning {
     float setpointC = 98.0f;
     // Thermal feedforward as Heater::loopPid (settings kf, output units per watt; 1000 / 1100 W = the water's heat exactly).
     float kff = 0.0f;
+    // Control on the thermal observer's water estimate instead of sensor + predictor correction (needs model W/rate
+    // and waterDeadS).
+    bool observer = false;
+    float observerGroupWeight = 0.0f;
 };
 
 struct Result {
@@ -225,6 +230,9 @@ struct Result {
     float startSag;  // lowest (sensor - setpoint) in the 10 minutes after the predictor starts (predictorStartS > 0)
     float backAt;    // s after the flush starts until the sensor first climbs back to setpoint
     float waterLow;  // lowest boiler water temperature (not the sensor) from the flush/shot start to 2 min after
+    float sensorSettledAt = -1.0f; // s after the start from which the sensor stays within ±0.3 °C of setpoint
+    float waterSettledAt = -1.0f;  // the same for the water itself
+    float waterOver = 0.0f;        // highest water temperature above setpoint after the start
 };
 
 static Result simulate(const Tuning &tu) {
@@ -255,6 +263,12 @@ static Result simulate(const Tuning &tu) {
     pid.setMode(SimplePID::Control::automatic);
 
     HeatBalancePredictor predictor;
+    ThermalObserver obs;
+    if (tu.observer)
+        obs.configure(tu.modelW, tu.modelRate, tu.waterDeadS, tu.predictorInletC);
+    obs.groupWeight = tu.observerGroupWeight;
+    float obsLastFlow = 0.0f;
+    bool obsPrimed = false;
     bool predictorStarted = false;
     const auto startPredictor = [&] {
         predictor.configure(tu.modelW, tu.modelRate, tu.modelDeadS, tu.predictorInletC, tu.waterDeadS);
@@ -299,6 +313,16 @@ static Result simulate(const Tuning &tu) {
             if (predictorStarted)
                 predictor.update(1.0f, output / 1000.0f, flow, measured, sp);
             control = measured + predictor.getCorrection();
+            if (tu.observer) {
+                if (!obsPrimed) {
+                    obs.reset(measured, tu.lossSeedW > 0.0f ? tu.lossSeedW : 45.0f);
+                    obsPrimed = true;
+                }
+                const float dump = (obsLastFlow > 0.0f && flow == 0.0f) ? lag_limits::VALVE_DUMP_ML : 0.0f;
+                obsLastFlow = flow;
+                obs.update(1.0f, output / 1000.0f, flow, dump, measured);
+                control = obs.getSettling();
+            }
             if (tu.kff > 0.0f && flow > 0.01f) {
                 // Heater::calculateDisturbanceFeedforwardGain + calculateSafetyScaling (without its smoothing)
                 const float err = measured - sp;
@@ -356,6 +380,19 @@ static Result simulate(const Tuning &tu) {
             boiler -= lag_limits::VALVE_DUMP_ML * 4.18f * (boiler - inletC) / waterC;
         if (t >= flushStart && t < flushStart + 120.0f)
             r.waterLow = std::min(r.waterLow, boiler);
+        if (t >= flushStart) {
+            r.waterOver = std::max(r.waterOver, boiler - setpoint);
+            if (std::fabs(boiler - setpoint) > 0.3f)
+                r.waterSettledAt = -1.0f;
+            else if (r.waterSettledAt < 0.0f)
+                r.waterSettledAt = t - flushStart;
+            if (step % 4 == 0) {
+                if (std::fabs(ema - setpoint) > 0.3f)
+                    r.sensorSettledAt = -1.0f;
+                else if (r.sensorSettledAt < 0.0f)
+                    r.sensorSettledAt = t - flushStart;
+            }
+        }
         pipe.push_back(boiler);
         const float delayed = pipe.front();
         pipe.pop_front();
@@ -367,6 +404,11 @@ static Result simulate(const Tuning &tu) {
     r.idleP2P = idleMax - idleMin;
     r.idleSwing = swingSum / static_cast<float>(swingN);
     return r;
+}
+
+static void reportSettle(const char *name, const Result &r) {
+    printf("%-34s sensor settled %5.0f s, water settled %5.0f s, water low %6.2f, water over %5.2f, settle err %4.2f\n", name,
+           r.sensorSettledAt, r.waterSettledAt, r.waterLow, r.waterOver, r.settleErr);
 }
 
 static void report(const char *name, const Result &r) {
@@ -601,6 +643,70 @@ void test_shot_feedforward() {
     }
 }
 
+// The thermal observer against the predictor, on the bench flush (exact and ±25 % model) and the logged shot. Controlling
+// on the water now overshoots (the element's stored heat); on the settling temperature it matches the predictor at the
+// same gains, and it lets Kp double (no sensor lag in the loop): water within ±0.3 °C after ~140 s instead of ~230, with
+// ~0.5 °C over, where the predictor at Kp 120 overshoots 1.4 °C. With the model 25 % off or the tank setting 10 °C warm
+// the observer's water settles more slowly (256-288 s): its bias correction is slow. Not wired into the heater yet.
+void test_observer_vs_predictor() {
+    Tuning pred = compensated();
+    Tuning obs = compensated();
+    obs.observer = true;
+    reportSettle("flush: predictor", simulate(pred));
+    reportSettle("flush: observer", simulate(obs));
+    for (float gw : {0.25f, 0.5f, 1.0f}) {
+        Tuning og = obs;
+        og.observerGroupWeight = gw;
+        char name[48];
+        snprintf(name, sizeof(name), "flush: observer, group %.2f", gw);
+        reportSettle(name, simulate(og));
+        og.plantInletC = 25.0f;
+        snprintf(name, sizeof(name), "flush, tank off: obs, group %.2f", gw);
+        reportSettle(name, simulate(og));
+    }
+    for (float rate : {0.45f, 0.75f}) {
+        Tuning p2 = pred, o2 = obs;
+        p2.modelRate = o2.modelRate = rate;
+        char name[48];
+        snprintf(name, sizeof(name), "flush, rate %.2f: predictor", rate);
+        reportSettle(name, simulate(p2));
+        snprintf(name, sizeof(name), "flush, rate %.2f: observer", rate);
+        reportSettle(name, simulate(o2));
+    }
+    Tuning pi = pred, oi = obs;
+    pi.plantInletC = oi.plantInletC = 25.0f; // tank setting 10 °C warm, as on the bench
+    reportSettle("flush, tank off: predictor", simulate(pi));
+    Result predFast{}, obsFast{};
+    for (bool useObs : {false, true}) {
+        Tuning t2 = useObs ? obs : pred;
+        t2.observerGroupWeight = 0.25f;
+        t2.kp = 120.0f;
+        (useObs ? obsFast : predFast) = simulate(t2);
+        reportSettle(useObs ? "Kp 120: observer" : "Kp 120: predictor", useObs ? obsFast : predFast);
+        t2.plantInletC = 25.0f;
+        reportSettle(useObs ? "Kp 120, tank off: observer" : "Kp 120, tank off: predictor", simulate(t2));
+        t2.plantInletC = 35.0f;
+        t2.modelRate = 0.45f;
+        reportSettle(useObs ? "Kp 120, rate 0.45: observer" : "Kp 120, rate 0.45: predictor", simulate(t2));
+        t2.modelRate = 0.75f;
+        reportSettle(useObs ? "Kp 120, rate 0.75: observer" : "Kp 120, rate 0.75: predictor", simulate(t2));
+    }
+    reportSettle("flush, tank off: observer", simulate(oi));
+    Tuning off;
+    off.kd = 1500.0f;
+    reportSettle("flush: PID only", simulate(off));
+    TEST_ASSERT_TRUE(obsFast.waterOver < 0.5f * predFast.waterOver);
+    TEST_ASSERT_TRUE(obsFast.waterSettledAt > 0.0f && obsFast.waterSettledAt < 180.0f);
+    TEST_ASSERT_TRUE(obsFast.settleErr < 0.3f);
+    Tuning ps = pred, os = obs;
+    ps.flowProfile = os.flowProfile = LONDONIUM_SHOT;
+    ps.setpointC = os.setpointC = 93.0f;
+    ps.plantInletC = os.plantInletC = ps.predictorInletC = os.predictorInletC = 32.0f;
+    const Result rps = simulate(ps), ros = simulate(os);
+    printf("shot: predictor sensor low %.2f water low %.2f peak %.2f | observer sensor low %.2f water low %.2f peak %.2f\n",
+           rps.dipMin, rps.waterLow, rps.peak, ros.dipMin, ros.waterLow, ros.peak);
+}
+
 int main(int argc, char **argv) {
     UNITY_BEGIN();
     RUN_TEST(test_disabled_when_any_parameter_missing);
@@ -625,5 +731,6 @@ int main(int argc, char **argv) {
     RUN_TEST(test_full_power_reheat_with_model_mismatch);
     RUN_TEST(test_bench_configurations);
     RUN_TEST(test_shot_feedforward);
+    RUN_TEST(test_observer_vs_predictor);
     return UNITY_END();
 }

@@ -5,7 +5,13 @@ on 2026-10-28 left open. See [FORK.md](FORK.md) for building and releasing.
 
 ## Planned
 
-1. **A small thermal model at the centre.** Three heat stores (element and wall, water, group head), driven by
+1. **A small thermal model at the centre.** *Started 2026-10-29:* `ThermalObserver` (controller lib) runs the fitted
+   three-node plant with the sensor's delay and lag, corrected by the reading plus a slow heat bias, and reports where
+   the water is heading (water + the element's stored heat, + a quarter of the group's deficit). In the simulator it
+   lets Kp double without overshoot (water within ±0.3 °C after ~140 s vs ~230 s today, 0.5 °C over vs 1.4 °C for the
+   predictor at the same Kp), but with the model 25 % off or the tank setting wrong its water settles in 256-288 s,
+   slower than today. Next: faster, safer bias learning; then wire it in behind a setting and A/B it on flushes.
+   Original idea: Three heat stores (element and wall, water, group head), driven by
    heater duty, pump flow and inlet temperature. A Kalman-filter state estimator, corrected by the sensor, gives the
    water temperature *now*; the controller acts on that instead of a reading ~20 s old. The heat-balance predictor
    (`lib/GaggiMateController/src/peripherals/HeatBalancePredictor.*`) is the minimal version.

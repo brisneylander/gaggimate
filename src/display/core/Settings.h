@@ -109,7 +109,6 @@ class Settings {
     float getInletTempC() const { return inletTempC.get(); }
     float getWaterDeadTimeS() const { return waterDeadTimeS.get(); }
     bool isReheatFullPower() const { return reheatFullPower.get(); }
-    float getFlushBoostC() const { return flushBoostC.get(); }
     bool isFlushButtonToTarget() const { return flushButtonToTarget.get(); }
     String getPid() const { return pid.get(); }
     String getPumpModelCoeffs() const { return pumpModelCoeffs.get(); }
@@ -235,7 +234,6 @@ class Settings {
     void setInletTempC(float degrees);
     void setWaterDeadTimeS(float seconds);
     void setReheatFullPower(bool enabled);
-    void setFlushBoostC(float degrees);
     void setFlushButtonToTarget(bool enabled);
     void setPumpModelCoeffs(const String &pumpModelCoeffs);
     void setPumpSlipCoeffs(const String &pumpSlipCoeffs);
@@ -395,7 +393,6 @@ class Settings {
     Property<float> inletTempC{registry, "lc_it", 0.0f};
     Property<float> waterDeadTimeS{registry, "lc_wd", 0.0f};
     Property<bool> reheatFullPower{registry, "lc_rh", false};
-    Property<float> flushBoostC{registry, "lc_fb", 0.0f}; // 0 = off
     Property<bool> flushButtonToTarget{registry, "fl_tt", true};
 
     // Display settings

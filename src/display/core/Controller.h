@@ -1,7 +1,6 @@
 #ifndef CONTROLLER_H
 #define CONTROLLER_H
 
-#include "FlushBoost.h"
 #include "FlushToTarget.h"
 #include "GaggiMateClient.h"
 #include "PluginManager.h"
@@ -164,7 +163,6 @@ class Controller {
 
   private:
     bool startFlush(float durationS); // 0 = hold-to-flush; false if a process was already running
-    void loopFlushBoost();
     // Initialization methods
 #ifndef GAGGIMATE_HEADLESS
     void setupPanel();
@@ -301,9 +299,6 @@ class Controller {
     // Heater held off until this millis() after a flush to target; 0 = no hold.
     static constexpr float FLUSH_TO_TARGET_HOLD_S = 30.0f;
     unsigned long flushToTargetHoldUntil = 0;
-    // Boost after flush (settings flushBoostC): armed by onFlush(), runs once that flush ends (see FlushBoost.h).
-    bool boostAfterFlush = false;
-    flush_boost::Boost flushBoost;
     bool processCompleted = false;
     bool steamReady = false;
     bool steamSwitchOn = false;

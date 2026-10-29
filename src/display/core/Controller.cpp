@@ -686,13 +686,6 @@ void Controller::loopLogic() {
     if (processEnded)
         afterDeactivate();
     dispatchEvents(events);
-    if (processEnded && boostAfterFlush) {
-        boostAfterFlush = false;
-        flushBoost.start(millis());
-        ESP_LOGI(LOG_TAG, "Boost after flush: heating %.1f°C over target", settings.getFlushBoostC());
-    }
-    if (flushBoost.isActive())
-        loopFlushBoost();
     if (newBrewDelay >= 0) {
         settings.setBrewDelay(newBrewDelay);
     }
@@ -1053,9 +1046,6 @@ void Controller::updateControl() {
         else
             flushToTargetHoldUntil = 0;
     }
-    // Boost after flush: aim above the target until the closing flush to target (see loopFlushBoost()).
-    if (flushBoost.isActive() && targetTemp > 0.0f)
-        targetTemp += settings.getFlushBoostC();
 
     bool altRelayActive = false;
     if (active && proc->isAltRelayActive()) {
@@ -1175,8 +1165,6 @@ void Controller::updateControl() {
 
 void Controller::activate(bool ignoreWarnings) {
     flushToTargetHoldUntil = 0; // a shot wants the heater back straight away
-    boostAfterFlush = false;
-    flushBoost.cancel();
     // Never create a process while startup is incomplete or the controller is
     // absent. The UI can be reached by tapping through the startup screen, and
     // previously its Start action ran against a half-initialized BLE session.
@@ -1592,30 +1580,7 @@ void Controller::onFlush() {
         getCurrentTemp() >= profileManager->getSelectedProfile().temperature + flush_to_target::BUTTON_SURPLUS_C &&
         flushToTarget().reason == nullptr)
         return;
-    const bool boost = settings.getFlushBoostC() > 0.0f && mode == MODE_BREW;
-    if (startFlush(static_cast<float>(settings.getFlushDuration())))
-        boostAfterFlush = boost;
-}
-
-void Controller::loopFlushBoost() {
-    if (mode != MODE_BREW) {
-        flushBoost.cancel();
-        return;
-    }
-    const float target = profileManager->getSelectedProfile().temperature;
-    switch (flushBoost.step(millis(), currentTemp, target, settings.getFlushBoostC())) {
-    case flush_boost::Action::Flush: {
-        const flush_to_target::Plan plan = flushToTarget();
-        if (plan.reason != nullptr)
-            ESP_LOGI(LOG_TAG, "Boost after flush at %.1f°C: no closing flush (%s)", currentTemp, plan.reason);
-        break;
-    }
-    case flush_boost::Action::GiveUp:
-        ESP_LOGI(LOG_TAG, "Boost after flush: gave up at %.1f°C, back to the target", currentTemp);
-        break;
-    case flush_boost::Action::None:
-        break;
-    }
+    startFlush(static_cast<float>(settings.getFlushDuration()));
 }
 
 flush_to_target::Plan Controller::flushToTarget() {
@@ -1639,7 +1604,6 @@ flush_to_target::Plan Controller::flushToTarget() {
     // The flush is sized so the boiler lands on target with only its standing loss after it. Left alone, the predictor
     // sees the cold water and the PID heats at full power (17.7 kJ, ~10 °C of rebound, on the first bench run), so the
     // heater stays off for the flush and until its effect has reached the sensor.
-    flushBoost.cancel();
     flushToTargetHoldUntil = millis() + static_cast<unsigned long>((plan.seconds + FLUSH_TO_TARGET_HOLD_S) * 1000.0f);
     if (flushToTargetHoldUntil == 0)
         flushToTargetHoldUntil = 1;

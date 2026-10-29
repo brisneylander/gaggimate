@@ -23,7 +23,6 @@ constexpr Range HEAT_RATE_C_PER_S{0.05f, 3.0f};   // large HX/dual boilers ... s
 constexpr Range STANDING_LOSS_W{0.0f, 300.0f};    // holding power at brew temperature
 constexpr Range INLET_TEMP_C{5.0f, 70.0f};        // tank water; tanks beside the boiler warm up (40 degC on a Silvia)
 constexpr float DEFAULT_INLET_TEMP_C = 23.0f;     // used while the inlet temperature is 0 (not set)
-constexpr Range FLUSH_BOOST_C{1.0f, 10.0f};       // display only: boost after flush, heat this far over target
 
 // 0 for off (<= 0 or not finite), otherwise clamped into the range.
 inline float clampOrOff(float value, Range range) {

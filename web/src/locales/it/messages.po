@@ -988,6 +988,10 @@ msgstr "Connessione…"
 msgid "Control Column Style"
 msgstr "Stile colonna di controllo"
 
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "Control on a model's estimate of where the water temperature is heading, instead of the sensor plus the predictor. Allows a stronger Kp (about 100 on a Silvia) without overshoot. Needs heater power, heat-up rate and water dead time."
+msgstr ""
+
 #: src/app/appSettings.js
 msgid "Controller errors and error-level warnings."
 msgstr "Errori del controller e avvisi di livello errore."
@@ -5139,6 +5143,10 @@ msgstr "Tema e notifiche"
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "Thermal Feedforward Gain"
 msgstr "Guadagno feedforward termico"
+
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "Thermal model (experimental)"
+msgstr ""
 
 #: src/app/machines.js
 msgid "this address is not a GaggiMate"

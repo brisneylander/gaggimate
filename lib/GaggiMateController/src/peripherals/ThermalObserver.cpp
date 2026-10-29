@@ -65,14 +65,14 @@ float ThermalObserver::update(float dt, float duty, float flow, float extraWater
     // Correct towards the reading: shift the whole chain (an offset the sensor shows straight away) and learn a slow
     // heat bias so a persistent mismatch stops recurring.
     const float innovation = measuredTemp - sensor;
-    const float shift = std::min(GAIN_WATER * dt, 1.0f) * innovation;
+    const float shift = std::min(gainWater * dt, 1.0f) * innovation;
     water += shift;
-    element += shift + GAIN_ELEMENT * dt * innovation;
+    element += shift + gainElement * dt * innovation;
     group += shift;
     sensor += shift;
     for (auto &p : pipe)
         p.second += shift;
-    biasW = std::min(std::max(biasW + GAIN_BIAS_W * dt * innovation, -0.5f * heaterW), 0.5f * heaterW);
+    biasW = std::min(std::max(biasW + gainBiasW * dt * innovation, -0.5f * heaterW), 0.5f * heaterW);
     return water;
 }
 

@@ -1,5 +1,6 @@
 #include "Heater.h"
 #include "HeaterCoordinator.h"
+#include "LagCompensationLimits.h"
 #include <Arduino.h>
 #include <algorithm>
 #include <cmath>
@@ -99,7 +100,7 @@ void Heater::setFeedforwardScale(float combinedKff) {
 
 void Heater::setLagCompensation(float derivativeFilterS, float integralZoneC, float sensorDeadTimeS, float modelHeaterW,
                                 float modelHeatRate, float modelLossW, float inletTempC, float waterDeadTimeS,
-                                bool reheatFullPower) {
+                                bool reheatFullPower, bool thermalObserver) {
     std::lock_guard<std::mutex> lock(lagMutex);
     simplePid->setDerivativeFilterTime(derivativeFilterS);
     simplePid->setIntegralZone(integralZoneC);
@@ -113,6 +114,11 @@ void Heater::setLagCompensation(float derivativeFilterS, float integralZoneC, fl
     predictor.configure(modelHeaterW, modelHeatRate, sensorDeadTimeS, incomingWaterTemp, waterDeadTimeS);
     predictor.seedLoss(modelLossW);
     reheatEnabled = reheatFullPower;
+    const float observerWaterDead = waterDeadTimeS > 0.0f ? waterDeadTimeS : sensorDeadTimeS;
+    observer.configure(modelHeaterW, modelHeatRate, observerWaterDead, incomingWaterTemp);
+    if (observerEnabled != thermalObserver)
+        observerPrimed = false;
+    observerEnabled = thermalObserver;
     ESP_LOGI(LOG_TAG,
              "Lag compensation: D filter %.1fs, I zone %.2f°C, dead time %.1fs, predictor %s (%.0fW, %.3f°C/s, water %.1fs), "
              "inlet %.1f°C",
@@ -154,8 +160,19 @@ void Heater::updateLagCompensation() {
         const float dt = static_cast<float>(now - lastPredictorMs) / 1000.0f;
         lastPredictorMs = now;
         predictor.update(dt, output / TUNER_OUTPUT_SPAN, flowing ? flow : 0.0f, temperature, setpoint);
+        if (observerEnabled && observer.isEnabled()) {
+            if (!observerPrimed) {
+                observer.reset(temperature, predictor.getLossWatts());
+                observerPrimed = true;
+            }
+            const float stepFlow = flowing ? flow : 0.0f;
+            const float dump = observerLastFlow > 0.0f && stepFlow == 0.0f ? lag_limits::VALVE_DUMP_ML : 0.0f;
+            observerLastFlow = stepFlow;
+            observer.update(dt, output / TUNER_OUTPUT_SPAN, stepFlow, dump, temperature);
+        }
     }
-    controlTemperature = temperature + predictor.getCorrection();
+    controlTemperature = observerEnabled && observer.isEnabled() && observerPrimed ? observer.getSettling()
+                                                                                   : temperature + predictor.getCorrection();
     eventDuty = reheatEnabled ? predictor.eventDuty() : -1.0f;
 }
 

@@ -103,6 +103,26 @@ export function LagCompensationSection({ formData, onChange }) {
           PID. Needs heater power, heat-up rate and dead time.
         </Trans>
       </p>
+      <label htmlFor='thermalObserver' className='label mt-4 cursor-pointer justify-start gap-3'>
+        <input
+          id='thermalObserver'
+          name='thermalObserver'
+          type='checkbox'
+          className='toggle toggle-primary'
+          checked={!!formData.thermalObserver}
+          onChange={onChange('thermalObserver')}
+        />
+        <span>
+          <Trans>Thermal model (experimental)</Trans>
+        </span>
+      </label>
+      <p className='text-sm opacity-70'>
+        <Trans>
+          Control on a model's estimate of where the water temperature is heading, instead of the
+          sensor plus the predictor. Allows a stronger Kp (about 100 on a Silvia) without overshoot.
+          Needs heater power, heat-up rate and water dead time.
+        </Trans>
+      </p>
       <label
         htmlFor='flushButtonToTarget'
         className='label mt-4 cursor-pointer justify-start gap-3'

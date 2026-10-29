@@ -471,20 +471,18 @@ export function TuneMachine({ formData, setField }) {
           <div className='mt-2 text-sm'>
             <p>
               <Trans>
-                After steaming, the boiler is far hotter than brewing needs. Flush to target works
-                out how much fresh tank water would bring it back down to the brew temperature, from
-                how far over it is, the boiler's size and the tank temperature, and flushes just
-                that much.
+                Flush to target works out how much fresh tank water is required to bring the boiler
+                back down to the brew temperature. It estimates this from how far over it is, the
+                boiler's size and the tank temperature, and flushes the required amount.
               </Trans>{' '}
               <Trans>
-                If <strong>Flush to brew target when hot</strong> is switched on (General → Flush),
-                the flush button does this by itself whenever the boiler is 2 °C or more over
-                target.
+                If <strong>Flush to brew target when hot</strong> is toggled on (General → Flush),
+                the flush button does this automatically if the boiler is 2 °C or more over target.
               </Trans>{' '}
               {formData.flushButtonToTarget ? (
-                <Trans>It's on now.</Trans>
+                <Trans>It's currently toggled on.</Trans>
               ) : (
-                <Trans>It's off now.</Trans>
+                <Trans>It's currently toggled off.</Trans>
               )}
             </p>
             <p className='mt-2'>

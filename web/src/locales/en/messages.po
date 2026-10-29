@@ -287,8 +287,8 @@ msgid "After steaming, or any time the boiler is 2 °C or more over the selected
 msgstr "After steaming, or any time the boiler is 2 °C or more over the selected profile's temperature, the flush button runs just enough fresh water to bring it back down to the brew temperature, then holds the heater off briefly while it settles. Closer to target it runs the normal flush. Needs heater power and heat-up rate in the Machine Boiler Profile."
 
 #: src/pages/Settings/tune/TuneMachine.jsx
-msgid "After steaming, the boiler is far hotter than brewing needs. Flush to target works out how much fresh tank water would bring it back down to the brew temperature, from how far over it is, the boiler's size and the tank temperature, and flushes just that much."
-msgstr "After steaming, the boiler is far hotter than brewing needs. Flush to target works out how much fresh tank water would bring it back down to the brew temperature, from how far over it is, the boiler's size and the tank temperature, and flushes just that much."
+#~ msgid "After steaming, the boiler is far hotter than brewing needs. Flush to target works out how much fresh tank water would bring it back down to the brew temperature, from how far over it is, the boiler's size and the tank temperature, and flushes just that much."
+#~ msgstr "After steaming, the boiler is far hotter than brewing needs. Flush to target works out how much fresh tank water would bring it back down to the brew temperature, from how far over it is, the boiler's size and the tank temperature, and flushes just that much."
 
 #: src/pages/Settings/tune/TuneMachine.jsx
 #~ msgid "After steaming, the boiler is far hotter than brewing needs. Flush to target works out how much fresh tank water would bring it back down to the brew temperature, from how far over it is, the boiler's size and the tank temperature, and flushes just that much. The flush button does this by itself whenever the boiler is 2 °C or more over target."
@@ -2026,6 +2026,10 @@ msgstr "Flush to target factor"
 msgid "Flush to target heater hold"
 msgstr "Flush to target heater hold"
 
+#: src/pages/Settings/tune/TuneMachine.jsx
+msgid "Flush to target works out how much fresh tank water is required to bring the boiler back down to the brew temperature. It estimates this from how far over it is, the boiler's size and the tank temperature, and flushes the required amount."
+msgstr "Flush to target works out how much fresh tank water is required to bring the boiler back down to the brew temperature. It estimates this from how far over it is, the boiler's size and the tank temperature, and flushes the required amount."
+
 #: src/pages/Home/FlushButton.jsx
 msgid "Flush water"
 msgstr "Flush water"
@@ -2342,8 +2346,12 @@ msgstr "Idle Filter Alpha"
 #~ msgstr "If <0>Flush button flushes to target when hot</0> is switched on in the Machine Boiler Profile, the flush button does this by itself whenever the boiler is 2 °C or more over target."
 
 #: src/pages/Settings/tune/TuneMachine.jsx
-msgid "If <0>Flush to brew target when hot</0> is switched on (General → Flush), the flush button does this by itself whenever the boiler is 2 °C or more over target."
-msgstr "If <0>Flush to brew target when hot</0> is switched on (General → Flush), the flush button does this by itself whenever the boiler is 2 °C or more over target."
+#~ msgid "If <0>Flush to brew target when hot</0> is switched on (General → Flush), the flush button does this by itself whenever the boiler is 2 °C or more over target."
+#~ msgstr "If <0>Flush to brew target when hot</0> is switched on (General → Flush), the flush button does this by itself whenever the boiler is 2 °C or more over target."
+
+#: src/pages/Settings/tune/TuneMachine.jsx
+msgid "If <0>Flush to brew target when hot</0> is toggled on (General → Flush), the flush button does this automatically if the boiler is 2 °C or more over target."
+msgstr "If <0>Flush to brew target when hot</0> is toggled on (General → Flush), the flush button does this automatically if the boiler is 2 °C or more over target."
 
 #: src/utils/warnings.js
 msgctxt "warning level"
@@ -2509,12 +2517,20 @@ msgid "iOS only lets GaggiMate stay connected to your machines while the app is 
 msgstr "iOS only lets GaggiMate stay connected to your machines while the app is open. Notifications stop a few seconds after you switch to another app or lock your phone."
 
 #: src/pages/Settings/tune/TuneMachine.jsx
-msgid "It's off now."
-msgstr "It's off now."
+msgid "It's currently toggled off."
+msgstr "It's currently toggled off."
 
 #: src/pages/Settings/tune/TuneMachine.jsx
-msgid "It's on now."
-msgstr "It's on now."
+msgid "It's currently toggled on."
+msgstr "It's currently toggled on."
+
+#: src/pages/Settings/tune/TuneMachine.jsx
+#~ msgid "It's off now."
+#~ msgstr "It's off now."
+
+#: src/pages/Settings/tune/TuneMachine.jsx
+#~ msgid "It's on now."
+#~ msgstr "It's on now."
 
 #: src/pages/Settings/PluginCard.jsx
 msgid "Keep selected profile"

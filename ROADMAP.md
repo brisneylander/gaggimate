@@ -40,6 +40,19 @@ promised 51 s. Reaching 93 °C sooner means over-delivering heat. Next idea: reh
 "flush to target" to take it off. (One "off" run showed a reheat-like burst; most likely the PID's own D term, but
 switching reheat on → off should be re-checked with a single flush.)
 
+**"Flush to target" after steaming** (heat to 100 °C in Steam, back to Brew, flush at the peak; target 93 °C, tank
+~35 °C), 2026-10-29:
+
+| Run | Release | Start | Flush | Lowest | Within 0.5 °C from |
+| --- | --- | --- | --- | --- | --- |
+| 1 | simon007 (PID heats during the flush) | 105.75 °C | 79 ml | 90.66 °C, rebound to 97 | 287 s |
+| 2 | simon008 (heater held off) | 106.5 °C | 86 ml | 90.85 °C | 317 s |
+| 3 | simon009 (+ standing-loss allowance) | 108.0 °C | 88–90 ml | 90.83 °C | 291 s |
+| **4** | **simon010 (counts 85 % of the shown surplus)** | **106.56 °C** | **68 ml, 7.8 s** | **92.24 °C** | **146 s** |
+
+Run 4 was within 1 °C 56 s after the flush, bottomed out 2 min later, and held 93.0 °C from ~4 min. The remaining
+−0.8 °C dip is the heater's dead time after the 30 s hold, not the volume. The 0.85 factor is empirical (one run so far).
+
 With the 12 s water delay the heater puts back about what the flush took (net −0.8 to +0.3 kJ), so an explicit heat
 budget for flushes looks unnecessary; recovery to 93 °C is a little slower (69–81 s vs 56–62 s). Next: try 10 and
 15 s, then shots, where the planned-heat idea (pre-heat before a shot) still applies.

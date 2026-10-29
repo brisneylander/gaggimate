@@ -224,7 +224,7 @@ export function TuneMachine({ formData, setField }) {
     live.mode !== 1 ? (
       <button
         type='button'
-        className='btn btn-primary btn-sm'
+        className='btn btn-primary'
         onClick={() => api.send({ tp: 'req:change-mode', mode: 1 })}
       >
         <Trans>Switch to Brew</Trans>
@@ -364,7 +364,7 @@ export function TuneMachine({ formData, setField }) {
             {flushResult ? (
               <button
                 type='button'
-                className='btn btn-sm'
+                className='btn'
                 disabled={busy}
                 onClick={() => {
                   setFlushResult(null);
@@ -377,7 +377,7 @@ export function TuneMachine({ formData, setField }) {
             ) : (
               <button
                 type='button'
-                className='btn btn-primary btn-sm'
+                className='btn btn-primary'
                 disabled={flushBlock !== null}
                 onClick={startFlushTest}
               >
@@ -454,7 +454,7 @@ export function TuneMachine({ formData, setField }) {
               </div>
               <button
                 type='button'
-                className='btn btn-sm'
+                className='btn'
                 disabled={!!flushResult.dead.error && !weighed}
                 onClick={applyFlush}
               >
@@ -511,7 +511,7 @@ export function TuneMachine({ formData, setField }) {
           </div>
           <button
             type='button'
-            className='btn btn-primary btn-sm mt-2'
+            className='btn btn-primary mt-2'
             disabled={targetBlock !== null}
             onClick={startTargetTest}
           >
@@ -563,7 +563,7 @@ export function TuneMachine({ formData, setField }) {
                   </p>
                   <button
                     type='button'
-                    className='btn btn-sm'
+                    className='btn'
                     onClick={() => {
                       setField('flushTargetFactor', targetResult.factor);
                       setNote(t`Applied to the machine profile: Save to keep them.`);

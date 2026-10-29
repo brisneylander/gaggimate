@@ -76,5 +76,7 @@ constexpr int ERROR_CODE_AUTOTUNE_TIMEOUT = 6;
 constexpr int ERROR_CODE_HEATER_NO_RISE = 7;
 constexpr int ERROR_CODE_SENSOR_JUMPS = 8;
 constexpr int ERROR_CODE_FULL_POWER_TOO_LONG = 9;
+constexpr int ERROR_CODE_OVER_TEMP = 10;
+constexpr int ERROR_CODE_SENSOR_FAULT = 11;
 
 #endif // GAGGIMATE_COMM_H

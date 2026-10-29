@@ -265,6 +265,8 @@ enum ErrorCode {
     ERROR_CODE_HEATER_NO_RISE = 7;        // heater safety layer: near full power, temperature not rising
     ERROR_CODE_SENSOR_JUMPS = 8;          // heater safety layer: temperature reading jumping
     ERROR_CODE_FULL_POWER_TOO_LONG = 9;   // heater safety layer: continuous full power too long
+    ERROR_CODE_OVER_TEMP = 10;            // heater safety layer: reading above the safe limit
+    ERROR_CODE_SENSOR_FAULT = 11;         // heater safety layer: temperature sensor failing
 }
 
 message Error {

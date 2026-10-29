@@ -29,7 +29,8 @@ on 2026-10-28 left open. See [FORK.md](FORK.md) for building and releasing.
    can't see; three >5 °C/s jumps within 30 s; continuous full power over 10 min. Replayed over all 52 bench logs of
    2026-10-28/29 it never trips; the longest "full power, no rise" stretch was under 30 s. Steaming milk isn't in the
    logs yet: watch for a false stop the first time. Kept as they were: the hardware fuse, the sensor's over-170 °C and
-   read-failure checks, the link watchdog. Later: move those into the same module.
+   read-failure checks, the link watchdog. *simon021:* the over-170 °C and sensor-fault limits moved into the module too (codes
+   10, 11); the sensors keep their own shutdown on their own task as an independent backstop, with the same limit.
 6. **Simulation and logging from day one.** Keep the plant model in the repo (`test/test_heat_balance_predictor`
    flush replay) and check every change against it. Log temperature, duty and flow at a few Hz into shot history so
    tuning can use real data.
@@ -130,8 +131,10 @@ budget for flushes looks unnecessary; recovery to 93 °C is a little slower (69�
   the Silvia's illuminated switch keeping the input partly on. Check the wiring against the GaggiMate Silvia guide.
   Workaround in place: button behaviour `brew,none,water` (steam switch ignored; steam from the screen or web UI).
   Restore with `brew,steam,water`. The display's "steam switch is on" warning only clears after a restart.
-- **Autotune.** Offset-aware, predictive safety cutoff (a run coasted to 131 °C), stop once dead time and k' are
-  identified, remember the Heater Wattage field, optional relay test.
+- **Autotune.** *simon021:* the predictive cutoff is done: at full power it stops once the reading plus rate x measured
+  dead time (20 s before the reaction) would pass 125 °C, ending like a timeout (gains kept, no error state) instead
+  of coasting past (a run once reached 131 °C). The heater wattage field defaults to the set heater power. Still open:
+  offset-aware limits; it already stops at the inflection once dead time and k' are found.
 - **Phone app** loads its web UI from the official releases (`web/src/app/updates.js`), so it never shows fork
   features.
 - **Upstream PRs** (`pr/pid-derivative-on-measurement` → `pr/heater-dfilter-integral-zone` →

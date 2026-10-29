@@ -227,6 +227,18 @@ void Heater::loopAutotune() {
         checkSafety(false);
         ESP_LOGI(LOG_TAG, "Autotuner Cycle: Temperature=%.2f", temperature);
         autotuner->update(temperature, millis() / 1000.0f);
+        // Stop before the coast carries the boiler past the limit, rather than at the limit: end the run like a timeout
+        // (gains kept, no error state) instead of a runaway stop.
+        if (autotuner->maxPowerOn && autotuner->predictedCoast(temperature) >= MAX_AUTOTUNE_TEMP) {
+            output = 0.0f;
+            autotuning = false;
+            softPwm(TUNER_OUTPUT_SPAN);
+            ESP_LOGW(LOG_TAG, "Autotune stopped at %.1f°C: would coast to %.1f°C, past %.1f°C; gains kept", temperature,
+                     autotuner->predictedCoast(temperature), MAX_AUTOTUNE_TEMP);
+            if (autotune_fail_callback)
+                autotune_fail_callback();
+            return;
+        }
         while (autotuning && micros() - microseconds < loopInterval) {
             softPwm(TUNER_OUTPUT_SPAN);
             vTaskDelay(1 / portTICK_PERIOD_MS);
@@ -311,7 +323,7 @@ void Heater::requestOutput(bool on) {
 void Heater::writeOutput(bool on) { digitalWrite(heaterPin, on && safety.permits() ? HIGH : LOW); }
 
 void Heater::checkSafety(bool flowing) {
-    if (safety.observe(millis(), temperature, output / TUNER_OUTPUT_SPAN, flowing, setpoint))
+    if (safety.observe(millis(), temperature, output / TUNER_OUTPUT_SPAN, flowing, setpoint, sensor->isErrorState()))
         return;
     output = 0.0f;
     writeOutput(false);

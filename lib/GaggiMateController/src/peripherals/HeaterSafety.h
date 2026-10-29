@@ -7,9 +7,13 @@
 // Hard limits on the heater, independent of the control code: Heater::writeOutput() asks permits() before every
 // switch-on, so no PID, predictor or autotune path can bypass it. Once tripped it stays off until a restart.
 //
-// What it adds to the sensor's own checks (over MAX_SAFE_TEMP, repeated read failures) is the failure those can't see:
-// a thermocouple that has come off the boiler reads room temperature or a slow fall, so the PID heats flat out and
-// only the machine's thermal fuse would stop it.
+// All the firmware's hard limits on the heater live here, with their own error codes:
+//   - Over temperature: the reading above MAX_SAFE_C (170 °C).
+//   - Sensor fault: the sensor in its error state (read failures, stale readings) for 3 steps after a good reading.
+// The sensors' monitor tasks keep their own over-temperature / read-failure shutdown as an independent backstop (they
+// run on their own task, so they still cut the heater if the heater task stalls), using the same MAX_SAFE_C.
+// And the failure the sensor's checks can't see: a thermocouple that has come off the boiler reads room temperature or
+// a slow fall, so the PID heats flat out and only the machine's thermal fuse would stop it.
 //   - No rise: near full power for a while, no water flowing, and the reading hasn't gone up. Brew temperatures allow
 //     60 s (a Silvia's sensor reacts ~20 s after the heater, then rises ~0.6 °C/s); steam temperatures allow 180 s,
 //     since steaming milk holds the heater flat out while the reading holds or falls.
@@ -17,7 +21,10 @@
 //   - Continuous full power longer than 10 minutes (a cold start to steam takes ~4).
 class HeaterSafety {
   public:
-    enum class Reason : uint8_t { None = 0, NoRise = 1, Jumps = 2, FullPowerTooLong = 3 };
+    enum class Reason : uint8_t { None = 0, NoRise = 1, Jumps = 2, FullPowerTooLong = 3, OverTemp = 4, SensorFault = 5 };
+
+    static constexpr float MAX_SAFE_C = 170.0f;
+    static constexpr int SENSOR_FAULT_STEPS = 3;
 
     static constexpr float HIGH_DUTY = 0.8f;
     static constexpr float NO_RISE_C = 2.0f;
@@ -32,11 +39,18 @@ class HeaterSafety {
 
     // Called once per control step with the reading, the duty about to be applied (0..1), whether water is flowing
     // and the setpoint. Returns false once tripped.
-    bool observe(uint32_t nowMs, float temperature, float duty, bool flowing, float setpoint) {
+    bool observe(uint32_t nowMs, float temperature, float duty, bool flowing, float setpoint, bool sensorFault = false) {
         if (tripped != Reason::None)
             return false;
-        if (!std::isfinite(temperature))
-            return true; // the sensor's own fault handling covers unreadable values
+        // A fault before the first good reading is the sensor starting up, not failing.
+        if (sensorFault || !std::isfinite(temperature)) {
+            if (haveLast && ++faultSteps >= SENSOR_FAULT_STEPS)
+                trip(Reason::SensorFault);
+            return tripped == Reason::None;
+        }
+        faultSteps = 0;
+        if (temperature > MAX_SAFE_C)
+            trip(Reason::OverTemp);
         checkJumps(nowMs, temperature);
         checkNoRise(nowMs, temperature, duty, flowing, setpoint);
         checkFullPower(nowMs, duty);
@@ -56,6 +70,10 @@ class HeaterSafety {
             return "temperature reading jumping (loose thermocouple?)";
         case Reason::FullPowerTooLong:
             return "heater at full power too long";
+        case Reason::OverTemp:
+            return "temperature above the safe limit";
+        case Reason::SensorFault:
+            return "temperature sensor failing";
         default:
             return "none";
         }
@@ -120,6 +138,7 @@ class HeaterSafety {
     }
 
     Reason tripped = Reason::None;
+    int faultSteps = 0;
     bool haveLast = false;
     float lastTemp = 0.0f;
     uint32_t lastMs = 0;

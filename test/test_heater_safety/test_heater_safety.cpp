@@ -26,9 +26,9 @@ void test_detached_sensor_at_brew_trips() {
 void test_cold_start_to_steam_does_not_trip() {
     HeaterSafety s;
     float temp = 22.0f;
-    for (uint32_t t = 0; t < 300000; t += 1000) {
-        if (t > 20000)
-            temp += 0.6f;
+    for (uint32_t t = 0; t < 230000; t += 1000) {
+        if (t > 20000 && temp < 145.0f)
+            temp += 0.6f; // then holds at steam temperature: the PID would drop below full power, but this keeps it flat out
         TEST_ASSERT_TRUE(s.observe(t, temp, 1.0f, false, 145.0f));
     }
 }
@@ -106,7 +106,8 @@ void test_full_power_too_long() {
     float temp = 22.0f;
     uint32_t t = 0;
     for (; t < 599000; t += 1000) {
-        temp += 0.5f; // rising, so no "no rise" trip
+        // Rising 2.1 °C every 100 s, then back: never "no rise", never over the limit.
+        temp = 100.0f + static_cast<float>((t / 1000) % 100) * 0.021f;
         TEST_ASSERT_TRUE(s.observe(t, temp, 1.0f, false, 300.0f));
     }
     TEST_ASSERT_FALSE(s.observe(t + 1000, temp, 1.0f, false, 300.0f));
@@ -122,6 +123,29 @@ void test_reading_gap_is_not_a_jump() {
     TEST_ASSERT_TRUE(s.permits());
 }
 
+void test_over_temperature() {
+    HeaterSafety s;
+    TEST_ASSERT_TRUE(s.observe(0, 165.0f, 0.5f, false, 145.0f));
+    TEST_ASSERT_FALSE(s.observe(1000, 171.0f, 0.5f, false, 145.0f));
+    TEST_ASSERT_EQUAL(static_cast<int>(Reason::OverTemp), static_cast<int>(s.reason()));
+}
+
+// A sensor in its error state for 3 steps after a good reading trips; at start-up (no good reading yet) it doesn't.
+void test_sensor_fault() {
+    HeaterSafety boot;
+    for (uint32_t t = 0; t < 10000; t += 1000)
+        TEST_ASSERT_TRUE(boot.observe(t, 0.0f, 0.0f, false, 98.0f, true));
+    HeaterSafety s;
+    TEST_ASSERT_TRUE(s.observe(0, 93.0f, 0.05f, false, 98.0f));
+    TEST_ASSERT_TRUE(s.observe(1000, 0.0f, 0.05f, false, 98.0f, true));
+    TEST_ASSERT_TRUE(s.observe(2000, 0.0f, 0.05f, false, 98.0f, true));
+    TEST_ASSERT_TRUE(s.observe(3000, 93.0f, 0.05f, false, 98.0f)); // recovered: count resets
+    TEST_ASSERT_TRUE(s.observe(4000, 0.0f, 0.05f, false, 98.0f, true));
+    TEST_ASSERT_TRUE(s.observe(5000, 0.0f, 0.05f, false, 98.0f, true));
+    TEST_ASSERT_FALSE(s.observe(6000, 0.0f, 0.05f, false, 98.0f, true));
+    TEST_ASSERT_EQUAL(static_cast<int>(Reason::SensorFault), static_cast<int>(s.reason()));
+}
+
 int main(int argc, char **argv) {
     UNITY_BEGIN();
     RUN_TEST(test_detached_sensor_at_brew_trips);
@@ -134,5 +158,7 @@ int main(int argc, char **argv) {
     RUN_TEST(test_spaced_jumps_do_not_trip);
     RUN_TEST(test_full_power_too_long);
     RUN_TEST(test_reading_gap_is_not_a_jump);
+    RUN_TEST(test_over_temperature);
+    RUN_TEST(test_sensor_fault);
     return UNITY_END();
 }

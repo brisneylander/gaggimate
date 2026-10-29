@@ -497,9 +497,22 @@ void GaggiMateController::thermalRunawayShutdown() {
         case HeaterSafety::Reason::FullPowerTooLong:
             code = ERROR_CODE_FULL_POWER_TOO_LONG;
             break;
+        case HeaterSafety::Reason::OverTemp:
+            code = ERROR_CODE_OVER_TEMP;
+            break;
+        case HeaterSafety::Reason::SensorFault:
+            code = ERROR_CODE_SENSOR_FAULT;
+            break;
         case HeaterSafety::Reason::None:
             break;
         }
+    }
+    // The sensors' own backstop got there first: name the cause the same way.
+    if (code == ERROR_CODE_RUNAWAY && brewTemperature != nullptr) {
+        if (brewTemperature->isErrorState())
+            code = ERROR_CODE_SENSOR_FAULT;
+        else if (brewTemperature->read() > MAX_SAFE_TEMP)
+            code = ERROR_CODE_OVER_TEMP;
     }
     errorState = code;
     _comms.sendError(code);

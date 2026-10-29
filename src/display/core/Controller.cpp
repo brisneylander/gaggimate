@@ -833,6 +833,10 @@ String Controller::getSystemStateMessage() const {
             return "Temperature reading unstable: check the thermocouple, then restart";
         case ERROR_CODE_FULL_POWER_TOO_LONG:
             return "Heater at full power too long, restart...";
+        case ERROR_CODE_OVER_TEMP:
+            return "Boiler over temperature limit, restart...";
+        case ERROR_CODE_SENSOR_FAULT:
+            return "Temperature sensor failing: check the thermocouple, then restart";
         default:
             return "Unknown error";
         }

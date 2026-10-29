@@ -17,7 +17,13 @@ export function CalibrationTab({ formData, onChange, setField }) {
   const [autotuneFailed, setAutotuneFailed] = useState(false);
   const [autotuneTime, setAutotuneTime] = useState(120);
   const [autotuneSamples, setAutotuneSamples] = useState(6);
-  const [autotuneWattage, setAutotuneWattage] = useState(1360);
+  // Defaults to the heater power already set for lag compensation (Boiler Lag Compensation), else a Gaggia Classic's.
+  const [autotuneWattage, setAutotuneWattage] = useState(
+    Number(formData?.modelHeaterW) > 0 ? Number(formData.modelHeaterW) : 1360,
+  );
+  useEffect(() => {
+    if (Number(formData?.modelHeaterW) > 0) setAutotuneWattage(Number(formData.modelHeaterW));
+  }, [formData?.modelHeaterW]);
 
   const onStartAutotune = useCallback(() => {
     apiService.send({

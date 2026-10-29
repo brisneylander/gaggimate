@@ -60,6 +60,7 @@ void Autotune::update(float temperature, float currentTime) {
     const std::deque<float> windowTimes(times.end() - N, times.end());
     const std::deque<float> windowValues(values.end() - N, values.end());
     const float slope = computeSlope(windowTimes, windowValues);
+    lastSlope = slope;
     allSlopes.push_back(slope);
     allSlopeTimes.push_back(currentTime);
 
@@ -308,3 +309,10 @@ float Autotune::getKp() const { return Kp; }
 float Autotune::getKi() const { return Ki; }
 float Autotune::getKd() const { return Kd; }
 float Autotune::getKff() const { return Kff; }
+
+float Autotune::predictedCoast(float temperature) const {
+    if (!maxPowerOn)
+        return temperature;
+    const float delay = reactionDetected && reactionTime > startPowerOnTime ? reactionTime - startPowerOnTime : DEFAULT_COAST_S;
+    return temperature + std::max(lastSlope, 0.0f) * delay;
+}

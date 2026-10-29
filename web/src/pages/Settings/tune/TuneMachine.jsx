@@ -395,6 +395,27 @@ export function TuneMachine({ formData, setField }) {
                   <Trans>The scale weighed {flushResult.weighedByScale} g in the cup.</Trans>
                 </p>
               )}
+              {weighed?.error && cupG !== '' && (
+                <p className='text-warning font-bold'>{weighed.error}</p>
+              )}
+              {weighed && !weighed.error && (
+                <p className='font-bold'>
+                  <Trans>
+                    Valve dump {weighed.valveDumpMl} ml. The cup got{' '}
+                    {(weighed.pumpRatio * 100).toFixed(0)} % of the pump reading
+                  </Trans>
+                  {weighed.pumpNeedsScaling ? (
+                    <Trans>: the pump coefficients will be scaled to match.</Trans>
+                  ) : (
+                    <Trans>: the pump calibration is fine.</Trans>
+                  )}
+                </p>
+              )}
+              {weighed && !weighed.error && (
+                <p className='opacity-70'>
+                  <Trans>You can change the measured values below.</Trans>
+                </p>
+              )}
               <div className='flex flex-wrap items-center gap-2'>
                 <label className='flex items-center gap-1'>
                   <Trans>Water in the cup (g)</Trans>
@@ -417,20 +438,6 @@ export function TuneMachine({ formData, setField }) {
                   />
                 </label>
               </div>
-              {weighed?.error && cupG !== '' && <p className='text-warning'>{weighed.error}</p>}
-              {weighed && !weighed.error && (
-                <p>
-                  <Trans>
-                    Valve dump {weighed.valveDumpMl} ml. The cup got{' '}
-                    {(weighed.pumpRatio * 100).toFixed(0)} % of the pump reading
-                  </Trans>
-                  {weighed.pumpNeedsScaling ? (
-                    <Trans>: the pump coefficients will be scaled to match.</Trans>
-                  ) : (
-                    <Trans>: the pump calibration is fine.</Trans>
-                  )}
-                </p>
-              )}
               <button
                 type='button'
                 className='btn btn-sm'

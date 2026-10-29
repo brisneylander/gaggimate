@@ -6247,6 +6247,10 @@ msgstr "Yesterday"
 msgid "Yield:"
 msgstr "Yield:"
 
+#: src/pages/Settings/tune/TuneMachine.jsx
+msgid "You can change the measured values below."
+msgstr "You can change the measured values below."
+
 #: src/components/VisualizerUploadModal.jsx
 msgid "Your credentials are only used for this upload and will be stored locally only if you choose to remember your username."
 msgstr "Your credentials are only used for this upload and will be stored locally only if you choose to remember your username."

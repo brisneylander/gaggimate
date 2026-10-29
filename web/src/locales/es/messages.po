@@ -6247,6 +6247,10 @@ msgstr "Ayer"
 msgid "Yield:"
 msgstr "Rendimiento:"
 
+#: src/pages/Settings/tune/TuneMachine.jsx
+msgid "You can change the measured values below."
+msgstr ""
+
 #: src/components/VisualizerUploadModal.jsx
 msgid "Your credentials are only used for this upload and will be stored locally only if you choose to remember your username."
 msgstr "Tus credenciales solo se usan para esta subida y se guardarán localmente solo si eliges recordar tu usuario."

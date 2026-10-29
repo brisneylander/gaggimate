@@ -67,8 +67,12 @@ water down after a flush; the sensor sees the water through 4.6 s + 15 s. On flu
 the sensor to 0.45 °C rms (old plant 1.09 °C) and puts the dip's low within ~6 s (old: 7-18 s early). Two findings:
 - **Flush water cools ~20 % more per ml than (boiler - tank setting) predicts**: sessions fit as if the tank were
   24-27 °C with the setting at 35. The same shortfall explains flush to target's 0.85 factor, and the full-power
-  reheat being sized short on the bench. Next: find out why (flow under-read, colder intake, cold water mixing at the
-  sensor), then fix the per-ml figure once in the shared code instead of the 0.85 factor.
+  reheat being sized short on the bench.
+- **Not the flow reading** (weighed flushes, 2026-10-29, tank 32 °C measured): water out of the boiler = jug + drip
+  tray (the valve dumps 5-6 g each flush). 5 s: 44.2 g vs 42.3 ml read. Three 10 s: 89.7, 99.0, 84.5 g (mean 91.1)
+  vs 88.2, 88.3, 88.0 ml read. The reading is steady; the real volume varies ±8 % flush to flush and is ~3 % above the
+  reading on average, far short of 20 %. So the pump calibration stays, and the extra cooling is heat moving between
+  boiler and group head (the fitted plant's slow node). Keep the 0.85 factor as the empirical correction.
 - The fitted plant still flatters full-power reheat a little in closed loop; trust bench runs over it for timing.
 
 With the 12 s water delay the heater puts back about what the flush took (net −0.8 to +0.3 kJ), so an explicit heat

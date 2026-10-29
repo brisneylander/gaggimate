@@ -359,7 +359,7 @@
           </div>
           <div class="stat">
             <div class="k">Back to brew temp after steam</div>
-            <div class="v">~150 s <small>from ~5 min</small></div>
+            <div class="v">~165 s <small>from ~5 min</small></div>
           </div>
         </div>
         <div class="chart">
@@ -388,6 +388,55 @@
       </section>
 
       <section>
+        <h2>After steaming: how much to flush</h2>
+        <p class="sub">
+          Back from steam the boiler sits at 106–110 °C. Any flush brings it
+          down, but too much water undershoots: the boiler drops to about 90.8
+          °C, then the PID climbs back past the target and takes about 5 minutes
+          to settle. Flush to target works out the amount from the surplus and
+          the tank temperature, and lands close to the brew temperature instead.
+        </p>
+        <div class="stats">
+          <div class="stat">
+            <div class="k">Lowest after the flush</div>
+            <div class="v">92.2 °C <small>from 90.8</small></div>
+          </div>
+          <div class="stat">
+            <div class="k">Settled within ±0.3 °C</div>
+            <div class="v">161–174 s <small>from 287–317</small></div>
+          </div>
+        </div>
+        <div class="chart">
+          <div class="legend">
+            <span
+              ><i style="background: var(--stock)"></i>88–90 ml flush (too
+              much)</span
+            >
+            <span
+              ><i style="background: var(--accent)"></i>74 ml calculated flush
+              to target</span
+            >
+            <span
+              ><i style="background: var(--band); height: 10px"></i>93 °C
+              ±0.3</span
+            >
+          </div>
+          <svg
+            id="steam-chart"
+            viewBox="0 0 900 380"
+            role="img"
+            aria-label="Two flushes from 108 °C after steaming: an 88 to 90 ml flush undershoots to 90.8 °C and settles after 290 s; a calculated 74 ml flush bottoms at 92.2 °C and settles after 174 s."
+          ></svg>
+          <p class="caption">
+            Bench logs from 2026-10-29, both flushed from 108.0 °C with a 93 °C
+            target: run 3 (an earlier calculation that flushed too much) and run
+            6 (flush to target as released). Settling ranges cover three bigger
+            flushes and three calculated ones.
+          </p>
+        </div>
+      </section>
+
+      <section>
         <h2>What's in it</h2>
         <p class="sub">
           Everything is off until configured, so an unconfigured machine behaves
@@ -410,7 +459,7 @@
               works out how much tank water brings it to brew temperature and
               flushes exactly that.
             </p>
-            <span class="result">Within 0.5 °C in about 2.5 min, from 5</span>
+            <span class="result">Settles in under 3 min, from 5</span>
           </div>
           <div class="card">
             <h3>Tank estimate</h3>
@@ -557,7 +606,7 @@
       </footer>
     </div>
     <script>
-      const DATA = {
+      const LAG = {
         stock: [
           [-20, 92.87],
           [-17, 92.85],
@@ -817,9 +866,267 @@
           [358, 93.04],
         ],
       };
-      (function () {
-        const svg = document.getElementById("chart");
-        // Draw at the chart's own width so labels stay readable on a phone.
+      const STEAM = {
+        big: [
+          [-18, 107.95],
+          [-15, 107.99],
+          [-12, 108.0],
+          [-9, 108.0],
+          [-6, 108.0],
+          [-2, 108.0],
+          [0, 108.0],
+          [3, 107.9],
+          [6, 107.81],
+          [9, 107.39],
+          [12, 106.51],
+          [15, 105.21],
+          [18, 103.5],
+          [21, 101.49],
+          [24, 99.74],
+          [27, 98.45],
+          [30, 97.02],
+          [33, 96.02],
+          [36, 95.04],
+          [39, 94.33],
+          [42, 93.74],
+          [45, 93.25],
+          [48, 92.85],
+          [52, 92.56],
+          [54, 92.3],
+          [57, 92.06],
+          [60, 91.81],
+          [63, 91.56],
+          [66, 91.5],
+          [69, 91.27],
+          [72, 91.15],
+          [75, 91.01],
+          [78, 91.0],
+          [81, 90.94],
+          [85, 90.9],
+          [87, 90.9],
+          [90, 90.96],
+          [93, 90.98],
+          [96, 91.0],
+          [99, 91.09],
+          [102, 91.22],
+          [105, 91.25],
+          [108, 91.45],
+          [111, 91.5],
+          [114, 91.54],
+          [117, 91.73],
+          [120, 91.74],
+          [123, 91.96],
+          [126, 92.0],
+          [129, 92.09],
+          [132, 92.24],
+          [135, 92.25],
+          [138, 92.37],
+          [141, 92.49],
+          [144, 92.5],
+          [147, 92.56],
+          [150, 92.74],
+          [153, 92.75],
+          [156, 92.75],
+          [159, 92.75],
+          [162, 92.75],
+          [165, 92.8],
+          [168, 92.9],
+          [171, 92.99],
+          [174, 93.0],
+          [177, 93.0],
+          [180, 93.0],
+          [183, 93.0],
+          [186, 93.15],
+          [189, 93.12],
+          [192, 93.23],
+          [195, 93.24],
+          [198, 93.25],
+          [201, 93.25],
+          [204, 93.25],
+          [207, 93.29],
+          [210, 93.28],
+          [213, 93.36],
+          [216, 93.39],
+          [219, 93.46],
+          [222, 93.49],
+          [225, 93.48],
+          [228, 93.49],
+          [231, 93.48],
+          [234, 93.45],
+          [238, 93.5],
+          [240, 93.5],
+          [243, 93.49],
+          [246, 93.5],
+          [249, 93.5],
+          [252, 93.49],
+          [255, 93.45],
+          [258, 93.49],
+          [261, 93.43],
+          [264, 93.43],
+          [267, 93.41],
+          [270, 93.3],
+          [273, 93.42],
+          [276, 93.38],
+          [279, 93.33],
+          [282, 93.38],
+          [285, 93.31],
+          [288, 93.27],
+          [291, 93.28],
+          [294, 93.26],
+          [297, 93.25],
+          [300, 93.25],
+          [303, 93.25],
+          [306, 93.25],
+          [309, 93.25],
+          [312, 93.25],
+          [315, 93.28],
+          [318, 93.25],
+          [321, 93.25],
+          [324, 93.25],
+          [327, 93.25],
+          [330, 93.25],
+          [333, 93.25],
+          [336, 93.25],
+          [339, 93.25],
+          [342, 93.2],
+          [345, 93.25],
+          [348, 93.25],
+          [351, 93.25],
+          [354, 93.25],
+          [357, 93.25],
+        ],
+        calc: [
+          [-20, 108.01],
+          [-18, 108.08],
+          [-15, 108.07],
+          [-12, 108.14],
+          [-9, 108.07],
+          [-6, 108.03],
+          [-2, 108.01],
+          [0, 108.0],
+          [3, 108.0],
+          [6, 107.73],
+          [9, 107.11],
+          [12, 105.88],
+          [15, 104.4],
+          [18, 102.78],
+          [21, 101.24],
+          [25, 99.83],
+          [28, 98.67],
+          [30, 97.81],
+          [33, 96.75],
+          [36, 96.24],
+          [39, 95.7],
+          [42, 95.21],
+          [45, 94.83],
+          [48, 94.56],
+          [51, 94.28],
+          [54, 94.08],
+          [57, 93.89],
+          [61, 93.72],
+          [64, 93.51],
+          [66, 93.38],
+          [69, 93.28],
+          [72, 93.05],
+          [75, 93.0],
+          [78, 92.8],
+          [81, 92.72],
+          [84, 92.62],
+          [87, 92.51],
+          [91, 92.46],
+          [93, 92.35],
+          [96, 92.27],
+          [99, 92.25],
+          [102, 92.25],
+          [105, 92.2],
+          [108, 92.24],
+          [111, 92.21],
+          [114, 92.24],
+          [117, 92.25],
+          [120, 92.25],
+          [123, 92.24],
+          [127, 92.25],
+          [129, 92.25],
+          [132, 92.25],
+          [135, 92.25],
+          [138, 92.29],
+          [141, 92.33],
+          [144, 92.44],
+          [147, 92.47],
+          [151, 92.45],
+          [153, 92.5],
+          [156, 92.5],
+          [159, 92.5],
+          [162, 92.5],
+          [165, 92.67],
+          [168, 92.69],
+          [171, 92.68],
+          [174, 92.73],
+          [178, 92.75],
+          [180, 92.75],
+          [183, 92.75],
+          [186, 92.75],
+          [189, 92.75],
+          [192, 92.76],
+          [195, 92.76],
+          [198, 92.76],
+          [201, 92.83],
+          [204, 92.88],
+          [207, 92.87],
+          [210, 92.96],
+          [213, 92.92],
+          [216, 93.0],
+          [219, 92.96],
+          [222, 93.0],
+          [225, 93.0],
+          [228, 92.95],
+          [231, 93.0],
+          [234, 93.0],
+          [237, 93.0],
+          [240, 93.01],
+          [243, 93.0],
+          [246, 93.0],
+          [249, 93.0],
+          [252, 93.0],
+          [255, 93.04],
+          [258, 93.01],
+          [261, 93.07],
+          [264, 93.09],
+          [268, 93.13],
+          [270, 93.07],
+          [273, 93.13],
+          [276, 93.18],
+          [279, 93.2],
+          [282, 93.17],
+          [285, 93.19],
+          [288, 93.2],
+          [291, 93.17],
+          [294, 93.12],
+          [297, 93.06],
+          [300, 93.08],
+          [303, 93.14],
+          [307, 93.14],
+          [309, 93.08],
+          [312, 93.15],
+          [315, 93.12],
+          [318, 93.15],
+          [321, 93.11],
+          [324, 93.1],
+          [327, 93.19],
+          [330, 93.1],
+          [333, 93.08],
+          [336, 93.15],
+          [339, 93.06],
+          [342, 93.06],
+          [345, 93.02],
+          [348, 93.0],
+          [351, 93.0],
+          [354, 93.0],
+          [357, 93.0],
+        ],
+      };
+      // Draws a temperature trace chart at the SVG's own width, so labels stay readable on a phone.
+      function drawChart(svg, { series, y0, y1, step, labels }) {
         const W = Math.max(
           340,
           Math.min(900, Math.round(svg.getBoundingClientRect().width) || 900),
@@ -829,23 +1136,22 @@
           R = 16,
           T = 16,
           B = 40;
-        svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
         const x0 = -20,
-          x1 = 360,
-          y0 = 86,
-          y1 = 97;
+          x1 = 360;
+        svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
         const X = (t) => L + ((t - x0) / (x1 - x0)) * (W - L - R);
         const Y = (v) => T + ((y1 - v) / (y1 - y0)) * (H - T - B);
-        const ns = "http://www.w3.org/2000/svg";
+        const css = getComputedStyle(document.documentElement);
+        const c = (n) => css.getPropertyValue(n).trim();
         const el = (name, attrs, text) => {
-          const e = document.createElementNS(ns, name);
+          const e = document.createElementNS(
+            "http://www.w3.org/2000/svg",
+            name,
+          );
           for (const k in attrs) e.setAttribute(k, attrs[k]);
           if (text != null) e.textContent = text;
           svg.appendChild(e);
-          return e;
         };
-        const css = getComputedStyle(document.documentElement);
-        const c = (n) => css.getPropertyValue(n).trim();
         el("rect", {
           x: L,
           y: Y(93.3),
@@ -853,16 +1159,15 @@
           height: Y(92.7) - Y(93.3),
           fill: c("--band"),
         });
-        for (let v = 86; v <= 97; v += 1) {
+        for (let v = y0; v <= y1; v += step / 2) {
           el("line", {
             x1: L,
             x2: W - R,
             y1: Y(v),
             y2: Y(v),
             stroke: c("--border"),
-            "stroke-width": 1,
           });
-          if (v % 2 === 0)
+          if ((v - y0) % step === 0)
             el(
               "text",
               {
@@ -907,48 +1212,67 @@
                 (i ? "L" : "M") + X(p[0]).toFixed(1) + " " + Y(p[1]).toFixed(1),
             )
             .join(" ");
-        el("path", {
-          d: path(DATA.stock),
-          fill: "none",
-          stroke: c("--stock"),
-          "stroke-width": 2.5,
-          "stroke-linejoin": "round",
+        for (const [pts, color] of series)
+          el("path", {
+            d: path(pts),
+            fill: "none",
+            stroke: c(color),
+            "stroke-width": 2.5,
+            "stroke-linejoin": "round",
+          });
+        for (const [t, v, color, text, dy] of labels)
+          el(
+            "text",
+            {
+              x: X(t),
+              y: Y(v) + dy,
+              "text-anchor": "middle",
+              "font-size": 13,
+              "font-weight": 600,
+              fill: c(color),
+            },
+            text,
+          );
+      }
+      const charts = () => {
+        drawChart(document.getElementById("chart"), {
+          series: [
+            [LAG.stock, "--stock"],
+            [LAG.fork, "--accent"],
+          ],
+          y0: 86,
+          y1: 96,
+          step: 2,
+          labels: [
+            [100, 95.75, "--stock", "+2.75 °C", -10],
+            [88, 93.75, "--accent", "+0.75 °C", -22],
+          ],
         });
-        el("path", {
-          d: path(DATA.fork),
-          fill: "none",
-          stroke: c("--accent"),
-          "stroke-width": 2.5,
-          "stroke-linejoin": "round",
+        drawChart(document.getElementById("steam-chart"), {
+          series: [
+            [STEAM.big, "--stock"],
+            [STEAM.calc, "--accent"],
+          ],
+          y0: 90,
+          y1: 110,
+          step: 4,
+          labels: [
+            [82, 90.83, "--stock", "90.8 °C", 20],
+            [130, 92.2, "--accent", "92.2 °C", -12],
+          ],
         });
-        const peak = (pts) =>
-          pts.reduce((a, p) => (p[0] > 30 && p[1] > a[1] ? p : a), [0, 0]);
-        const ps = peak(DATA.stock),
-          pf = peak(DATA.fork);
-        el(
-          "text",
-          {
-            x: X(ps[0]) + 6,
-            y: Y(ps[1]) - 8,
-            "font-size": 13,
-            "font-weight": 600,
-            fill: c("--stock"),
-          },
-          "+" + (ps[1] - 93).toFixed(2) + " °C",
-        );
-        el(
-          "text",
-          {
-            x: X(pf[0]) - 4,
-            y: Y(pf[1]) - 22,
-            "font-size": 13,
-            "font-weight": 600,
-            fill: c("--accent"),
-            "text-anchor": "middle",
-          },
-          "+" + (pf[1] - 93).toFixed(2) + " °C",
-        );
-      })();
+      };
+      const redraw = () => {
+        for (const id of ["chart", "steam-chart"])
+          document.getElementById(id).replaceChildren();
+        charts();
+      };
+      charts();
+      let resizeTimer;
+      window.addEventListener("resize", () => {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(redraw, 150);
+      });
     </script>
   </body>
 </html>

@@ -55,18 +55,21 @@ switching reheat on → off should be re-checked with a single flush.)
 **"Flush to target" after steaming** (heat to 100 °C in Steam, back to Brew, flush at the peak; target 93 °C, tank
 ~35 °C), 2026-10-29:
 
-| Run   | Release                                                                | Start         | Flush             | Lowest                  | Within 0.5 °C from |
-| ----- | ---------------------------------------------------------------------- | ------------- | ----------------- | ----------------------- | ------------------ |
-| 1     | simon007 (PID heats during the flush)                                  | 105.75 °C     | 79 ml             | 90.66 °C, rebound to 97 | 287 s              |
-| 2     | simon008 (heater held off)                                             | 106.5 °C      | 86 ml             | 90.85 °C                | 317 s              |
-| 3     | simon009 (+ standing-loss allowance)                                   | 108.0 °C      | 88–90 ml          | 90.83 °C                | 291 s              |
-| **4** | **simon010 (counts 85 % of the shown surplus)**                        | **106.56 °C** | **68 ml, 7.8 s**  | **92.24 °C**            | **146 s**          |
-| **5** | **simon010**                                                           | **106.73 °C** | **68 ml**         | **91.85 °C**            | **149 s**          |
-| **6** | **simon010**                                                           | **108.13 °C** | **74 ml**         | **92.18 °C**            | **157 s**          |
-| **7** | **simon014 (+ 5 g valve dump, factor 0.91), target 88 °C (Londonium)** | **106.64 °C** | **92 ml, 10.8 s** | **87.70 °C**            | **169 s**          |
+| Run   | Release                                                                | Start         | Flush             | Lowest                  | Settled ±0.3 °C |
+| ----- | ---------------------------------------------------------------------- | ------------- | ----------------- | ----------------------- | --------------- |
+| 1     | simon007 (PID heats during the flush)                                  | 105.75 °C     | 79 ml             | 90.66 °C, rebound to 97 | 287 s           |
+| 2     | simon008 (heater held off)                                             | 106.5 °C      | 86 ml             | 90.85 °C                | 317 s           |
+| 3     | simon009 (+ standing-loss allowance)                                   | 108.0 °C      | 88–90 ml          | 90.83 °C                | 290 s           |
+| **4** | **simon010 (counts 85 % of the shown surplus)**                        | **106.56 °C** | **68 ml, 7.8 s**  | **92.24 °C**            | **161 s**       |
+| **5** | **simon010**                                                           | **106.73 °C** | **68 ml**         | **91.85 °C**            | **163 s**       |
+| **6** | **simon010**                                                           | **108.13 °C** | **74 ml**         | **92.18 °C**            | **174 s**       |
+| **7** | **simon014 (+ 5 g valve dump, factor 0.91), target 88 °C (Londonium)** | **106.64 °C** | **92 ml, 10.8 s** | **87.70 °C**            | **169 s**       |
 
 Run 4 was within 1 °C 56 s after the flush, bottomed out 2 min later, and held 93.0 °C from ~4 min. The remaining
-−0.8 °C dip is the heater's dead time after the 30 s hold, not the volume. The 0.85 factor held over three runs (lowest 91.85–92.24 °C, within 0.5 °C after 146–157 s). Run 7, with the valve dump counted, came down from above with no undershoot (within 1 °C after 145 s, settled 87.7-88.0 °C) on a bigger 19 °C drop to a different target.
+−0.8 °C dip is the heater's dead time after the 30 s hold, not the volume. The 0.85 factor held over three runs (lowest 91.85–92.24 °C, settled within ±0.3 °C 161–174 s after the flush). The bigger flushes of runs 1–3
+undershot to about 90.8 °C, then the PID climbed back past the target to 93.5 °C, and they took 287–317 s to settle.
+Settling times are recomputed from the logs (re-checked 2026-10-29), all measured from the start of the flush to the
+last reading outside ±0.3 °C; run 7 has no saved log and keeps the time recorded on the day. Run 7, with the valve dump counted, came down from above with no undershoot (within 1 °C after 145 s, settled 87.7-88.0 °C) on a bigger 19 °C drop to a different target.
 
 **Boost after flush (simon011) is worse; leave it off.** Alternating pairs, 5 s flush from 93 °C, boost 5 °C,
 2026-10-29: plain flushes were within 0.5 °C after 74 and 84 s; boosted ones reached 97.75 °C ~3 min after the flush,

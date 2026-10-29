@@ -12,8 +12,8 @@
 </p>
 
 > **This is a fork** with boiler-control changes tested on a Rancilio Silvia (lag compensation, flush to target, tank
-> estimate, heater safety layer, machine profiles). See [how and why](docs/boiler-control.md) and
-> [everything else that differs from upstream](FORK.md).
+> estimate, heater safety layer, machine profiles). See the [fork's front page](https://brisneylander.github.io/gaggimate/),
+> [how and why in detail](docs/boiler-control.md) and [everything else that differs from upstream](FORK.md).
 
 This project upgrades a Gaggia espresso machine with smart controls to improve your coffee-making experience. By adding a display and custom electronics, you can monitor and control the machine more easily.
 

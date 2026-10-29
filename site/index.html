@@ -1,0 +1,954 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>GaggiMate Silvia fork</title>
+    <meta
+      name="description"
+      content="A GaggiMate fork with boiler control tuned on a Rancilio Silvia: lag compensation, flush to target, tank estimate and a heater safety layer."
+    />
+    <style>
+      :root {
+        --bg: #faf8f5;
+        --surface: #ffffff;
+        --surface-2: #f2eee8;
+        --text: #1f1b17;
+        --muted: #6b625a;
+        --faint: #9a9088;
+        --border: #e4ddd4;
+        --accent: #0f766e;
+        --accent-bg: #e0f2ef;
+        --stock: #c2410c;
+        --stock-bg: #fdeee6;
+        --band: rgba(15, 118, 110, 0.1);
+        --code: #f2eee8;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root:not([data-theme="light"]) {
+          --bg: #171412;
+          --surface: #201c19;
+          --surface-2: #2a2521;
+          --text: #efe9e3;
+          --muted: #b3a89e;
+          --faint: #857a71;
+          --border: #3a332d;
+          --accent: #2dd4bf;
+          --accent-bg: #123a36;
+          --stock: #fb923c;
+          --stock-bg: #3a2418;
+          --band: rgba(45, 212, 191, 0.12);
+          --code: #2a2521;
+        }
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html {
+        -webkit-text-size-adjust: 100%;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font:
+          16px/1.65 system-ui,
+          -apple-system,
+          "Segoe UI",
+          Roboto,
+          sans-serif;
+      }
+      a {
+        color: var(--accent);
+      }
+      .wrap {
+        max-width: 980px;
+        margin: 0 auto;
+        padding: 0 16px;
+      }
+      header.hero {
+        padding: 64px 0 40px;
+      }
+      .eyebrow {
+        font-size: 13px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--muted);
+        margin: 0 0 12px;
+      }
+      h1 {
+        font-size: clamp(32px, 5vw, 48px);
+        line-height: 1.1;
+        margin: 0 0 16px;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+      }
+      .lede {
+        font-size: 19px;
+        color: var(--muted);
+        max-width: 640px;
+        margin: 0 0 28px;
+      }
+      .btns {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+      }
+      .btn {
+        display: inline-block;
+        padding: 10px 18px;
+        border-radius: 8px;
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 15px;
+        border: 1px solid var(--border);
+        color: var(--text);
+        background: var(--surface);
+      }
+      .btn.primary {
+        background: var(--accent);
+        border-color: var(--accent);
+        color: var(--bg);
+      }
+      section {
+        padding: 40px 0;
+        border-top: 1px solid var(--border);
+      }
+      h2 {
+        font-size: 26px;
+        margin: 0 0 8px;
+        letter-spacing: -0.01em;
+      }
+      .sub {
+        color: var(--muted);
+        margin: 0 0 24px;
+        max-width: 680px;
+      }
+      .stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 12px;
+        margin: 0 0 24px;
+      }
+      .stat {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 16px 18px;
+      }
+      .stat .k {
+        font-size: 13px;
+        color: var(--muted);
+      }
+      .stat .v {
+        font-size: 26px;
+        font-weight: 700;
+        margin-top: 2px;
+      }
+      .stat .v small {
+        font-size: 15px;
+        font-weight: 500;
+        color: var(--faint);
+      }
+      .chart {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 16px;
+      }
+      .chart svg {
+        width: 100%;
+        height: auto;
+        display: block;
+      }
+      .legend {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 18px;
+        font-size: 14px;
+        color: var(--muted);
+        margin: 4px 4px 8px;
+      }
+      .legend i {
+        display: inline-block;
+        width: 18px;
+        height: 3px;
+        border-radius: 2px;
+        vertical-align: middle;
+        margin-right: 6px;
+      }
+      .caption {
+        font-size: 13px;
+        color: var(--faint);
+        margin: 10px 4px 0;
+      }
+      .cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
+        gap: 14px;
+      }
+      .card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 18px 20px;
+      }
+      .card h3 {
+        margin: 0 0 6px;
+        font-size: 17px;
+      }
+      .card p {
+        margin: 0 0 10px;
+        color: var(--muted);
+        font-size: 15px;
+      }
+      .card .result {
+        font-size: 14px;
+        color: var(--accent);
+        background: var(--accent-bg);
+        border-radius: 6px;
+        padding: 4px 8px;
+        display: inline-block;
+      }
+      ol.steps {
+        padding: 0;
+        margin: 0;
+        list-style: none;
+        counter-reset: s;
+        display: grid;
+        gap: 14px;
+      }
+      ol.steps li {
+        counter-increment: s;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 16px 20px 16px 60px;
+        position: relative;
+      }
+      ol.steps li::before {
+        content: counter(s);
+        position: absolute;
+        left: 18px;
+        top: 16px;
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        background: var(--accent-bg);
+        color: var(--accent);
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 14px;
+      }
+      ol.steps h3 {
+        margin: 0 0 4px;
+        font-size: 16px;
+      }
+      ol.steps p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 15px;
+      }
+      code {
+        font:
+          14px ui-monospace,
+          "Cascadia Code",
+          Menlo,
+          monospace;
+        background: var(--code);
+        padding: 1px 5px;
+        border-radius: 4px;
+      }
+      .dropped {
+        display: grid;
+        gap: 10px;
+      }
+      .drop {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+        gap: 16px;
+        padding: 12px 0;
+        border-bottom: 1px solid var(--border);
+      }
+      .drop:last-child {
+        border-bottom: 0;
+      }
+      .drop b {
+        font-weight: 600;
+      }
+      .drop span {
+        color: var(--muted);
+        font-size: 15px;
+      }
+      @media (max-width: 640px) {
+        .drop {
+          grid-template-columns: 1fr;
+          gap: 2px;
+        }
+        header.hero {
+          padding-top: 40px;
+        }
+      }
+      .note {
+        background: var(--stock-bg);
+        border-radius: 10px;
+        padding: 12px 16px;
+        font-size: 15px;
+        margin: 18px 0 0;
+      }
+      footer {
+        padding: 32px 0 48px;
+        border-top: 1px solid var(--border);
+        color: var(--faint);
+        font-size: 14px;
+      }
+      footer a {
+        color: var(--muted);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <header class="hero">
+        <p class="eyebrow">
+          A GaggiMate fork · tested on a Rancilio Silvia 230 V
+        </p>
+        <h1>Boiler control that knows its sensor is late</h1>
+        <p class="lede">
+          The Silvia's thermocouple sits on the outside of the boiler and sees
+          heat about 20 seconds after it happens. This fork teaches GaggiMate's
+          controller to account for that, then builds tools around it: flushing
+          a hot boiler straight down to brew temperature, estimating the tank's
+          temperature, and a safety layer for the heater.
+        </p>
+        <div class="btns">
+          <a
+            class="btn primary"
+            href="https://github.com/brisneylander/gaggimate/releases/latest"
+            >Latest release</a
+          >
+          <a class="btn" href="https://github.com/brisneylander/gaggimate"
+            >Source on GitHub</a
+          >
+          <a
+            class="btn"
+            href="https://github.com/brisneylander/gaggimate/blob/master/docs/boiler-control.md"
+            >The full write-up</a
+          >
+        </div>
+      </header>
+
+      <section>
+        <h2>The headline result</h2>
+        <p class="sub">
+          The same 5 second flush from 93 °C, logged on the same machine. The
+          stock loop keeps heating into a dip the sensor is still showing, then
+          overshoots. With the fork's compensation it lands close to target and
+          settles in less than half the time.
+        </p>
+        <div class="stats">
+          <div class="stat">
+            <div class="k">Overshoot after a flush</div>
+            <div class="v">+0.63 °C <small>from +2.9</small></div>
+          </div>
+          <div class="stat">
+            <div class="k">Settled within ±0.3 °C</div>
+            <div class="v">126 s <small>from 318</small></div>
+          </div>
+          <div class="stat">
+            <div class="k">Back to brew temp after steam</div>
+            <div class="v">~150 s <small>from ~5 min</small></div>
+          </div>
+        </div>
+        <div class="chart">
+          <div class="legend">
+            <span
+              ><i style="background: var(--stock)"></i>Stock GaggiMate
+              loop</span
+            ><span><i style="background: var(--accent)"></i>This fork</span
+            ><span
+              ><i style="background: var(--band); height: 10px"></i>93 °C
+              ±0.3</span
+            >
+          </div>
+          <svg
+            id="chart"
+            viewBox="0 0 900 380"
+            role="img"
+            aria-label="Boiler temperature after a 5 second flush: the stock loop overshoots to 95.7 °C, the fork peaks at 93.75 °C."
+          ></svg>
+          <p class="caption">
+            Bench logs from 2026-10-28: stock run +2.75 °C (one of three,
+            average +2.9), fork run +0.75 °C (one of two, average +0.63). Flush
+            starts at 0 s.
+          </p>
+        </div>
+      </section>
+
+      <section>
+        <h2>What's in it</h2>
+        <p class="sub">
+          Everything is off until configured, so an unconfigured machine behaves
+          like upstream GaggiMate.
+        </p>
+        <div class="cards">
+          <div class="card">
+            <h3>Lag compensation</h3>
+            <p>
+              A heat-balance predictor counts the heater energy and flush water
+              that haven't reached the sensor yet, so the PID backs off before
+              an overshoot shows. Heat and water get separate delays.
+            </p>
+            <span class="result">+2.9 → +0.63 °C overshoot</span>
+          </div>
+          <div class="card">
+            <h3>Flush to target</h3>
+            <p>
+              After steaming the boiler sits at 106–110 °C. The flush button
+              works out how much tank water brings it to brew temperature and
+              flushes exactly that.
+            </p>
+            <span class="result">Within 0.5 °C in about 2.5 min, from 5</span>
+          </div>
+          <div class="card">
+            <h3>Tank estimate</h3>
+            <p>
+              The tank warms beside the boiler, from about 25 °C fresh to 40 °C
+              or more. The fork models that, resets on a refill, and checks
+              itself against flushes.
+            </p>
+            <span class="result">Spots a missed refill from two flushes</span>
+          </div>
+          <div class="card">
+            <h3>Heater safety layer</h3>
+            <p>
+              One gate in front of the heater pin. It latches the heater off if
+              the sensor comes loose, the reading jumps, or the boiler passes
+              170 °C.
+            </p>
+            <span class="result">Never tripped across 52 bench logs</span>
+          </div>
+          <div class="card">
+            <h3>Machine profiles</h3>
+            <p>
+              All machine-specific values as one set: apply the measured Silvia
+              profile, start from a Gaggia or DeLonghi preset, or import and
+              export JSON.
+            </p>
+            <span class="result">Silvia values fully measured</span>
+          </div>
+          <div class="card">
+            <h3>Tune this machine</h3>
+            <p>
+              A guided routine on the Calibration page: autotune, one weighed 5
+              s flush, and a flush to target after steam. It measures the values
+              for a machine that isn't a Silvia.
+            </p>
+            <span class="result">Three guided steps</span>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <h2>Getting it on your machine</h2>
+        <p class="sub">
+          For a GaggiMate display and controller. The fork follows upstream
+          GaggiMate closely, so the hardware and wiring are the same.
+        </p>
+        <ol class="steps">
+          <li>
+            <h3>Flash the fork once over USB</h3>
+            <p>
+              Upstream firmware only updates from upstream, so the first install
+              is by USB: flash the display and controller files from the
+              <a
+                href="https://github.com/brisneylander/gaggimate/releases/latest"
+                >latest release</a
+              >. After that, updates come over the air.
+            </p>
+          </li>
+          <li>
+            <h3>Pick an update channel</h3>
+            <p>
+              In <b>Settings → System &amp; Updates</b>: <b>Stable</b> installs
+              tagged releases, <b>Nightly</b> follows the head of the fork's
+              master branch.
+            </p>
+          </li>
+          <li>
+            <h3>Apply a machine profile</h3>
+            <p>
+              In <b>Settings → Machine → Machine Boiler Profile</b>, apply
+              <b>Rancilio Silvia 230 V</b>, or a Gaggia or DeLonghi starting
+              point, then save.
+            </p>
+          </li>
+          <li>
+            <h3>Tune it</h3>
+            <p>
+              On another machine, run <b>Tune this machine</b> under
+              <b>Settings → Calibration</b> to measure its own values. Turn on
+              <b>Flush to brew target when hot</b> under General to make the
+              flush button use them.
+            </p>
+          </li>
+        </ol>
+        <p class="note">
+          Only the Silvia profile is measured. The Gaggia and DeLonghi entries
+          are upstream's documented PID gains as a starting point, not tested
+          here.
+        </p>
+      </section>
+
+      <section>
+        <h2>What was tried and dropped</h2>
+        <p class="sub">
+          Every idea was checked on the bench. These didn't earn their place.
+        </p>
+        <div class="dropped">
+          <div class="drop">
+            <b>Full-power reheat after a flush</b
+            ><span
+              >Slower back to target (124–129 s against 62–100 s): heat takes
+              about 2 minutes to reach the sensor, so delivering it fast doesn't
+              help.</span
+            >
+          </div>
+          <div class="drop">
+            <b>Boost, then flush the surplus off</b
+            ><span
+              >366–375 s to settle against 74–84 s. Heating up takes as long as
+              a plain recovery, then the flush starts another.</span
+            >
+          </div>
+          <div class="drop">
+            <b>A thermal model steering the water estimate</b
+            ><span
+              >No difference at the sensor (+0.69 against +0.66 °C). Any gain
+              would be in the water, which needs a probe inside the boiler to
+              see.</span
+            >
+          </div>
+          <div class="drop">
+            <b>Keeping shot temperature up with the heater</b
+            ><span
+              >A shot's fill draws about 2 kW against the element's 1100 W, so
+              heating during the shot lifts the water only about 0.6 °C. Set the
+              profile a little hotter instead.</span
+            >
+          </div>
+        </div>
+      </section>
+
+      <footer>
+        A fork of
+        <a href="https://github.com/jniebuhr/gaggimate">GaggiMate</a> by
+        brisneylander, not affiliated with the GaggiMate project. Licensed
+        <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/"
+          >CC BY-NC-SA 4.0</a
+        >
+        like upstream. Bench data and open items:
+        <a
+          href="https://github.com/brisneylander/gaggimate/blob/master/ROADMAP.md"
+          >ROADMAP.md</a
+        >.
+      </footer>
+    </div>
+    <script>
+      const DATA = {
+        stock: [
+          [-20, 92.87],
+          [-17, 92.85],
+          [-14, 92.88],
+          [-11, 92.85],
+          [-7, 92.89],
+          [-5, 92.89],
+          [-2, 92.94],
+          [1, 92.89],
+          [4, 92.97],
+          [7, 92.63],
+          [10, 91.62],
+          [13, 90.19],
+          [16, 89.04],
+          [19, 88.01],
+          [22, 87.37],
+          [25, 87.22],
+          [28, 87.22],
+          [31, 87.5],
+          [34, 88.06],
+          [37, 88.73],
+          [40, 89.47],
+          [43, 90.23],
+          [46, 91.05],
+          [50, 91.82],
+          [52, 92.34],
+          [56, 92.96],
+          [58, 93.4],
+          [61, 93.87],
+          [64, 94.28],
+          [67, 94.59],
+          [70, 94.83],
+          [73, 94.99],
+          [76, 95.22],
+          [79, 95.35],
+          [82, 95.49],
+          [85, 95.5],
+          [88, 95.5],
+          [91, 95.58],
+          [94, 95.69],
+          [97, 95.73],
+          [100, 95.75],
+          [103, 95.75],
+          [107, 95.71],
+          [109, 95.66],
+          [112, 95.51],
+          [115, 95.5],
+          [118, 95.5],
+          [121, 95.5],
+          [124, 95.45],
+          [127, 95.35],
+          [130, 95.26],
+          [133, 95.21],
+          [137, 95.25],
+          [140, 95.06],
+          [142, 95.03],
+          [145, 95.0],
+          [148, 94.97],
+          [151, 94.88],
+          [154, 94.76],
+          [157, 94.75],
+          [160, 94.75],
+          [163, 94.61],
+          [166, 94.55],
+          [169, 94.5],
+          [172, 94.5],
+          [176, 94.5],
+          [179, 94.46],
+          [181, 94.36],
+          [184, 94.28],
+          [187, 94.29],
+          [190, 94.25],
+          [193, 94.21],
+          [196, 94.22],
+          [199, 94.25],
+          [202, 94.14],
+          [205, 94.06],
+          [208, 94.01],
+          [211, 94.0],
+          [214, 94.0],
+          [217, 94.0],
+          [220, 94.0],
+          [223, 94.0],
+          [226, 94.0],
+          [229, 94.0],
+          [232, 94.0],
+          [235, 93.95],
+          [238, 93.95],
+          [241, 93.94],
+          [244, 93.99],
+          [247, 93.91],
+          [250, 93.87],
+          [253, 93.77],
+          [256, 93.75],
+          [259, 93.75],
+          [262, 93.75],
+          [266, 93.75],
+          [268, 93.64],
+          [272, 93.65],
+          [274, 93.6],
+          [277, 93.51],
+          [280, 93.5],
+          [283, 93.5],
+          [286, 93.5],
+          [289, 93.48],
+          [292, 93.47],
+          [295, 93.46],
+          [298, 93.39],
+          [301, 93.35],
+          [304, 93.37],
+          [307, 93.31],
+          [310, 93.33],
+          [313, 93.26],
+          [316, 93.29],
+          [319, 93.27],
+          [322, 93.25],
+          [325, 93.25],
+          [328, 93.25],
+          [331, 93.25],
+          [334, 93.25],
+          [337, 93.3],
+          [340, 93.26],
+          [343, 93.25],
+          [346, 93.26],
+          [349, 93.25],
+          [352, 93.25],
+          [355, 93.25],
+          [358, 93.25],
+        ],
+        fork: [
+          [-20, 93.0],
+          [-17, 92.98],
+          [-14, 93.0],
+          [-11, 93.03],
+          [-8, 93.0],
+          [-5, 93.0],
+          [-2, 93.0],
+          [1, 93.0],
+          [4, 93.0],
+          [7, 92.48],
+          [10, 91.53],
+          [13, 89.94],
+          [16, 88.5],
+          [19, 87.5],
+          [22, 87.04],
+          [25, 86.78],
+          [29, 86.93],
+          [31, 87.16],
+          [34, 87.68],
+          [37, 88.27],
+          [40, 88.82],
+          [43, 89.51],
+          [46, 90.16],
+          [49, 90.8],
+          [52, 91.34],
+          [55, 91.63],
+          [59, 92.07],
+          [61, 92.35],
+          [64, 92.66],
+          [67, 92.89],
+          [70, 93.07],
+          [73, 93.23],
+          [76, 93.44],
+          [79, 93.49],
+          [82, 93.55],
+          [85, 93.73],
+          [88, 93.73],
+          [91, 93.75],
+          [94, 93.71],
+          [97, 93.75],
+          [100, 93.75],
+          [103, 93.68],
+          [106, 93.73],
+          [109, 93.68],
+          [112, 93.51],
+          [115, 93.5],
+          [118, 93.5],
+          [121, 93.5],
+          [124, 93.36],
+          [127, 93.33],
+          [130, 93.28],
+          [133, 93.26],
+          [136, 93.25],
+          [139, 93.2],
+          [142, 93.08],
+          [145, 93.01],
+          [148, 93.0],
+          [151, 93.0],
+          [154, 93.0],
+          [157, 93.0],
+          [160, 92.92],
+          [163, 92.81],
+          [166, 92.8],
+          [169, 92.82],
+          [172, 92.81],
+          [175, 92.79],
+          [178, 92.76],
+          [181, 92.8],
+          [184, 92.8],
+          [187, 92.82],
+          [190, 92.85],
+          [193, 92.85],
+          [196, 92.86],
+          [199, 92.95],
+          [202, 92.99],
+          [205, 92.99],
+          [209, 92.99],
+          [211, 92.96],
+          [214, 93.0],
+          [217, 92.98],
+          [220, 92.93],
+          [223, 93.0],
+          [226, 93.0],
+          [229, 93.0],
+          [232, 93.0],
+          [235, 93.0],
+          [238, 93.0],
+          [242, 93.0],
+          [244, 93.0],
+          [247, 92.95],
+          [250, 93.0],
+          [253, 93.0],
+          [256, 93.0],
+          [259, 93.0],
+          [262, 93.0],
+          [265, 92.99],
+          [268, 93.0],
+          [271, 93.0],
+          [274, 92.99],
+          [277, 92.99],
+          [280, 93.0],
+          [283, 93.0],
+          [286, 93.0],
+          [289, 93.0],
+          [292, 93.0],
+          [295, 93.0],
+          [298, 93.0],
+          [302, 93.0],
+          [304, 93.0],
+          [307, 93.0],
+          [310, 93.0],
+          [313, 93.0],
+          [316, 93.0],
+          [319, 93.0],
+          [322, 93.0],
+          [325, 93.0],
+          [328, 93.0],
+          [331, 93.0],
+          [334, 93.0],
+          [337, 93.0],
+          [340, 93.0],
+          [343, 93.0],
+          [346, 93.0],
+          [349, 93.0],
+          [352, 93.0],
+          [355, 92.96],
+          [358, 93.04],
+        ],
+      };
+      (function () {
+        const svg = document.getElementById("chart");
+        // Draw at the chart's own width so labels stay readable on a phone.
+        const W = Math.max(
+          340,
+          Math.min(900, Math.round(svg.getBoundingClientRect().width) || 900),
+        );
+        const H = Math.round(W < 600 ? W * 0.75 : W * 0.42),
+          L = 52,
+          R = 16,
+          T = 16,
+          B = 40;
+        svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+        const x0 = -20,
+          x1 = 360,
+          y0 = 86,
+          y1 = 97;
+        const X = (t) => L + ((t - x0) / (x1 - x0)) * (W - L - R);
+        const Y = (v) => T + ((y1 - v) / (y1 - y0)) * (H - T - B);
+        const ns = "http://www.w3.org/2000/svg";
+        const el = (name, attrs, text) => {
+          const e = document.createElementNS(ns, name);
+          for (const k in attrs) e.setAttribute(k, attrs[k]);
+          if (text != null) e.textContent = text;
+          svg.appendChild(e);
+          return e;
+        };
+        const css = getComputedStyle(document.documentElement);
+        const c = (n) => css.getPropertyValue(n).trim();
+        el("rect", {
+          x: L,
+          y: Y(93.3),
+          width: W - L - R,
+          height: Y(92.7) - Y(93.3),
+          fill: c("--band"),
+        });
+        for (let v = 86; v <= 97; v += 1) {
+          el("line", {
+            x1: L,
+            x2: W - R,
+            y1: Y(v),
+            y2: Y(v),
+            stroke: c("--border"),
+            "stroke-width": 1,
+          });
+          if (v % 2 === 0)
+            el(
+              "text",
+              {
+                x: L - 8,
+                y: Y(v) + 4,
+                "text-anchor": "end",
+                "font-size": 12,
+                fill: c("--faint"),
+              },
+              v + " °C",
+            );
+        }
+        for (let t = 0; t <= 360; t += W < 600 ? 120 : 60)
+          el(
+            "text",
+            {
+              x: X(t),
+              y: H - B + 20,
+              "text-anchor": "middle",
+              "font-size": 12,
+              fill: c("--faint"),
+            },
+            t + " s",
+          );
+        el("line", {
+          x1: X(0),
+          x2: X(0),
+          y1: T,
+          y2: H - B,
+          stroke: c("--faint"),
+          "stroke-dasharray": "3 4",
+        });
+        el(
+          "text",
+          { x: X(0) + 6, y: T + 12, "font-size": 12, fill: c("--muted") },
+          "flush",
+        );
+        const path = (pts) =>
+          pts
+            .map(
+              (p, i) =>
+                (i ? "L" : "M") + X(p[0]).toFixed(1) + " " + Y(p[1]).toFixed(1),
+            )
+            .join(" ");
+        el("path", {
+          d: path(DATA.stock),
+          fill: "none",
+          stroke: c("--stock"),
+          "stroke-width": 2.5,
+          "stroke-linejoin": "round",
+        });
+        el("path", {
+          d: path(DATA.fork),
+          fill: "none",
+          stroke: c("--accent"),
+          "stroke-width": 2.5,
+          "stroke-linejoin": "round",
+        });
+        const peak = (pts) =>
+          pts.reduce((a, p) => (p[0] > 30 && p[1] > a[1] ? p : a), [0, 0]);
+        const ps = peak(DATA.stock),
+          pf = peak(DATA.fork);
+        el(
+          "text",
+          {
+            x: X(ps[0]) + 6,
+            y: Y(ps[1]) - 8,
+            "font-size": 13,
+            "font-weight": 600,
+            fill: c("--stock"),
+          },
+          "+" + (ps[1] - 93).toFixed(2) + " °C",
+        );
+        el(
+          "text",
+          {
+            x: X(pf[0]) - 4,
+            y: Y(pf[1]) - 22,
+            "font-size": 13,
+            "font-weight": 600,
+            fill: c("--accent"),
+            "text-anchor": "middle",
+          },
+          "+" + (pf[1] - 93).toFixed(2) + " °C",
+        );
+      })();
+    </script>
+  </body>
+</html>

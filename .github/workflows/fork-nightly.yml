@@ -11,6 +11,8 @@ on:
     paths-ignore:
       - "**.md"
       - "docs/**"
+      - "site/**"
+      - ".github/workflows/fork-pages.yml"
   workflow_dispatch:
 
 concurrency:

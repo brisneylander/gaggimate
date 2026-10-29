@@ -24,6 +24,22 @@ jobs:
           fetch-tags: true
           fetch-depth: 0
           submodules: 'recursive'
+      # The fork's own standby logo is kept out of the repository: the secret holds the generated
+      # ui_image_logo.c, gzipped and base64-encoded. Without the secret the stock logo is built.
+      # skip-worktree keeps `git describe --dirty` (firmware version, version.txt) clean, so OTA
+      # version comparison still sees v<release>-simonNNN.
+      - name: Apply private standby logo
+        env:
+          STANDBY_LOGO: ${{ secrets.STANDBY_LOGO_C_GZ_B64 }}
+        run: |
+          if [ -n "$STANDBY_LOGO" ]; then
+            f=src/display/ui/default/eez/images/ui_image_logo.c
+            printf '%s' "$STANDBY_LOGO" | base64 -d | gunzip > "$f"
+            git update-index --skip-worktree "$f"
+            grep -q 'img_logo_map' "$f" && echo "private standby logo applied"
+          else
+            echo "no STANDBY_LOGO_C_GZ_B64 secret; building the stock logo"
+          fi
       - uses: actions/cache@v4
         with:
           path: |

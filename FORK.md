@@ -63,3 +63,14 @@ normally be clean. After syncing, tag a new `-simonNNN` build to install it.
 ## Licence
 
 GaggiMate is licensed CC BY-NC-SA 4.0, and this fork is too. It's for personal, non-commercial use.
+
+## Private standby logo
+
+The fork's standby logo is not in this repository. The release workflow (`fork-release.yml`) decodes the
+`STANDBY_LOGO_C_GZ_B64` Actions secret into `src/display/ui/default/eez/images/ui_image_logo.c` before building, and
+marks the file `skip-worktree` so the firmware version stays clean. Without the secret the stock logo is built.
+
+To change it: generate the 392x53 `LV_IMG_CF_ALPHA_8BIT` `ui_image_logo.c`, then
+`gzip -9 -c ui_image_logo.c | base64 -w0 | gh secret set STANDBY_LOGO_C_GZ_B64 -R brisneylander/gaggimate` and tag a
+release. Never commit the generated file or its PNG sources. The firmware binaries attached to releases are public and
+contain the image.

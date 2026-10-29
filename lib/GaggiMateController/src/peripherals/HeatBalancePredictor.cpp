@@ -1,4 +1,5 @@
 #include "HeatBalancePredictor.h"
+#include "LagCompensationLimits.h"
 #include <algorithm>
 #include <cmath>
 #include <numeric>
@@ -39,6 +40,7 @@ void HeatBalancePredictor::reset() {
     reheatActive = false;
     coasting = false;
     energyOwed = 0.0f;
+    lastFlow = 0.0f;
 }
 
 float HeatBalancePredictor::update(float dt, float duty, float flow, float measuredTemp, float setpoint) {
@@ -46,6 +48,7 @@ float HeatBalancePredictor::update(float dt, float duty, float flow, float measu
         correction = 0.0f;
         eventActive = reheatActive = coasting = false;
         energyOwed = 0.0f;
+        lastFlow = 0.0f;
         return correction;
     }
     duty = std::min(std::max(duty, 0.0f), 1.0f);
@@ -54,6 +57,11 @@ float HeatBalancePredictor::update(float dt, float duty, float flow, float measu
 
     const float heaterPower = heaterWatts * duty;
     const float waterPower = flow * WATER_SPECIFIC_HEAT * std::max(measuredTemp - inletTemp, 0.0f);
+    // When the water stops the valve dumps the group's water into the drip tray: boiler water the flow didn't count.
+    float waterJ = waterPower * dt;
+    if (flow == 0.0f && lastFlow > 0.0f)
+        waterJ += lag_limits::VALVE_DUMP_ML * WATER_SPECIFIC_HEAT * std::max(measuredTemp - inletTemp, 0.0f);
+    lastFlow = flow;
 
     // Water event energy count (see reheatWanted()); opened from the prediction before this step's water is added.
     if (flow > 0.0f && !eventActive) {
@@ -67,7 +75,7 @@ float HeatBalancePredictor::update(float dt, float duty, float flow, float measu
         lossWatts += (heaterPower - lossWatts) * dt / (LOSS_LEARN_TAU + dt);
     }
 
-    window.push_back({dt, (heaterPower - lossWatts) * dt / heatCapacity, waterPower * dt / heatCapacity});
+    window.push_back({dt, (heaterPower - lossWatts) * dt / heatCapacity, waterJ / heatCapacity});
     windowTime += dt;
     // Steps older than both delays have reached the sensor; they are in measuredTemp already.
     const float longest = std::max(deadTime, waterDeadTime);
@@ -90,7 +98,7 @@ float HeatBalancePredictor::update(float dt, float duty, float flow, float measu
     correction = std::min(std::max(pending, -MAX_CORRECTION), MAX_CORRECTION);
 
     if (eventActive) {
-        energyOwed += (waterPower + lossWatts - heaterPower) * dt;
+        energyOwed += waterJ + (lossWatts - heaterPower) * dt;
         if (flow > 0.0f) {
             sinceFlow = 0.0f;
         } else {

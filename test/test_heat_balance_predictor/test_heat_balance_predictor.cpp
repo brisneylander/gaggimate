@@ -190,10 +190,10 @@ void test_seed_waits_for_enable_and_is_bounded() {
 // carries the standing loss (~45 W at 98 °C), so it sits ~8 °C below the water: after a flush or a fast reheat it keeps
 // pulling the water down, or soaking up the extra, for minutes. The thermocouple sees the water through a 4.6 s
 // transport delay and a 15 s first-order lag (flush water shows after ~12 s, heater heat after ~40 s), then MAX31855
-// quantisation (0.25 °C) and the driver's 0.2 EMA at 4 Hz. Against bench flushes it doesn't see in fitting, it tracks
-// the sensor to 0.45 °C rms (the earlier two-node plant: 1.09 °C) and puts the dip's low within ~6 s.
-// Controller: SimplePID at 1 Hz on 0..1000 ms of a 1 s window, mirroring Heater::loopPid/updateLagCompensation.
-// Scenario: settle at 98 °C (93 + 5 offset), then a 5 s, 8.9 ml/s flush of 35 °C tank water (as on the bench).
+// quantisation (0.25 °C) and the driver's 0.2 EMA at 4 Hz. Each flush ends with the valve's ~5 g dump. Against bench flushes it
+// doesn't see in fitting, it tracks the sensor to 0.45 °C rms (the earlier two-node plant: 1.09 °C) and puts the dip's low within
+// ~6 s. Controller: SimplePID at 1 Hz on 0..1000 ms of a 1 s window, mirroring Heater::loopPid/updateLagCompensation. Scenario:
+// settle at 98 °C (93 + 5 offset), then a 5 s, 8.9 ml/s flush of 35 °C tank water (as on the bench).
 
 struct Tuning {
     float kp = 60.0f, ki = 0.658f, kd = 2800.0f;
@@ -328,6 +328,9 @@ static Result simulate(const Tuning &tu) {
         wall += (heat - toWater) * dt / wallC;
         group += (toGroup - lossPerK * (boiler - room)) * dt / groupC;
         boiler += (toWater - water - toGroup) * dt / waterC;
+        // As the flush ends the valve dumps the group's water (~5 g of boiler water) into the drip tray.
+        if (t < flushEnd && t + dt >= flushEnd)
+            boiler -= lag_limits::VALVE_DUMP_ML * 4.18f * (boiler - inletC) / waterC;
         pipe.push_back(boiler);
         const float delayed = pipe.front();
         pipe.pop_front();
@@ -376,7 +379,7 @@ void test_flush_overshoot_is_reduced() {
 }
 
 // Each part on its own: the D filter cuts chatter, the predictor cuts the overshoot. On the fitted plant a 2 s filter
-// alone delays the D term's braking enough to cost ~0.75 °C more overshoot (8 s: ~2.75 °C), which is why it ships with
+// alone delays the D term's braking enough to cost ~1 °C more overshoot (8 s: ~3 °C), which is why it ships with
 // the predictor rather than on its own.
 void test_individual_features() {
     const Result legacy = simulate(Tuning{});
@@ -396,7 +399,7 @@ void test_individual_features() {
     slow.derivFilterS = 8.0f;
     report("D filter 8 s only", simulate(slow));
 
-    TEST_ASSERT_TRUE(rf.peak <= legacy.peak + 1.0f);
+    TEST_ASSERT_TRUE(rf.peak <= legacy.peak + 1.25f);
     TEST_ASSERT_TRUE(rf.idleSwing < 0.5f * legacy.idleSwing); // ~3x less chatter (2.5 vs 7.4)
     // On the fitted plant most of the overshoot is element heat still arriving, which the integral can't see coming:
     // the zone alone trims it a little (3.0 -> 2.75 °C) but mustn't make it worse.

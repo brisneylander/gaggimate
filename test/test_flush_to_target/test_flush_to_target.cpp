@@ -12,21 +12,22 @@ void tearDown() {}
 // Silvia on the bench: 1100 W at 0.6 °C/s (1833 J/°C), +5 °C display offset, 30 °C tank, 8.644 ml/s into an open group.
 constexpr float W = 1100.0f, RATE = 0.6f, OFFSET = 5.0f, TANK = 30.0f, FLOW = 8.644f;
 constexpr float NO_LOSS = 1e-6f; // isolates the heat sums from the standing-loss allowance
+constexpr float REAL = flush_to_target::SURPLUS_REALISED, DUMP = lag_limits::VALVE_DUMP_ML;
 
 void test_two_degrees_over_needs_a_short_flush() {
     const auto p = plan(95.0f, 93.0f, OFFSET, W, RATE, TANK, FLOW, NO_LOSS);
     TEST_ASSERT_NULL(p.reason);
-    // 2 °C x 0.85 realised x 1833 J/°C / (4.18 x (99 - 30)) = 10.8 ml
-    TEST_ASSERT_FLOAT_WITHIN(0.2f, 12.7f * flush_to_target::SURPLUS_REALISED, p.ml);
-    TEST_ASSERT_FLOAT_WITHIN(0.05f, 12.7f * flush_to_target::SURPLUS_REALISED / FLOW, p.seconds);
+    // 2 °C x 0.91 realised x 1833 J/°C / (4.18 x (99 - 30)) = 11.6 ml out of the boiler, 5 ml of it the valve's dump
+    TEST_ASSERT_FLOAT_WITHIN(0.2f, 12.7f * REAL - DUMP, p.ml);
+    TEST_ASSERT_FLOAT_WITHIN(0.05f, (12.7f * REAL - DUMP) / FLOW, p.seconds);
 }
 
-// Straight after steaming: 32 °C x 0.85 x 1833 J/°C / (4.18 x (114 - 30)) = 142 ml, about 16 s.
+// Straight after steaming: 32 °C x 0.91 x 1833 J/°C / (4.18 x (114 - 30)) = 152 ml out, 147 ml pumped, about 17 s.
 void test_after_steam() {
     const auto p = plan(125.0f, 93.0f, OFFSET, W, RATE, TANK, FLOW, NO_LOSS);
     TEST_ASSERT_NULL(p.reason);
-    TEST_ASSERT_FLOAT_WITHIN(2.0f, 167.0f * flush_to_target::SURPLUS_REALISED, p.ml);
-    TEST_ASSERT_FLOAT_WITHIN(0.3f, 19.3f * flush_to_target::SURPLUS_REALISED, p.seconds);
+    TEST_ASSERT_FLOAT_WITHIN(2.0f, 167.0f * REAL - DUMP, p.ml);
+    TEST_ASSERT_FLOAT_WITHIN(0.3f, (167.0f * REAL - DUMP) / FLOW, p.seconds);
 }
 
 // A surplus needing more than 30 s (here a 70 °C tank) is capped per press; press again if still hot.
@@ -37,12 +38,12 @@ void test_long_flush_is_capped() {
     TEST_ASSERT_FLOAT_WITHIN(0.1f, flush_to_target::MAX_SECONDS * FLOW, p.ml);
 }
 
-// Warmer tank water cools less per ml, so it needs more.
+// Warmer tank water cools less per ml, so it needs more (in proportion, once the valve's dump is added back).
 void test_warmer_tank_needs_more_water() {
     const auto cool = plan(97.0f, 93.0f, OFFSET, W, RATE, 23.0f, FLOW, NO_LOSS);
     const auto warm = plan(97.0f, 93.0f, OFFSET, W, RATE, 40.0f, FLOW, NO_LOSS);
     TEST_ASSERT_TRUE(warm.ml > cool.ml);
-    TEST_ASSERT_FLOAT_WITHIN(0.01f, (100.0f - 23.0f) / (100.0f - 40.0f), warm.ml / cool.ml);
+    TEST_ASSERT_FLOAT_WITHIN(0.01f, (100.0f - 23.0f) / (100.0f - 40.0f), (warm.ml + DUMP) / (cool.ml + DUMP));
 }
 
 void test_tank_zero_means_default() {
@@ -71,7 +72,7 @@ void test_standing_loss_reduces_the_flush() {
     TEST_ASSERT_NULL(loss.reason);
     // 37 W over the ~9 s flush + 30 s hold = ~1.45 kJ less of a 24.7 kJ surplus: ~6 % less water.
     const float perMl = 4.18f * ((106.5f + 93.0f) / 2.0f + OFFSET - 35.0f);
-    const float expectedMl = (13.5f * flush_to_target::SURPLUS_REALISED * W / RATE - 37.0f * (loss.seconds + 30.0f)) / perMl;
+    const float expectedMl = (13.5f * REAL * W / RATE - 37.0f * (loss.seconds + 30.0f)) / perMl - DUMP;
     TEST_ASSERT_FLOAT_WITHIN(0.3f, expectedMl, loss.ml);
     TEST_ASSERT_TRUE(loss.ml < none.ml);
     TEST_ASSERT_FLOAT_WITHIN(0.02f, 0.93f, loss.ml / none.ml);

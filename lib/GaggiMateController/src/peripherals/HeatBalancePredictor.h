@@ -85,6 +85,7 @@ class HeatBalancePredictor {
     bool lossSeeded = false;
     bool eventActive = false;
     float sinceFlow = 0.0f;
+    float lastFlow = 0.0f; // ml/s at the previous step: its fall to 0 is the valve's dump
     bool reheatActive = false;
     bool coasting = false;
     float lastDt = 0.0f;

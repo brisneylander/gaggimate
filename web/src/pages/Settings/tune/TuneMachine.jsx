@@ -277,7 +277,7 @@ export function TuneMachine({ formData, setField }) {
               {formData.sensorDeadTimeS} s.
             </Trans>
           ) : (
-            <div role='alert' className='alert alert-warning mt-2 block text-sm'>
+            <div className='mt-2 text-sm'>
               <Trans>
                 Run Autotune above with the machine cold and the heater wattage from its rating
                 plate: it saves the heat-up rate, dead time and heater power.
@@ -290,7 +290,7 @@ export function TuneMachine({ formData, setField }) {
           <strong>
             <Trans>A 5 s flush, logged and weighed</Trans>
           </strong>
-          <div role='alert' className='alert alert-warning mt-2 block text-sm'>
+          <div className='mt-2 text-sm'>
             <p>
               <Trans>
                 This short flush shows how quickly fresh water reaches the temperature sensor, how
@@ -454,7 +454,7 @@ export function TuneMachine({ formData, setField }) {
           <strong>
             <Trans>Flush to target after steam</Trans>
           </strong>
-          <div role='alert' className='alert alert-warning mt-2 block text-sm'>
+          <div className='mt-2 text-sm'>
             <p>
               <Trans>
                 After steaming, the boiler is far hotter than brewing needs. Flush to target works

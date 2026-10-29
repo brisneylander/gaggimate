@@ -75,6 +75,11 @@ the sensor to 0.45 °C rms (old plant 1.09 °C) and puts the dip's low within ~6
   one, ~7 % of a 68 ml flush to target. That is about half of the extra cooling; the rest is heat moving between
   boiler and group head (the fitted plant's slow node). Next: count ~5 g per flush for the valve dump in flush-to-target
   sizing and the predictor, then re-check the 0.85 factor (expect ~0.92).
+- **First logged shot** (Londonium, 88 °C, simon014, 2026-10-29 13:49): stopped at 34.7 g by the puck-flow estimate
+  (no scale), 38 g in the cup (stop ~3.5 g early for a target). The sensor fell 87.7 -> 81.9 °C over 37 s, and in
+  the 9 bar phase the heater backed off to 22-33 % (~300 W) while the water took ~500 W and the boiler sat 6 °C low:
+  the integral is held while water flows (right for a flush, wrong for a shot), leaving only P. Next: supply the
+  flowing water's heat during a shot (planned heat), then compare shots.
 - **Phantom flow after a stopped brew** (2026-10-29 13:01): a brew stopped within a second, in the profile's 5 ml/s
   Fill phase, left the reported pump flow at 5.0 ml/s for over a minute with no water moving (pressure 0.3-0.6 bar,
   boiler sealed). The predictor counted cold water that wasn't there and heated the boiler 93 -> 98 °C. Reproduce

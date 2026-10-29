@@ -135,8 +135,9 @@ budget for flushes looks unnecessary; recovery to 93 °C is a little slower (69�
   dead time (20 s before the reaction) would pass 125 °C, ending like a timeout (gains kept, no error state) instead
   of coasting past (a run once reached 131 °C). The heater wattage field defaults to the set heater power. Still open:
   offset-aware limits; it already stops at the inflection once dead time and k' are found.
-- **Phone app** loads its web UI from the official releases (`web/src/app/updates.js`), so it never shows fork
-  features.
+- **Phone app**: not applicable for now. The repo has a Capacitor Android/iOS project (TestFlight upload script, Android
+  APK/bundle builds) that live-updates its UI from upstream's releases (`web/src/app/updates.js`), but it isn't on the
+  Play Store (checked 2026-10-29); the web UI the display serves is the fork's interface and has all its features.
 - **Upstream PRs** (`pr/pid-derivative-on-measurement` → `pr/heater-dfilter-integral-zone` →
   `pr/heater-heat-balance-predictor`): need the CLA, screenshots and bench data.
 - **Upstream sync**: a weekly sync pull request rather than a daily auto-merge.

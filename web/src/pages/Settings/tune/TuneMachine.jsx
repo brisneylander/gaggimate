@@ -260,9 +260,9 @@ export function TuneMachine({ formData, setField }) {
     <Section title={t`Tune this machine`}>
       <p className='mb-4 text-sm opacity-70'>
         <Trans>
-          Measures the machine-specific settings from the machine's own readings. Each step proposes
-          values; apply them to the form, then Save. Export the result as a machine profile from
-          Machine → Machine Boiler Profile.
+          Builds your Machine Boiler Profile from the machine's own readings. Each step measures
+          part of it and suggests values: Apply to machine profile, then Save. To keep a copy or
+          share it, use Export JSON under Machine → Machine Boiler Profile.
         </Trans>
       </p>
 

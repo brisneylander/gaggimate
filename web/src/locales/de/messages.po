@@ -725,6 +725,10 @@ msgstr "Erstellen"
 msgid "Build and show Shot Charts"
 msgstr "Shot-Diagramme erstellen und anzeigen"
 
+#: src/pages/Settings/tune/TuneMachine.jsx
+msgid "Builds your Machine Boiler Profile from the machine's own readings. Each step measures part of it and suggests values: Apply to machine profile, then Save. To keep a copy or share it, use Export JSON under Machine → Machine Boiler Profile."
+msgstr ""
+
 #: src/pages/ProfileList/index.jsx
 msgid "Built-in profile, can be edited but not deleted"
 msgstr "Integriertes Profil, kann bearbeitet, aber nicht gelöscht werden"
@@ -2790,8 +2794,8 @@ msgstr ""
 #~ msgstr ""
 
 #: src/pages/Settings/tune/TuneMachine.jsx
-msgid "Measures the machine-specific settings from the machine's own readings. Each step proposes values; apply them to the form, then Save. Export the result as a machine profile from Machine → Machine Boiler Profile."
-msgstr ""
+#~ msgid "Measures the machine-specific settings from the machine's own readings. Each step proposes values; apply them to the form, then Save. Export the result as a machine profile from Machine → Machine Boiler Profile."
+#~ msgstr ""
 
 #: src/pages/ShotAnalyzer/services/ReplayVideoExportService.js
 msgid "MediaRecorder is not supported in this browser."

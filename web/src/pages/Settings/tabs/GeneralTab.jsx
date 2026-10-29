@@ -267,6 +267,31 @@ export function GeneralTab({
               ))}
             </div>
           </SettingsFormField>
+          <label
+            htmlFor='flushButtonToTarget'
+            className='label mt-4 cursor-pointer justify-start gap-3'
+          >
+            <input
+              id='flushButtonToTarget'
+              name='flushButtonToTarget'
+              type='checkbox'
+              className='toggle toggle-primary'
+              checked={!!formData.flushButtonToTarget}
+              onChange={onChange('flushButtonToTarget')}
+            />
+            <span>
+              <Trans>Flush to brew target when hot</Trans>
+            </span>
+          </label>
+          <p className='text-sm opacity-70'>
+            <Trans>
+              After steaming, or any time the boiler is 2 °C or more over the selected profile's
+              temperature, the flush button runs just enough fresh water to bring it back down to
+              the brew temperature, then holds the heater off briefly while it settles. Closer to
+              target it runs the normal flush. Needs heater power and heat-up rate in the Machine
+              Boiler Profile.
+            </Trans>
+          </p>
         </div>
 
         {/* Buttons */}

@@ -477,9 +477,9 @@ export function TuneMachine({ formData, setField }) {
                 that much.
               </Trans>{' '}
               <Trans>
-                If <strong>Flush button flushes to target when hot</strong> is switched on in the
-                Machine Boiler Profile, the flush button does this by itself whenever the boiler is
-                2 °C or more over target.
+                If <strong>Flush to brew target when hot</strong> is switched on (General → Flush),
+                the flush button does this by itself whenever the boiler is 2 °C or more over
+                target.
               </Trans>{' '}
               {formData.flushButtonToTarget ? (
                 <Trans>It's on now.</Trans>

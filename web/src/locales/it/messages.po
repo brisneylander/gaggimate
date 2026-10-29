@@ -3043,6 +3043,10 @@ msgstr "Nessuna fase precedente"
 msgid "No Profile Loaded"
 msgstr "Nessun profilo caricato"
 
+#: src/pages/Settings/tune/TuneMachine.jsx
+msgid "no reply"
+msgstr ""
+
 #: src/pages/ShotAnalyzer/services/analyzer/shotAnalysis.js
 msgid "No sample data available for analysis."
 msgstr "Nessun dato di campionamento disponibile per l'analisi."
@@ -5370,6 +5374,11 @@ msgstr "Il macinacaffè raggiunge GaggiMate a questo indirizzo, quindi entrambi 
 
 #: src/pages/Settings/tabs/LagCompensationSection.jsx
 msgid "The heater stops (until a restart) after this long near full power with no water flowing and the temperature not rising: a sensor off the boiler. Raise it for a slow sensor. 0 uses 60 s."
+msgstr ""
+
+#. placeholder {0}: reply?.reason || t`no reply`
+#: src/pages/Settings/tune/TuneMachine.jsx
+msgid "The machine didn't flush: {0}"
 msgstr ""
 
 #: src/app/appSettings.js

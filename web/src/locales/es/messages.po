@@ -3039,6 +3039,10 @@ msgstr "Sin fase anterior"
 msgid "No Profile Loaded"
 msgstr "Ningún perfil cargado"
 
+#: src/pages/Settings/tune/TuneMachine.jsx
+msgid "no reply"
+msgstr ""
+
 #: src/pages/ShotAnalyzer/services/analyzer/shotAnalysis.js
 msgid "No sample data available for analysis."
 msgstr "No hay datos de muestras disponibles para analizar."
@@ -5366,6 +5370,11 @@ msgstr "El molino accede a GaggiMate a través de esta dirección, así que ambo
 
 #: src/pages/Settings/tabs/LagCompensationSection.jsx
 msgid "The heater stops (until a restart) after this long near full power with no water flowing and the temperature not rising: a sensor off the boiler. Raise it for a slow sensor. 0 uses 60 s."
+msgstr ""
+
+#. placeholder {0}: reply?.reason || t`no reply`
+#: src/pages/Settings/tune/TuneMachine.jsx
+msgid "The machine didn't flush: {0}"
 msgstr ""
 
 #: src/app/appSettings.js

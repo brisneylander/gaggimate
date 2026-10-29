@@ -3039,6 +3039,10 @@ msgstr "No preceding phase"
 msgid "No Profile Loaded"
 msgstr "No Profile Loaded"
 
+#: src/pages/Settings/tune/TuneMachine.jsx
+msgid "no reply"
+msgstr "no reply"
+
 #: src/pages/ShotAnalyzer/services/analyzer/shotAnalysis.js
 msgid "No sample data available for analysis."
 msgstr "No sample data available for analysis."
@@ -5367,6 +5371,11 @@ msgstr "The grinder reaches GaggiMate at this address, so both need to share a n
 #: src/pages/Settings/tabs/LagCompensationSection.jsx
 msgid "The heater stops (until a restart) after this long near full power with no water flowing and the temperature not rising: a sensor off the boiler. Raise it for a slow sensor. 0 uses 60 s."
 msgstr "The heater stops (until a restart) after this long near full power with no water flowing and the temperature not rising: a sensor off the boiler. Raise it for a slow sensor. 0 uses 60 s."
+
+#. placeholder {0}: reply?.reason || t`no reply`
+#: src/pages/Settings/tune/TuneMachine.jsx
+msgid "The machine didn't flush: {0}"
+msgstr "The machine didn't flush: {0}"
 
 #: src/app/appSettings.js
 msgid "The machine has been in steam mode for 5 minutes."

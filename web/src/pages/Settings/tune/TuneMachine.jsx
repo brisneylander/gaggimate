@@ -134,8 +134,24 @@ export function TuneMachine({ formData, setField }) {
     api.send({ tp: 'req:change-mode', mode: 2 });
     setPhase('steam');
   };
-  const startTargetFlush = st => {
+  const startTargetFlush = async st => {
     setPhase('target');
+    // Wait for the machine's answer: it refuses (with a reason) when a flush to target isn't possible, and then there
+    // is no landing to watch. On the first real run it went unanswered and the page watched a flush that never ran.
+    let reply;
+    try {
+      reply = await api.request({ tp: 'req:flush:to-target' });
+    } catch (e) {
+      reply = { success: false, reason: e.message };
+    }
+    if (!reply?.success) {
+      steamRef.current = null;
+      setTargetResult({ error: t`The machine didn't flush: ${reply?.reason || t`no reply`}` });
+      setPhase('done');
+      return;
+    }
+    // From the flush's own start (the reading it flushed at), not the earlier peak.
+    st.peak = live.ct > 0 ? Math.max(st.peak, live.ct) : st.peak;
     startRecording(TARGET_RECORD_S, samples => {
       steamRef.current = null;
       const low = lowestAfterFlush(samples);
@@ -155,7 +171,6 @@ export function TuneMachine({ formData, setField }) {
       );
       setPhase('done');
     });
-    api.send({ tp: 'req:flush:to-target' });
   };
   startTargetFlushRef.current = startTargetFlush;
 

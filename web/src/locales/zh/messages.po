@@ -3039,6 +3039,10 @@ msgstr "无前一阶段"
 msgid "No Profile Loaded"
 msgstr "未加载曲线"
 
+#: src/pages/Settings/tune/TuneMachine.jsx
+msgid "no reply"
+msgstr ""
+
 #: src/pages/ShotAnalyzer/services/analyzer/shotAnalysis.js
 msgid "No sample data available for analysis."
 msgstr "没有可供分析的样本数据。"
@@ -5366,6 +5370,11 @@ msgstr "磨豆机通过此地址访问 GaggiMate，因此两者需处于同一�
 
 #: src/pages/Settings/tabs/LagCompensationSection.jsx
 msgid "The heater stops (until a restart) after this long near full power with no water flowing and the temperature not rising: a sensor off the boiler. Raise it for a slow sensor. 0 uses 60 s."
+msgstr ""
+
+#. placeholder {0}: reply?.reason || t`no reply`
+#: src/pages/Settings/tune/TuneMachine.jsx
+msgid "The machine didn't flush: {0}"
 msgstr ""
 
 #: src/app/appSettings.js

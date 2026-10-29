@@ -1,0 +1,141 @@
+# Fork-only head build for brisneylander/gaggimate: every push to master rebuilds the firmware and replaces the
+# `nightly` pre-release here, which is what the firmware's Nightly update channel reads
+# (RELEASE_URL + "tag/nightly" in src/display/plugins/WebUIPlugin.cpp, version from its version.txt).
+# Same build as Fork Release (no -DNIGHTLY_BUILD), so a head build is the next simonNNN release candidate.
+# Its version is `git describe`, e.g. v1.9.0-simon033-3-g6bb7704: newer than simon033, older than simon034,
+# so switching back to Stable picks up the next release. Docs-only pushes don't build.
+on:
+  push:
+    branches:
+      - master
+    paths-ignore:
+      - "**.md"
+      - "docs/**"
+  workflow_dispatch:
+
+concurrency:
+  group: fork-nightly
+  cancel-in-progress: true
+
+name: Fork Nightly
+jobs:
+  ota-testbench:
+    uses: ./.github/workflows/ota-testbench.yml
+  build:
+    needs: ota-testbench
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+        with:
+          fetch-tags: true
+          fetch-depth: 0
+          submodules: "recursive"
+      # The fork's own standby logo is kept out of the repository: the secret holds the generated
+      # ui_image_logo.c, gzipped and base64-encoded. Without the secret the stock logo is built.
+      # skip-worktree keeps `git describe --dirty` (firmware version, version.txt) clean, so OTA
+      # version comparison still sees v<release>-simonNNN.
+      - name: Apply private standby logo
+        env:
+          STANDBY_LOGO: ${{ secrets.STANDBY_LOGO_C_GZ_B64 }}
+        run: |
+          if [ -n "$STANDBY_LOGO" ]; then
+            f=src/display/ui/default/eez/images/ui_image_logo.c
+            printf '%s' "$STANDBY_LOGO" | base64 -d | gunzip > "$f"
+            git update-index --skip-worktree "$f"
+            grep -q 'img_logo_map' "$f" && echo "private standby logo applied"
+          else
+            echo "no STANDBY_LOGO_C_GZ_B64 secret; building the stock logo"
+          fi
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/pip
+            ~/.platformio/.cache
+          key: ${{ runner.os }}-pio
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install PlatformIO Core
+        run: pip install --upgrade platformio
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: "npm"
+          cache-dependency-path: web/package-lock.json
+      - name: Add version
+        run: |
+          mkdir -p out
+          mkdir -p upload/display
+          mkdir -p upload/headless
+          mkdir -p upload/controller
+          git tag -d nightly || true
+          git tag -d db || true
+          git describe --tags --dirty --match "v*" > out/version.txt
+      - name: Build Web
+        run: ./scripts/build_webui.sh
+      - name: Package app web bundle
+        # Live update for the native app (web/src/app/updates.js), attached to the same release as the firmware.
+        run: BUNDLE_VERSION="$(cat out/version.txt)" web/scripts/package-app-bundle.sh out "nightly"
+      - name: Build controller
+        run: |
+          pio run -e controller
+          cp .pio/build/controller/firmware.bin out/board-firmware.bin
+          cp .pio/build/controller/partitions.bin out/board-partitions.bin
+          cp .pio/build/controller/bootloader.bin out/board-bootloader.bin
+          cp .pio/build/controller/firmware.bin upload/controller/firmware.bin
+          cp .pio/build/controller/partitions.bin upload/controller/partitions.bin
+          cp .pio/build/controller/bootloader.bin upload/controller/bootloader.bin
+      - name: Build display FS
+        run: |
+          pio run -t buildfs -e display
+          cp .pio/build/display/littlefs.bin out/display-filesystem.bin
+          cp .pio/build/display/littlefs.bin out/display-headless-filesystem.bin
+          cp .pio/build/display/littlefs.bin upload/display/filesystem.bin
+          cp .pio/build/display/littlefs.bin upload/headless/filesystem.bin
+      - name: Build display
+        run: |
+          pio run -e display
+          cp .pio/build/display/firmware.bin out/display-firmware.bin
+          cp .pio/build/display/partitions.bin out/display-partitions.bin
+          cp .pio/build/display/bootloader.bin out/display-bootloader.bin
+          cp .pio/build/display/firmware.bin upload/display/firmware.bin
+          cp .pio/build/display/partitions.bin upload/display/partitions.bin
+          cp .pio/build/display/bootloader.bin upload/display/bootloader.bin
+      - name: Build headless
+        run: |
+          pio run -e display-headless
+          cp .pio/build/display-headless/firmware.bin out/display-headless-firmware.bin
+          cp .pio/build/display-headless/partitions.bin out/display-headless-partitions.bin
+          cp .pio/build/display-headless/bootloader.bin out/display-headless-bootloader.bin
+          cp .pio/build/display-headless/firmware.bin upload/headless/firmware.bin
+          cp .pio/build/display-headless/partitions.bin upload/headless/partitions.bin
+          cp .pio/build/display-headless/bootloader.bin upload/headless/bootloader.bin
+      - name: Archive Firmware Files
+        uses: actions/upload-artifact@v4
+        with:
+          name: gaggimate-firmware
+          path: "out/*"
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download Firmware Files
+        uses: actions/download-artifact@v4
+        with:
+          name: gaggimate-firmware
+          path: release
+      - name: Update nightly release
+        uses: andelf/nightly-release@c5ed4bdb7c1da04a4fa1e40bc5e67306f682563b
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: nightly
+          name: "Head build ${{ github.sha }}"
+          prerelease: true
+          body: "Head of master. Select the Nightly channel under Settings, System & Updates to install it."
+          files: |
+            release/*

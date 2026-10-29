@@ -10,6 +10,7 @@ firmware over Wi-Fi while staying in sync with upstream.
 | ------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `src/display/plugins/WebUIPlugin.h`  | `RELEASE_URL` points at this fork's releases, so OTA updates come from here.                                                                                                                                                                                                                    |
 | `.github/workflows/fork-release.yml` | Fork-only copy of `build.yml`: builds the firmware on `v*-simon*` tags and publishes a GitHub release here. It leaves out the steps that upload to the official update server.                                                                                                                  |
+| `.github/workflows/fork-nightly.yml` | Same build on every push to `master`, published as the `nightly` pre-release for the Nightly update channel.                                                                                                                                                                                    |
 | Boiler control                       | Lag compensation, flush to target, tank estimate, heater safety layer, machine profiles and the Tune this machine routine: goal, bench observations and how the code addresses them in [docs/boiler-control.md](docs/boiler-control.md); bench data and open items in [ROADMAP.md](ROADMAP.md). |
 | `FORK.md`                            | This file.                                                                                                                                                                                                                                                                                      |
 
@@ -29,7 +30,10 @@ Upstream's own `Build`, `Build Nightly` and `Deploy PR Preview` workflows are
    and _Update Display_. The display checks for updates every 30 min, or straight away
    after _Save Channel & Refresh_.
 
-Use the **Stable** channel. Nightly looks for a `nightly` release, which this fork doesn't publish.
+**Stable** installs the tagged simonNNN releases. **Nightly** installs the head of `master`: the
+**Fork Nightly** workflow (`.github/workflows/fork-nightly.yml`) rebuilds the `nightly` pre-release on every push
+(docs-only pushes excepted), about 10–15 min after it. A head build reports e.g. `v1.9.0-simon033-3-g6bb7704`, newer
+than simon033 and older than simon034, so going back to Stable picks up the next release.
 
 ## Version numbering
 

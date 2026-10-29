@@ -9,6 +9,7 @@
 #include <cstdint>
 #include <cstdio>
 #include <deque>
+#include <vector>
 
 static uint32_t fakeNow = 0;
 static uint32_t millis() { return fakeNow; }
@@ -207,6 +208,12 @@ struct Tuning {
     // Tank temperature the flush water really cools like (plant) and the one the predictor is told. On the bench each ml
     // took ~20 % more heat than (boiler - tank setting) predicts: fitted sessions cool like 24-27 °C water at 35 °C.
     float plantInletC = 35.0f, predictorInletC = 35.0f;
+    // A shot instead of the 5 s flush: pump flow (ml/s) for each second from the start; and the setpoint (98 = a 93 °C
+    // profile + 5 offset).
+    std::vector<float> flowProfile;
+    float setpointC = 98.0f;
+    // Thermal feedforward as Heater::loopPid (settings kf, output units per watt; 1000 / 1100 W = the water's heat exactly).
+    float kff = 0.0f;
 };
 
 struct Result {
@@ -217,10 +224,11 @@ struct Result {
     float idleSwing; // mean |change in output| per second while idling (heater chatter), output units
     float startSag;  // lowest (sensor - setpoint) in the 10 minutes after the predictor starts (predictorStartS > 0)
     float backAt;    // s after the flush starts until the sensor first climbs back to setpoint
+    float waterLow;  // lowest boiler water temperature (not the sensor) from the flush/shot start to 2 min after
 };
 
 static Result simulate(const Tuning &tu) {
-    const float dt = 0.25f, setpoint = 98.0f, room = 22.0f, lossPerK = 0.59f; // ~45 W at 98 °C
+    const float dt = 0.25f, setpoint = tu.setpointC, room = 22.0f, lossPerK = 0.59f; // ~45 W at 98 °C
     const float plantW = 1100.0f, wallC = 200.0f, waterC = 1296.0f, wallToWater = 9.6f;
     const float groupC = 819.0f, waterToGroup = 5.7f;
     const float inletC = tu.plantInletC, flushFlow = 8.9f;
@@ -260,8 +268,9 @@ static Result simulate(const Tuning &tu) {
     uint32_t lastFlowMs = 0;
     bool flowSeen = false;
 
-    const float flushStart = 1800.0f, flushEnd = flushStart + 5.0f, end = flushStart + 600.0f;
-    Result r{1e9f, -1e9f, 0.0f, 0.0f, 0.0f, 0.0f, -1.0f};
+    const float flushStart = 1800.0f, end = flushStart + 600.0f;
+    const float flushEnd = flushStart + (tu.flowProfile.empty() ? 5.0f : static_cast<float>(tu.flowProfile.size()));
+    Result r{1e9f, -1e9f, 0.0f, 0.0f, 0.0f, 0.0f, -1.0f, 1e9f};
     float swingSum = 0.0f, lastOutput = 0.0f;
     int swingN = 0;
     float idleMin = 1e9f, idleMax = -1e9f, errSum = 0.0f;
@@ -271,7 +280,9 @@ static Result simulate(const Tuning &tu) {
 
     for (int step = 0; step * dt < end; ++step) {
         const float t = step * dt;
-        const float flow = (t >= flushStart && t < flushEnd) ? flushFlow : 0.0f;
+        float flow = 0.0f;
+        if (t >= flushStart && t < flushEnd)
+            flow = tu.flowProfile.empty() ? flushFlow : tu.flowProfile[static_cast<size_t>(t - flushStart)];
 
         // Controller, once per second (the PWM window); `output` was applied over the last second.
         if (step % 4 == 0) {
@@ -288,6 +299,18 @@ static Result simulate(const Tuning &tu) {
             if (predictorStarted)
                 predictor.update(1.0f, output / 1000.0f, flow, measured, sp);
             control = measured + predictor.getCorrection();
+            if (tu.kff > 0.0f && flow > 0.01f) {
+                // Heater::calculateDisturbanceFeedforwardGain + calculateSafetyScaling (without its smoothing)
+                const float err = measured - sp;
+                const float safety = err > 1.0f    ? 0.0f
+                                     : err >= 0.0f ? 0.7f + 0.3f * (1.0f - err)
+                                     : err > -1.0f ? 0.7f - 0.3f * err
+                                                   : 1.0f;
+                const float perFlow = (4.18f * (sp - tu.predictorInletC) + 5.0f / flow) / 0.95f;
+                pid.setDisturbanceFeedforward(flow, perFlow * tu.kff * safety);
+            } else {
+                pid.setDisturbanceFeedforward(0.0f, 0.0f);
+            }
             pid.update();
             if (tu.reheat && predictor.eventDuty() >= 0.0f)
                 output = predictor.eventDuty() * 1000.0f;
@@ -331,6 +354,8 @@ static Result simulate(const Tuning &tu) {
         // As the flush ends the valve dumps the group's water (~5 g of boiler water) into the drip tray.
         if (t < flushEnd && t + dt >= flushEnd)
             boiler -= lag_limits::VALVE_DUMP_ML * 4.18f * (boiler - inletC) / waterC;
+        if (t >= flushStart && t < flushStart + 120.0f)
+            r.waterLow = std::min(r.waterLow, boiler);
         pipe.push_back(boiler);
         const float delayed = pipe.front();
         pipe.pop_front();
@@ -522,6 +547,60 @@ void test_bench_configurations() {
     report("bench: 12 s water + reheat", rr);
 }
 
+// A logged shot (Londonium on a Silvia, 2026-10-29: 5 s fill at ~8.8 ml/s, 10 s infusion, then 9 bar at 0.8-2.2 ml/s; 38 g
+// in the cup), replayed at the profile's 88 °C (93 boiler). On the bench the sensor fell 5.8 °C (87.7 -> 81.9) while the
+// heater backed off to 22-33 %: the integral is held while water flows, so only P answers a steady draw. The plant
+// gives 6.5 °C. Most of it is physics: the 5 s fill draws ~45 ml (~11 kJ, ~2 kW) faster than the 1100 W element can
+// replace, and heater heat reaches the water with a ~21 s time constant, mostly after the shot. So the thermal
+// feedforward (kf) and full-power reheat each lift the sensor's low by ~2 °C but the water's by only ~0.6 °C; only heat
+// put in before the shot (idling hotter) lifts the water itself.
+static const std::vector<float> LONDONIUM_SHOT = {0.19f, 8.17f, 8.84f, 8.85f, 8.94f, 8.74f, 5.94f, 1.73f, 1.07f, 0.24f,
+                                                  0.01f, 0.1f,  0.29f, 0.26f, 0.22f, 0.16f, 4.87f, 0.87f, 0.76f, 0.84f,
+                                                  1.0f,  1.06f, 1.17f, 1.27f, 1.4f,  1.51f, 1.61f, 1.73f, 1.79f, 1.88f,
+                                                  1.95f, 1.99f, 2.02f, 2.06f, 2.15f, 2.14f, 2.22f, 2.2f};
+
+void test_shot_feedforward() {
+    Tuning base = compensated();
+    base.flowProfile = LONDONIUM_SHOT;
+    base.setpointC = 93.0f;
+    base.plantInletC = 32.0f;
+    base.predictorInletC = 32.0f;
+    const Result rb = simulate(base);
+    printf("shot, no feedforward:   sensor low %.2f (%.2f under), water low %.2f, peak after %.2f\n", rb.dipMin,
+           rb.dipMin - 93.0f, rb.waterLow, rb.peak);
+    Tuning rh = base;
+    rh.reheat = true;
+    const Result rr = simulate(rh);
+    printf("shot, full-power reheat: sensor low %.2f (%.2f under), water low %.2f, peak after %.2f\n", rr.dipMin,
+           rr.dipMin - 93.0f, rr.waterLow, rr.peak);
+    Tuning rf = rh;
+    rf.kff = 0.909f;
+    const Result rrf = simulate(rf);
+    printf("shot, reheat + ff 0.909: sensor low %.2f (%.2f under), water low %.2f, peak after %.2f\n", rrf.dipMin,
+           rrf.dipMin - 93.0f, rrf.waterLow, rrf.peak);
+    Result hot3{};
+    for (float pre : {1.0f, 2.0f, 3.0f}) {
+        Tuning hot = base;
+        hot.setpointC = 93.0f + pre; // idle a little above, as a pre-heat
+        const Result rh2 = simulate(hot);
+        printf("shot, idle %.0f °C over:   sensor low %.2f (%.2f vs 93), water low %.2f, peak after %.2f\n", pre, rh2.dipMin,
+               rh2.dipMin - 93.0f, rh2.waterLow, rh2.peak);
+        hot3 = rh2;
+    }
+    TEST_ASSERT_TRUE_MESSAGE(rb.dipMin < 93.0f - 5.0f, "plant should reproduce the bench shot's ~6 °C drop");
+    TEST_ASSERT_TRUE(rr.dipMin > rb.dipMin + 1.0f);       // reheat lifts the sensor's low
+    TEST_ASSERT_TRUE(rr.waterLow < rb.waterLow + 1.0f);   // ... but hardly the water's: the element can't keep up
+    TEST_ASSERT_TRUE(hot3.waterLow > rb.waterLow + 2.0f); // heat put in before the shot does
+    const float gains[] = {0.45f, 0.7f, 0.909f};
+    for (float k : gains) {
+        Tuning ff = base;
+        ff.kff = k;
+        const Result r = simulate(ff);
+        printf("shot, feedforward %.3f: sensor low %.2f (%.2f under), water low %.2f, peak after %.2f, settle err %.2f\n", k,
+               r.dipMin, r.dipMin - 93.0f, r.waterLow, r.peak, r.settleErr);
+    }
+}
+
 int main(int argc, char **argv) {
     UNITY_BEGIN();
     RUN_TEST(test_disabled_when_any_parameter_missing);
@@ -545,5 +624,6 @@ int main(int argc, char **argv) {
     RUN_TEST(test_full_power_reheat);
     RUN_TEST(test_full_power_reheat_with_model_mismatch);
     RUN_TEST(test_bench_configurations);
+    RUN_TEST(test_shot_feedforward);
     return UNITY_END();
 }

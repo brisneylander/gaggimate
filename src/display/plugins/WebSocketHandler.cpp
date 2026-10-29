@@ -234,6 +234,8 @@ void WebSocketHandler::handleWebSocketData(AsyncWebSocket *server, AsyncWebSocke
                 } else if (msgType == "req:process:deactivate") {
                     controller->deactivate();
                     controller->clear();
+                } else if (msgType == "req:tank:refilled") {
+                    controller->onTankRefilled();
                 } else if (msgType == "req:process:clear") {
                     controller->clear();
                 } else if (msgType == "req:grind:activate") {

@@ -107,6 +107,7 @@ class Settings {
     float getModelHeatRate() const { return modelHeatRate.get(); }
     float getModelLossW() const { return modelLossW.get(); } // learned by the controller, saved here
     float getInletTempC() const { return inletTempC.get(); }
+    float getTankFillC() const { return tankFillC.get(); }
     float getWaterDeadTimeS() const { return waterDeadTimeS.get(); }
     bool isFlushButtonToTarget() const { return flushButtonToTarget.get(); }
     String getPid() const { return pid.get(); }
@@ -231,6 +232,7 @@ class Settings {
     void setModelHeatRate(float degreesPerSecond);
     void setModelLossW(float watts);
     void setInletTempC(float degrees);
+    void setTankFillC(float degrees);
     void setWaterDeadTimeS(float seconds);
     void setFlushButtonToTarget(bool enabled);
     void setPumpModelCoeffs(const String &pumpModelCoeffs);
@@ -389,6 +391,7 @@ class Settings {
     Property<float> modelHeatRate{registry, "lc_hr", 0.0f};
     Property<float> modelLossW{registry, "lc_lw", 0.0f};
     Property<float> inletTempC{registry, "lc_it", 0.0f};
+    Property<float> tankFillC{registry, "tk_fill", 0.0f}; // fresh tank water (°C) for the tank estimate, 0 = off
     Property<float> waterDeadTimeS{registry, "lc_wd", 0.0f};
     Property<bool> flushButtonToTarget{registry, "fl_tt", true};
 

@@ -1638,6 +1638,10 @@ msgstr "estimated flow"
 msgid "Estimated Output"
 msgstr "Estimated Output"
 
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "Estimated tank water now: {tankEstimate} °C"
+msgstr "Estimated tank water now: {tankEstimate} °C"
+
 #: src/pages/DashboardSettings/index.jsx
 msgid "Even fill"
 msgstr "Even fill"
@@ -4863,6 +4867,14 @@ msgid "T"
 msgstr "T"
 
 #: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "Tank fill temperature"
+msgstr "Tank fill temperature"
+
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "Tank refilled"
+msgstr "Tank refilled"
+
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
 msgid "Tank water temperature"
 msgstr "Tank water temperature"
 
@@ -5032,8 +5044,16 @@ msgid "Temperature not stable"
 msgstr "Temperature not stable"
 
 #: src/pages/Settings/tabs/LagCompensationSection.jsx
-msgid "Temperature of the water drawn in by a shot or flush. A tank beside the boiler warms up; 0 assumes 23 °C."
-msgstr "Temperature of the water drawn in by a shot or flush. A tank beside the boiler warms up; 0 assumes 23 °C."
+msgid "Temperature of fresh tank water (lower in winter). Set it to estimate the tank instead: it warms while the machine is on and resets on a refill. 0 uses the fixed tank water temperature."
+msgstr "Temperature of fresh tank water (lower in winter). Set it to estimate the tank instead: it warms while the machine is on and resets on a refill. 0 uses the fixed tank water temperature."
+
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+#~ msgid "Temperature of the water drawn in by a shot or flush. A tank beside the boiler warms up; 0 assumes 23 °C."
+#~ msgstr "Temperature of the water drawn in by a shot or flush. A tank beside the boiler warms up; 0 assumes 23 °C."
+
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "Temperature of the water drawn in by a shot or flush. A tank beside the boiler warms up; 0 assumes 23 °C. Used while the tank fill temperature is 0."
+msgstr "Temperature of the water drawn in by a shot or flush. A tank beside the boiler warms up; 0 assumes 23 °C. Used while the tank fill temperature is 0."
 
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "Temperature Offset (°C)"

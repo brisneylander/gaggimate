@@ -700,7 +700,30 @@ void Controller::loopLogic() {
     if (mode != MODE_STANDBY && settings.getStandbyTimeout() > 0 && now > lastAction + settings.getStandbyTimeout())
         activateStandby();
 
+    loopTank();
     loopControl();
+}
+
+void Controller::loopTank() {
+    const unsigned long now = millis();
+    if (lastTankMs != 0 && now - lastTankMs < TANK_UPDATE_MS)
+        return;
+    const float dt = lastTankMs != 0 ? static_cast<float>(now - lastTankMs) / 1000.0f : 0.0f;
+    lastTankMs = now != 0 ? now : 1;
+    tank.configure(settings.getTankFillC());
+    tank.update(dt, mode != MODE_STANDBY);
+    if (systemInfo.capabilities.tof && tank.onWaterLevel(getWaterLevel()))
+        ESP_LOGI(LOG_TAG, "Water level back to full: tank estimate reset to %.0f°C", tank.get());
+    // Resend only on a whole-degree change: each resend reconfigures the heater.
+    if (comms.isConnected() && std::fabs(getTankTempC() - tankSentC) >= 1.0f)
+        setHeaterSettings();
+}
+
+void Controller::onTankRefilled() {
+    tank.refilled();
+    ESP_LOGI(LOG_TAG, "Tank refilled: estimate reset to %.0f°C", tank.get());
+    if (comms.isConnected())
+        setHeaterSettings();
 }
 
 void Controller::loopControl() {
@@ -932,7 +955,8 @@ void Controller::setHeaterSettings() {
     lag.modelHeaterW = settings.getModelHeaterW();
     lag.modelHeatRate = settings.getModelHeatRate();
     lag.modelLossW = settings.getModelLossW();
-    lag.inletTempC = settings.getInletTempC();
+    lag.inletTempC = getTankTempC();
+    tankSentC = lag.inletTempC;
     lag.waterDeadTimeS = settings.getWaterDeadTimeS();
     comms.sendHeaterSettings(pid[0], pid[1], pid[2], pid[3], settings.isHeaterCoordinationEnabled(),
                              static_cast<uint32_t>(settings.getHeaterHandoverMs()), lag);
@@ -1595,7 +1619,7 @@ flush_to_target::Plan Controller::flushToTarget() {
     const float target = profileManager->getSelectedProfile().temperature;
     flush_to_target::Plan plan = flush_to_target::plan(
         getCurrentTemp(), target, static_cast<float>(settings.getTemperatureOffset()), settings.getModelHeaterW(),
-        settings.getModelHeatRate(), settings.getInletTempC(), coeffs[0], settings.getModelLossW(), FLUSH_TO_TARGET_HOLD_S);
+        settings.getModelHeatRate(), getTankTempC(), coeffs[0], settings.getModelLossW(), FLUSH_TO_TARGET_HOLD_S);
     if (plan.reason == nullptr && mode != MODE_BREW)
         plan.reason = "only in Brew mode";
     if (plan.reason == nullptr && isActive())

@@ -1638,6 +1638,10 @@ msgstr "推定流量"
 msgid "Estimated Output"
 msgstr "推定抽出量"
 
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "Estimated tank water now: {tankEstimate} °C"
+msgstr ""
+
 #: src/pages/DashboardSettings/index.jsx
 msgid "Even fill"
 msgstr "均等に埋める"
@@ -4863,6 +4867,14 @@ msgid "T"
 msgstr "火"
 
 #: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "Tank fill temperature"
+msgstr ""
+
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "Tank refilled"
+msgstr ""
+
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
 msgid "Tank water temperature"
 msgstr ""
 
@@ -5032,7 +5044,15 @@ msgid "Temperature not stable"
 msgstr "温度が安定していません"
 
 #: src/pages/Settings/tabs/LagCompensationSection.jsx
-msgid "Temperature of the water drawn in by a shot or flush. A tank beside the boiler warms up; 0 assumes 23 °C."
+msgid "Temperature of fresh tank water (lower in winter). Set it to estimate the tank instead: it warms while the machine is on and resets on a refill. 0 uses the fixed tank water temperature."
+msgstr ""
+
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+#~ msgid "Temperature of the water drawn in by a shot or flush. A tank beside the boiler warms up; 0 assumes 23 °C."
+#~ msgstr ""
+
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "Temperature of the water drawn in by a shot or flush. A tank beside the boiler warms up; 0 assumes 23 °C. Used while the tank fill temperature is 0."
 msgstr ""
 
 #: src/pages/Settings/tabs/MachineTab.jsx

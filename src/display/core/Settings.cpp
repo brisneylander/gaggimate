@@ -164,6 +164,7 @@ void Settings::setModelHeatRate(float degreesPerSecond) {
 
 void Settings::setModelLossW(float watts) { modelLossW.set(lag_limits::clampOrOff(watts, lag_limits::STANDING_LOSS_W)); }
 
+void Settings::setTankFillC(float degrees) { tankFillC.set(lag_limits::clampOrOff(degrees, lag_limits::TANK_FILL_C)); }
 void Settings::setInletTempC(float degrees) { inletTempC.set(lag_limits::clampOrOff(degrees, lag_limits::INLET_TEMP_C)); }
 
 void Settings::setWaterDeadTimeS(float seconds) {

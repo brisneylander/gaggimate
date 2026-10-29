@@ -12,9 +12,12 @@ void HeatBalancePredictor::configure(float heaterWatts, float fullPowerRate, flo
     const float delay = valid ? deadTimeSeconds : 0.0f;
     const float waterDelay =
         valid ? (std::isfinite(waterDeadTimeSeconds) && waterDeadTimeSeconds > 0.0f ? waterDeadTimeSeconds : delay) : 0.0f;
-    if (capacity == heatCapacity && delay == deadTime && waterDelay == waterDeadTime && heaterWatts == this->heaterWatts &&
-        inletTemp == this->inletTemp)
-        return; // unchanged re-send: keep the in-flight window
+    if (capacity == heatCapacity && delay == deadTime && waterDelay == waterDeadTime && heaterWatts == this->heaterWatts) {
+        // Unchanged re-send keeps the in-flight window; so does a new tank temperature (the display's estimate drifts by
+        // a degree every ~10 min while the tank warms): it only changes how future water is counted.
+        this->inletTemp = inletTemp;
+        return;
+    }
     this->heaterWatts = valid ? heaterWatts : 0.0f;
     heatCapacity = capacity;
     deadTime = delay;

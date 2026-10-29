@@ -1,4 +1,6 @@
 import { Trans, useLingui } from '@lingui/react/macro';
+import { useContext } from 'preact/hooks';
+import { ApiServiceContext } from '../../../services/ApiService.js';
 import Section from '../../../components/Card.jsx';
 import { InputGroupField } from '../../../components/SettingsFormField.jsx';
 
@@ -13,6 +15,7 @@ const FIELDS = [
   { key: 'modelHeaterW', unit: 'W', min: 200, max: 2500 },
   { key: 'modelHeatRate', unit: '°C/s', min: 0.05, max: 3 },
   { key: 'inletTempC', unit: '°C', min: 5, max: 70 },
+  { key: 'tankFillC', unit: '°C', min: 5, max: 40 },
 ];
 
 const inRangeOrOff = (value, min, max) => {
@@ -30,6 +33,7 @@ export function LagCompensationSection({ formData, onChange }) {
     modelHeaterW: t`Heater power`,
     modelHeatRate: t`Full-power heat-up rate`,
     inletTempC: t`Tank water temperature`,
+    tankFillC: t`Tank fill temperature`,
   };
   const help = {
     derivativeFilterS: t`Smooths the D term so thermocouple steps don't switch the heater. Try 2 s; long filters delay its braking.`,
@@ -38,9 +42,13 @@ export function LagCompensationSection({ formData, onChange }) {
     waterDeadTimeS: t`Time from water starting to flow until the temperature has dropped about half way; often shorter than the heater's (about 12 s on a Silvia). 0 uses the sensor dead time.`,
     modelHeaterW: t`Element power, e.g. 1100 W for a 230 V Rancilio Silvia.`,
     modelHeatRate: t`Steady rise at full power, measured mid-warm-up (autotune logs it as k').`,
-    inletTempC: t`Temperature of the water drawn in by a shot or flush. A tank beside the boiler warms up; 0 assumes 23 °C.`,
+    inletTempC: t`Temperature of the water drawn in by a shot or flush. A tank beside the boiler warms up; 0 assumes 23 °C. Used while the tank fill temperature is 0.`,
+    tankFillC: t`Temperature of fresh tank water (lower in winter). Set it to estimate the tank instead: it warms while the machine is on and resets on a refill. 0 uses the fixed tank water temperature.`,
   };
   const learnedLoss = Math.round(Number(formData.modelLossW) || 0);
+  const tankEstimate = Math.round(Number(formData.tankEstimateC) || 0);
+  const apiService = useContext(ApiServiceContext);
+  const onTankRefilled = () => apiService.send({ tp: 'req:tank:refilled' });
   return (
     <Section title={t`Boiler Lag Compensation`} className='h-full'>
       <p className='mb-4 text-sm opacity-70'>
@@ -107,6 +115,16 @@ export function LagCompensationSection({ formData, onChange }) {
           flush. Needs heater power and heat-up rate.
         </Trans>
       </p>
+      {tankEstimate > 0 && (
+        <div className='mt-4 flex items-center gap-3 text-sm'>
+          <span className='opacity-70'>
+            <Trans>Estimated tank water now: {tankEstimate} °C</Trans>
+          </span>
+          <button type='button' className='btn btn-sm btn-outline' onClick={onTankRefilled}>
+            <Trans>Tank refilled</Trans>
+          </button>
+        </div>
+      )}
       {learnedLoss > 0 && (
         <p className='mt-4 text-sm opacity-70'>
           <Trans>

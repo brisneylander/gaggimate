@@ -375,6 +375,8 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
                 settings->setModelHeatRate(request->arg("modelHeatRate").toFloat());
             if (request->hasArg("modelLossW")) // 0 = forget the learned value (controller reseeds on its next boot)
                 settings->setModelLossW(request->arg("modelLossW").toFloat());
+            if (request->hasArg("tankFillC"))
+                settings->setTankFillC(request->arg("tankFillC").toFloat());
             if (request->hasArg("inletTempC"))
                 settings->setInletTempC(request->arg("inletTempC").toFloat());
             if (request->hasArg("waterDeadTimeS"))
@@ -585,6 +587,8 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
     doc["modelHeatRate"] = settings.getModelHeatRate();
     doc["modelLossW"] = settings.getModelLossW();
     doc["inletTempC"] = settings.getInletTempC();
+    doc["tankFillC"] = settings.getTankFillC();
+    doc["tankEstimateC"] = controller->getTankEstimateC(); // read-only: 0 while the estimate is off
     doc["waterDeadTimeS"] = settings.getWaterDeadTimeS();
     doc["flushButtonToTarget"] = settings.isFlushButtonToTarget();
     doc["pid"] = settings.getPid();

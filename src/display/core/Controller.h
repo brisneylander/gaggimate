@@ -7,6 +7,7 @@
 #include "Settings.h"
 #include "StrayFlowGuard.h"
 #include "SystemInfo.h"
+#include "TankTemperature.h"
 #include <WiFi.h>
 #include <atomic>
 #include <display/core/ButtonHandler.h>
@@ -142,6 +143,11 @@ class Controller {
     void onFlush();
     // Flush just enough tank water to bring the boiler back to its target; reason is set if it didn't start.
     flush_to_target::Plan flushToTarget();
+    // Tank water temperature for the heater and flush to target: the estimate (TankTemperature.h) when a fill
+    // temperature is set, otherwise the fixed setting (0 = 23 °C).
+    float getTankTempC() const { return tank.isEnabled() ? std::round(tank.get()) : settings.getInletTempC(); }
+    float getTankEstimateC() const { return tank.isEnabled() ? tank.get() : 0.0f; }
+    void onTankRefilled(); // fresh water in the tank (the UI's "Tank refilled", or the water level climbing to full)
     void onFlushRelease(); // ends a hold-to-flush; no-op otherwise
     int getWaterLevel() const {
         float reversedLevel = static_cast<float>(settings.getEmptyTankDistance()) -
@@ -299,8 +305,13 @@ class Controller {
     unsigned long lastLossSaveMs = 0;
     // Heater held off until this millis() after a flush to target; 0 = no hold.
     static constexpr float FLUSH_TO_TARGET_HOLD_S = 30.0f;
+    static constexpr unsigned long TANK_UPDATE_MS = 10000;
     unsigned long flushToTargetHoldUntil = 0;
     StrayFlowGuard strayFlowGuard; // see StrayFlowGuard.h
+    TankTemperature tank;
+    unsigned long lastTankMs = 0;
+    float tankSentC = -1.0f; // tank temperature last sent to the controller
+    void loopTank();
     bool processCompleted = false;
     bool steamReady = false;
     bool steamSwitchOn = false;

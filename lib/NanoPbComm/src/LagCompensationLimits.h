@@ -23,6 +23,7 @@ constexpr Range HEAT_RATE_C_PER_S{0.05f, 3.0f};   // large HX/dual boilers ... s
 constexpr Range STANDING_LOSS_W{0.0f, 300.0f};    // holding power at brew temperature
 constexpr Range INLET_TEMP_C{5.0f, 70.0f};        // tank water; tanks beside the boiler warm up (40 degC on a Silvia)
 constexpr float DEFAULT_INLET_TEMP_C = 23.0f;     // used while the inlet temperature is 0 (not set)
+constexpr Range TANK_FILL_C{5.0f, 40.0f};         // display only: fresh tank water for the tank estimate
 // Water a 3-way valve dumps into the drip tray when a flush or shot ends: it has left the boiler too, but the pump flow
 // reading doesn't include it. 4.8-5.7 g on a Silvia over six weighed flushes (2026-10-29).
 constexpr float VALVE_DUMP_ML = 5.0f;

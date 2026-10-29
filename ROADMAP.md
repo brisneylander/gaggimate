@@ -111,6 +111,9 @@ budget for flushes looks unnecessary; recovery to 93 °C is a little slower (69�
 
 ## Open from bench testing (v1.9.0-simon003/004)
 
+Open work is tracked as [issues](https://github.com/brisneylander/gaggimate/issues) (labels: bench test, firmware,
+web, docs, release, upstream, hardware, idea). The notes below are the history behind them.
+
 - **Flush A/B, one run each** (5 s flush from 93 °C, Kp 60 / Ki 0.658 / Kd 1500): overshoot 2.23 → 1.75 °C, settling
   283 → 182 s, dip 86.45 → 87.17 °C with everything on. Much less than the simulation's 2.0 → 0.25 °C. Repeat as
   alternating pairs before drawing conclusions (identical settings varied by 1–3 °C in hand tests).

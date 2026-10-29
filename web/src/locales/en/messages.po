@@ -364,8 +364,12 @@ msgid "Appearance"
 msgstr "Appearance"
 
 #: src/pages/Settings/tune/TuneMachine.jsx
-msgid "Applied to the form: Save to keep them."
-msgstr "Applied to the form: Save to keep them."
+#~ msgid "Applied to the form: Save to keep them."
+#~ msgstr "Applied to the form: Save to keep them."
+
+#: src/pages/Settings/tune/TuneMachine.jsx
+msgid "Applied to the machine profile: Save to keep them."
+msgstr "Applied to the machine profile: Save to keep them."
 
 #: src/pages/Settings/tabs/MachineProfilePicker.jsx
 msgid "Apply"
@@ -376,8 +380,12 @@ msgid "Apply suggested gains"
 msgstr "Apply suggested gains"
 
 #: src/pages/Settings/tune/TuneMachine.jsx
-msgid "Apply to the form"
-msgstr "Apply to the form"
+msgid "Apply to machine profile"
+msgstr "Apply to machine profile"
+
+#: src/pages/Settings/tune/TuneMachine.jsx
+#~ msgid "Apply to the form"
+#~ msgstr "Apply to the form"
 
 #: src/pages/ShotAnalyzer/components/library/LibraryPanel.jsx
 msgid "Are you sure you want to delete \"{itemName}\"?"
@@ -623,8 +631,8 @@ msgid "Boiler at {temperature} °C"
 msgstr "Boiler at {temperature} °C"
 
 #: src/pages/Settings/tabs/LagCompensationSection.jsx
-msgid "Boiler Lag Compensation"
-msgstr "Boiler Lag Compensation"
+#~ msgid "Boiler Lag Compensation"
+#~ msgstr "Boiler Lag Compensation"
 
 #: src/pages/Settings/PluginCard.jsx
 msgid "Boiler Refill Plugin"
@@ -2628,6 +2636,10 @@ msgstr "Machine"
 msgid "Machine address for the grinder"
 msgstr "Machine address for the grinder"
 
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "Machine Boiler Profile"
+msgstr "Machine Boiler Profile"
+
 #: src/app/notifications.js
 msgid "Machine error"
 msgstr "Machine error"
@@ -2760,16 +2772,26 @@ msgstr "Maximum Pump Power (0 - 1)"
 #. placeholder {0}: autotuneResult.heatRate.toFixed(3)
 #. placeholder {1}: autotuneResult.deadTime.toFixed(1)
 #: src/pages/Settings/tabs/CalibrationTab.jsx
-msgid "Measured and saved for Boiler Lag Compensation: heat-up rate {0} °C/s, dead time {1} s. Your PID gains are unchanged."
-msgstr "Measured and saved for Boiler Lag Compensation: heat-up rate {0} °C/s, dead time {1} s. Your PID gains are unchanged."
+#~ msgid "Measured and saved for Boiler Lag Compensation: heat-up rate {0} °C/s, dead time {1} s. Your PID gains are unchanged."
+#~ msgstr "Measured and saved for Boiler Lag Compensation: heat-up rate {0} °C/s, dead time {1} s. Your PID gains are unchanged."
+
+#. placeholder {0}: autotuneResult.heatRate.toFixed(3)
+#. placeholder {1}: autotuneResult.deadTime.toFixed(1)
+#: src/pages/Settings/tabs/CalibrationTab.jsx
+msgid "Measured and saved to the Machine Boiler Profile: heat-up rate {0} °C/s, dead time {1} s. Your PID gains are unchanged."
+msgstr "Measured and saved to the Machine Boiler Profile: heat-up rate {0} °C/s, dead time {1} s. Your PID gains are unchanged."
 
 #: src/pages/Settings/tune/TuneMachine.jsx
 msgid "Measures how soon flush water reaches the sensor, the water the valve dumps into the drip tray, and checks the pump calibration. Portafilter out, an empty cup under the group, drip tray emptied."
 msgstr "Measures how soon flush water reaches the sensor, the water the valve dumps into the drip tray, and checks the pump calibration. Portafilter out, an empty cup under the group, drip tray emptied."
 
 #: src/pages/Settings/tune/TuneMachine.jsx
-msgid "Measures the machine-specific settings from the machine's own readings. Each step proposes values; apply them to the form, then Save. Export the result as a machine profile from Machine → Boiler Lag Compensation."
-msgstr "Measures the machine-specific settings from the machine's own readings. Each step proposes values; apply them to the form, then Save. Export the result as a machine profile from Machine → Boiler Lag Compensation."
+#~ msgid "Measures the machine-specific settings from the machine's own readings. Each step proposes values; apply them to the form, then Save. Export the result as a machine profile from Machine → Boiler Lag Compensation."
+#~ msgstr "Measures the machine-specific settings from the machine's own readings. Each step proposes values; apply them to the form, then Save. Export the result as a machine profile from Machine → Boiler Lag Compensation."
+
+#: src/pages/Settings/tune/TuneMachine.jsx
+msgid "Measures the machine-specific settings from the machine's own readings. Each step proposes values; apply them to the form, then Save. Export the result as a machine profile from Machine → Machine Boiler Profile."
+msgstr "Measures the machine-specific settings from the machine's own readings. Each step proposes values; apply them to the form, then Save. Export the result as a machine profile from Machine → Machine Boiler Profile."
 
 #: src/pages/ShotAnalyzer/services/ReplayVideoExportService.js
 msgid "MediaRecorder is not supported in this browser."

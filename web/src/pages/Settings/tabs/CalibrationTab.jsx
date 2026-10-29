@@ -18,7 +18,7 @@ export function CalibrationTab({ formData, onChange, setField }) {
   const [autotuneFailed, setAutotuneFailed] = useState(false);
   const [autotuneTime, setAutotuneTime] = useState(120);
   const [autotuneSamples, setAutotuneSamples] = useState(6);
-  // Defaults to the heater power already set for lag compensation (Boiler Lag Compensation), else a Gaggia Classic's.
+  // Defaults to the heater power already set for lag compensation (Machine Boiler Profile), else a Gaggia Classic's.
   const [autotuneWattage, setAutotuneWattage] = useState(
     Number(formData?.modelHeaterW) > 0 ? Number(formData.modelHeaterW) : 1360,
   );
@@ -99,7 +99,7 @@ export function CalibrationTab({ formData, onChange, setField }) {
                 <div className='text-sm'>
                   {autotuneResult.heatRate > 0 ? (
                     <Trans>
-                      Measured and saved for Boiler Lag Compensation: heat-up rate{' '}
+                      Measured and saved to the Machine Boiler Profile: heat-up rate{' '}
                       {autotuneResult.heatRate.toFixed(3)} °C/s, dead time{' '}
                       {autotuneResult.deadTime.toFixed(1)} s. Your PID gains are unchanged.
                     </Trans>

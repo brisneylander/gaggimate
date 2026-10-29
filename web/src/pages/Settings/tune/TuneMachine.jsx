@@ -211,7 +211,7 @@ export function TuneMachine({ formData, setField }) {
       if (weighed.pumpNeedsScaling && formData.pumpModelCoeffs)
         setField('pumpModelCoeffs', scaleCoeffs(formData.pumpModelCoeffs, weighed.pumpRatio));
     }
-    setNote(t`Applied to the form: Save to keep them.`);
+    setNote(t`Applied to the machine profile: Save to keep them.`);
   };
 
   const busy = phase === 'flushing' || phase === 'steam' || phase === 'peak' || phase === 'target';
@@ -262,7 +262,7 @@ export function TuneMachine({ formData, setField }) {
         <Trans>
           Measures the machine-specific settings from the machine's own readings. Each step proposes
           values; apply them to the form, then Save. Export the result as a machine profile from
-          Machine → Boiler Lag Compensation.
+          Machine → Machine Boiler Profile.
         </Trans>
       </p>
 
@@ -410,7 +410,7 @@ export function TuneMachine({ formData, setField }) {
                 disabled={!!flushResult.dead.error && !weighed}
                 onClick={applyFlush}
               >
-                <Trans>Apply to the form</Trans>
+                <Trans>Apply to machine profile</Trans>
               </button>
             </div>
           )}
@@ -473,9 +473,12 @@ export function TuneMachine({ formData, setField }) {
                   <button
                     type='button'
                     className='btn btn-sm'
-                    onClick={() => setField('flushTargetFactor', targetResult.factor)}
+                    onClick={() => {
+                      setField('flushTargetFactor', targetResult.factor);
+                      setNote(t`Applied to the machine profile: Save to keep them.`);
+                    }}
                   >
-                    <Trans>Apply to the form</Trans>
+                    <Trans>Apply to machine profile</Trans>
                   </button>
                 </>
               )}

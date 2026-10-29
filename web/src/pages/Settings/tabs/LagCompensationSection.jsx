@@ -72,7 +72,7 @@ export function LagCompensationSection({ formData, onChange, setField }) {
   const apiService = useContext(ApiServiceContext);
   const onTankRefilled = () => apiService.send({ tp: 'req:tank:refilled' });
   return (
-    <Section title={t`Boiler Lag Compensation`} className='h-full'>
+    <Section title={t`Machine Boiler Profile`} className='h-full'>
       {setField && <MachineProfilePicker formData={formData} setField={setField} />}
       <p className='mb-4 text-sm opacity-70'>
         <Trans>

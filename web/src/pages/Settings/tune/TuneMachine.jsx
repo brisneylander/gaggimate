@@ -6,6 +6,7 @@ import {
   flushTargetFactor,
   lowestAfterFlush,
   pumpedMl,
+  scaleGain,
   scaleCoeffs,
   waterDeadTime,
   weighedFlush,
@@ -14,6 +15,7 @@ import {
 const STEADY_BAND_C = 0.5;
 const STEADY_S = 30;
 const FLUSH_RECORD_S = 120;
+const PRE_FLUSH_MS = 3000;
 const TARGET_RECORD_S = 240;
 const STEAM_OVERSHOOT_C = 12; // heat this far over the brew target before the flush-to-target test
 
@@ -47,13 +49,19 @@ export function TuneMachine({ formData, setField }) {
     const id = api.on('evt:status', () => {
       const s = api.state.value.status || {};
       const now = Date.now() / 1000;
-      const sample = { t: now, ct: Number(s.currentTemperature), fl: Number(s.currentFlow) || 0 };
+      const sample = {
+        t: now,
+        ct: Number(s.currentTemperature),
+        fl: Number(s.currentFlow) || 0,
+        w: s.bluetoothConnected ? Number(s.bluetoothWeight) : NaN,
+      };
       setLive({
         ct: sample.ct,
         tt: Number(s.targetTemperature),
         mode: s.mode,
         fl: sample.fl,
         active: !!s.process?.a,
+        scale: !!s.bluetoothConnected,
       });
       const steady =
         s.mode === 1 && Math.abs(sample.ct - Number(s.targetTemperature)) <= STEADY_BAND_C;
@@ -109,10 +117,14 @@ export function TuneMachine({ formData, setField }) {
         /* the form still holds the old value; Save restores it */
       }
       const dead = waterDeadTime(samples);
-      setFlushResult({ dead, readingMl: pumpedMl(samples) });
+      // With a paired Bluetooth scale under the cup it weighs the flush; without one the weight is typed in.
+      const weighedByScale = scaleGain(samples);
+      setFlushResult({ dead, readingMl: pumpedMl(samples), weighedByScale });
+      if (weighedByScale !== null) setCupG(String(weighedByScale));
       setPhase('weigh');
     });
-    api.send({ tp: 'req:flush:start' });
+    // A few seconds of readings first: the scale's starting weight (and the temperature it falls from).
+    setTimeout(() => api.send({ tp: 'req:flush:start' }), PRE_FLUSH_MS);
   };
 
   // Step 3: steam up, back to Brew, flush to target at the peak, watch the landing.
@@ -207,7 +219,18 @@ export function TuneMachine({ formData, setField }) {
               Measures how soon flush water reaches the sensor, the water the valve dumps into the
               drip tray, and checks the pump calibration. Portafilter out, an empty cup under the
               group, drip tray emptied.
-            </Trans>
+            </Trans>{' '}
+            {live.scale ? (
+              <Trans>
+                A Bluetooth scale is connected: put the cup on it and it weighs the flush; only the
+                drip tray needs weighing by hand.
+              </Trans>
+            ) : (
+              <Trans>
+                Weigh the cup and drip tray afterwards (or pair a Bluetooth scale and it weighs the
+                cup).
+              </Trans>
+            )}
           </div>
           <label className='mt-2 flex items-center gap-2'>
             <input
@@ -264,6 +287,11 @@ export function TuneMachine({ formData, setField }) {
                     {flushResult.dead.depth.toFixed(1)} °C). Pump reading{' '}
                     {flushResult.readingMl.toFixed(1)} ml.
                   </Trans>
+                </p>
+              )}
+              {flushResult.weighedByScale !== null && (
+                <p>
+                  <Trans>The scale weighed {flushResult.weighedByScale} g in the cup.</Trans>
                 </p>
               )}
               <div className='flex flex-wrap items-center gap-2'>

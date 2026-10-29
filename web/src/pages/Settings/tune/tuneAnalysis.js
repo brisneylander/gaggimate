@@ -18,6 +18,22 @@ export function waterDeadTime(samples, { flowOn = 0.5, windowS = 90 } = {}) {
   return { seconds: half.t - t0, depth, start, low: low.ct, lowAt: low.t - t0 };
 }
 
+// What a paired Bluetooth scale gained over the flush: the median of the readings before the flow starts against the
+// median of the last few seconds (after the drips). samples carry w (g); null without enough scale readings.
+export function scaleGain(samples, { flowOn = 0.5, tailS = 5 } = {}) {
+  const median = xs => {
+    const v = xs.filter(Number.isFinite).sort((a, b) => a - b);
+    return v.length ? v[Math.floor(v.length / 2)] : NaN;
+  };
+  const i0 = samples.findIndex(s => s.fl > flowOn);
+  if (i0 < 1) return null;
+  const before = median(samples.slice(0, i0).map(s => s.w));
+  const tEnd = samples[samples.length - 1].t;
+  const after = median(samples.filter(s => tEnd - s.t <= tailS).map(s => s.w));
+  const gain = after - before;
+  return Number.isFinite(gain) && gain > 1 ? Math.round(gain * 10) / 10 : null;
+}
+
 // Pump flow reading integrated over the samples (ml).
 export function pumpedMl(samples) {
   let ml = 0;

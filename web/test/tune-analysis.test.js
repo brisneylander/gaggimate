@@ -8,6 +8,7 @@ import {
   scaleCoeffs,
   flushTargetFactor,
   lowestAfterFlush,
+  scaleGain,
 } from '../src/pages/Settings/tune/tuneAnalysis.js';
 
 // Two 5 s flushes the machine started itself, from a settled 93 °C on a Silvia (2026-10-29), as [t, ct, fl].
@@ -67,4 +68,15 @@ test('flush to target factor from the Silvia bench runs', () => {
 test('lowest reading after the flush', () => {
   const low = lowestAfterFlush(samples(fixtures.flush5s_machine));
   assert.ok(low.lowC < 88 && low.at > 15 && low.at < 40);
+});
+
+test('scale gain: before the flow against the settled end; none without a scale', () => {
+  const s = [];
+  for (let t = 0; t < 120; t++) {
+    const fl = t >= 10 && t < 15 ? 8.6 : 0;
+    const w = 300 + (t < 10 ? 0 : t < 15 ? (t - 10) * 8.6 : t < 30 ? 43 + (t - 15) * 0.05 : 43.8);
+    s.push({ t, ct: 93, fl, w: t === 50 ? NaN : w });
+  }
+  assert.equal(scaleGain(s), 43.8);
+  assert.equal(scaleGain(s.map(x => ({ ...x, w: NaN }))), null); // no scale: typed in instead
 });

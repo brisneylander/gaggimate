@@ -159,6 +159,10 @@ msgstr "1 anno fa"
 msgid "A 5 s flush, logged and weighed"
 msgstr ""
 
+#: src/pages/Settings/tune/TuneMachine.jsx
+msgid "A Bluetooth scale is connected: put the cup on it and it weighs the flush; only the drip tray needs weighing by hand."
+msgstr ""
+
 #: src/app/appSettings.js
 msgid "A brew started on the machine."
 msgstr "Un'erogazione è stata avviata sulla macchina."
@@ -5368,6 +5372,11 @@ msgstr "La bilancia è stata trovata, ma la connessione Bluetooth non è riuscit
 msgid "The scale wasn't found. Make sure it's switched on and nearby, then scan again."
 msgstr "La bilancia non è stata trovata. Assicurati che sia accesa e vicina, poi ripeti la scansione."
 
+#. placeholder {0}: flushResult.weighedByScale
+#: src/pages/Settings/tune/TuneMachine.jsx
+msgid "The scale weighed {0} g in the cup."
+msgstr ""
+
 #: src/pages/Settings/tabs/SystemTab.jsx
 msgid "The update could not be completed and the device kept its current firmware. Check the network connection and start the update again."
 msgstr "Non è stato possibile completare l'aggiornamento e il dispositivo ha mantenuto il firmware attuale. Controlla la connessione di rete e avvia di nuovo l'aggiornamento."
@@ -6033,6 +6042,10 @@ msgstr "Settimana: {startText} - {endText}"
 #: src/pages/Settings/tabs/CleaningSection.jsx
 msgid "weeks"
 msgstr "settimane"
+
+#: src/pages/Settings/tune/TuneMachine.jsx
+msgid "Weigh the cup and drip tray afterwards (or pair a Bluetooth scale and it weighs the cup)."
+msgstr ""
 
 #: src/pages/DashboardSettings/index.jsx
 #: src/pages/Home/cards/ProfileCard.jsx

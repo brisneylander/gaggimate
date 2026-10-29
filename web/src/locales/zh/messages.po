@@ -155,6 +155,10 @@ msgstr "1 年前"
 msgid "A 5 s flush, logged and weighed"
 msgstr ""
 
+#: src/pages/Settings/tune/TuneMachine.jsx
+msgid "A Bluetooth scale is connected: put the cup on it and it weighs the flush; only the drip tray needs weighing by hand."
+msgstr ""
+
 #: src/app/appSettings.js
 msgid "A brew started on the machine."
 msgstr "咖啡机上已开始冲煮。"
@@ -5364,6 +5368,11 @@ msgstr "已找到秤，但蓝牙连接失败。请重试或重启秤。"
 msgid "The scale wasn't found. Make sure it's switched on and nearby, then scan again."
 msgstr "未找到秤。请确认秤已开机并在附近，然后重新扫描。"
 
+#. placeholder {0}: flushResult.weighedByScale
+#: src/pages/Settings/tune/TuneMachine.jsx
+msgid "The scale weighed {0} g in the cup."
+msgstr ""
+
 #: src/pages/Settings/tabs/SystemTab.jsx
 msgid "The update could not be completed and the device kept its current firmware. Check the network connection and start the update again."
 msgstr "更新未能完成，设备保留了当前固件。请检查网络连接并重新开始更新。"
@@ -6029,6 +6038,10 @@ msgstr "周：{startText} - {endText}"
 #: src/pages/Settings/tabs/CleaningSection.jsx
 msgid "weeks"
 msgstr "周"
+
+#: src/pages/Settings/tune/TuneMachine.jsx
+msgid "Weigh the cup and drip tray afterwards (or pair a Bluetooth scale and it weighs the cup)."
+msgstr ""
 
 #: src/pages/DashboardSettings/index.jsx
 #: src/pages/Home/cards/ProfileCard.jsx

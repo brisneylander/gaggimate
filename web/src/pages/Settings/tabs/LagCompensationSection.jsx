@@ -4,6 +4,7 @@ import { ApiServiceContext } from '../../../services/ApiService.js';
 import Section from '../../../components/Card.jsx';
 import { InputGroupField } from '../../../components/SettingsFormField.jsx';
 import { MachineProfilePicker } from './MachineProfilePicker.jsx';
+import { BUILT_IN_PROFILES, profileInUse } from './machineProfiles.js';
 
 // Brew-boiler lag compensation; every field 0 keeps the plain PID loop. Each value is 0 (off) or within
 // [min, max]: the same ranges as lag_limits in lib/NanoPbComm/src/LagCompensationLimits.h, which the display and
@@ -25,6 +26,26 @@ const FIELDS = [
   { key: 'noRiseBrewS', unit: 's', min: 30, max: 300 },
   { key: 'noRiseSteamS', unit: 's', min: 60, max: 900 },
 ];
+
+// Always shown: what a person sets or checks. The rest is under Advanced (closed by default); every value stays
+// editable, since profiles and the tune routine write to them. Values a calibration measures say so.
+const MAIN_KEYS = [
+  'modelHeaterW',
+  'modelHeatRate',
+  'sensorDeadTimeS',
+  'waterDeadTimeS',
+  'tankFillC',
+];
+const CALIBRATED = {
+  modelHeaterW: 'autotune',
+  modelHeatRate: 'autotune',
+  sensorDeadTimeS: 'autotune',
+  waterDeadTimeS: 'tune',
+  valveDumpMl: 'tune',
+  flushTargetFactor: 'tune',
+};
+
+const sameNumber = (a, b) => Math.abs(Number(a ?? 0) - Number(b ?? 0)) < 1e-6;
 
 const inRangeOrOff = (value, min, max) => {
   const v = Number(value);
@@ -67,6 +88,59 @@ export function LagCompensationSection({ formData, onChange, setField }) {
     noRiseBrewS: t`The heater stops (until a restart) after this long near full power with no water flowing and the temperature not rising: a sensor off the boiler. Raise it for a slow sensor. 0 uses 60 s.`,
     noRiseSteamS: t`The same at steam temperatures, where steaming milk holds the heater flat out. 0 uses 180 s.`,
   };
+  const calibratedBy = {
+    autotune: t`Set by autotune (Calibration).`,
+    tune: t`Set by Tune this machine (Calibration).`,
+  };
+  const renderField = ({ key, unit, min, max }) => {
+    const range = t`0 (off) or ${min}–${max} ${unit}`;
+    const by = CALIBRATED[key] ? `${calibratedBy[CALIBRATED[key]]} ` : '';
+    return (
+      <InputGroupField
+        key={key}
+        label={labels[key]}
+        htmlFor={key}
+        unit={unit}
+        helpText={`${by}${help[key]} ${t`Allowed: ${range}.`}`}
+        noMargin
+      >
+        <input
+          id={key}
+          name={key}
+          type='number'
+          step='any'
+          min='0'
+          max={max}
+          className='grow'
+          placeholder='0'
+          value={formData[key] ?? 0}
+          onInput={e =>
+            // Values between 0 and the minimum are as silly as values above the maximum; block saving.
+            e.target.setCustomValidity(
+              inRangeOrOff(e.target.value, min, max) ? '' : t`Use ${range}.`,
+            )
+          }
+          onChange={onChange(key)}
+        />
+      </InputGroupField>
+    );
+  };
+  // The fixed tank temperature only matters while the tank estimate is off (fill temperature 0).
+  const estimateOn = Number(formData.tankFillC) > 0;
+  const mainFields = FIELDS.filter(f => MAIN_KEYS.includes(f.key));
+  const advancedFields = FIELDS.filter(
+    f => !MAIN_KEYS.includes(f.key) && !(f.key === 'inletTempC' && estimateOn),
+  );
+  // A closed Advanced section mustn't hide a change: count the advanced values that differ from the built-in
+  // profile in use (only built-ins carry their values here).
+  const inUse = profileInUse(formData);
+  const inUseBuiltIn = BUILT_IN_PROFILES.find(p => p.name === (inUse.name || inUse.changedFrom));
+  const differingAdvanced = inUseBuiltIn
+    ? advancedFields.filter(
+        f =>
+          f.key in inUseBuiltIn.values && !sameNumber(formData[f.key], inUseBuiltIn.values[f.key]),
+      ).length
+    : 0;
   const learnedLoss = Math.round(Number(formData.modelLossW) || 0);
   const tankEstimate = Math.round(Number(formData.tankEstimateC) || 0);
   const apiService = useContext(ApiServiceContext);
@@ -81,40 +155,7 @@ export function LagCompensationSection({ formData, onChange, setField }) {
           before the overshoot shows. Leave a field at 0 to disable it.
         </Trans>
       </p>
-      <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
-        {FIELDS.map(({ key, unit, min, max }) => {
-          const range = t`0 (off) or ${min}–${max} ${unit}`;
-          return (
-            <InputGroupField
-              key={key}
-              label={labels[key]}
-              htmlFor={key}
-              unit={unit}
-              helpText={`${help[key]} ${t`Allowed: ${range}.`}`}
-              noMargin
-            >
-              <input
-                id={key}
-                name={key}
-                type='number'
-                step='any'
-                min='0'
-                max={max}
-                className='grow'
-                placeholder='0'
-                value={formData[key] ?? 0}
-                onInput={e =>
-                  // Values between 0 and the minimum are as silly as values above the maximum; block saving.
-                  e.target.setCustomValidity(
-                    inRangeOrOff(e.target.value, min, max) ? '' : t`Use ${range}.`,
-                  )
-                }
-                onChange={onChange(key)}
-              />
-            </InputGroupField>
-          );
-        })}
-      </div>
+      <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>{mainFields.map(renderField)}</div>
       {tankEstimate > 0 && (
         <div className='mt-4 flex items-center gap-3 text-sm'>
           <span className='opacity-70'>
@@ -125,6 +166,21 @@ export function LagCompensationSection({ formData, onChange, setField }) {
           </button>
         </div>
       )}
+      <details className='border-base-content/10 mt-4 rounded-lg border p-3'>
+        <summary className='cursor-pointer text-sm font-medium'>
+          <Trans>Advanced</Trans>
+          {differingAdvanced > 0 && (
+            <span className='text-warning ml-2'>
+              <Trans>
+                ({differingAdvanced} differ from {inUseBuiltIn.name})
+              </Trans>
+            </span>
+          )}
+        </summary>
+        <div className='mt-3 grid grid-cols-1 gap-4 md:grid-cols-2'>
+          {advancedFields.map(renderField)}
+        </div>
+      </details>
       {learnedLoss > 0 && (
         <p className='mt-4 text-sm opacity-70'>
           <Trans>

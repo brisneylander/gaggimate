@@ -19,6 +19,11 @@ msgstr ""
 msgid ": the pump coefficients will be scaled to match."
 msgstr ""
 
+#. placeholder {0}: inUseBuiltIn.name
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "({differingAdvanced} differ from {0})"
+msgstr ""
+
 #: src/pages/Statistics/components/StatisticsSearchHelp.jsx
 msgid "(exact)"
 msgstr "(esatto)"
@@ -286,6 +291,7 @@ msgstr "Aggiungi ai preferiti"
 msgid "Address"
 msgstr "Indirizzo"
 
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
 #: src/pages/Statistics/components/toolbar/subcomponents.jsx
 msgid "Advanced"
 msgstr "Avanzate"
@@ -4585,6 +4591,14 @@ msgstr ""
 #: src/services/VisualizerService.js
 msgid "Server error - the API may not support this data format or account type"
 msgstr "Errore del server: l'API potrebbe non supportare questo formato di dati o tipo di account"
+
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "Set by autotune (Calibration)."
+msgstr ""
+
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "Set by Tune this machine (Calibration)."
+msgstr ""
 
 #: src/pages/Settings/tune/TuneMachine.jsx
 msgid "set heater power and heat-up rate first (step 1)"

@@ -984,10 +984,6 @@ msgstr "接続中…"
 msgid "Control Column Style"
 msgstr "コントロール列のスタイル"
 
-#: src/pages/Settings/tabs/LagCompensationSection.jsx
-msgid "Control on a model's estimate of where the water temperature is heading, instead of the sensor plus the predictor. Allows a stronger Kp (about 100 on a Silvia) without overshoot. Needs heater power, heat-up rate and water dead time."
-msgstr ""
-
 #: src/app/appSettings.js
 msgid "Controller errors and error-level warnings."
 msgstr "コントローラーのエラーとエラーレベルの警告。"
@@ -5139,10 +5135,6 @@ msgstr "テーマと通知"
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "Thermal Feedforward Gain"
 msgstr "熱フィードフォワードゲイン"
-
-#: src/pages/Settings/tabs/LagCompensationSection.jsx
-msgid "Thermal model (experimental)"
-msgstr ""
 
 #: src/app/machines.js
 msgid "this address is not a GaggiMate"

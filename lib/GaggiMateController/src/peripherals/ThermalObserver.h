@@ -28,12 +28,10 @@ class ThermalObserver {
     static constexpr float SENSOR_LAG_PER_WATER_DEAD = 15.0f / 12.0f;
     static constexpr float ROOM_C = 22.0f;
 
-    // Observer gains per second of innovation (°C error between sensor and predicted sensor), chosen in the simulator
-    // over the model 25 % off and the tank setting 10 °C off either way (test_observer_gain_sweep): faster bias gains
-    // go unstable.
-    float gainWater = 0.10f;
-    float gainElement = 0.02f;
-    float gainBiasW = 2.0f; // W of unexplained heat per °C·s of innovation
+    // Observer gains per second of innovation (°C error between sensor and predicted sensor).
+    static constexpr float GAIN_WATER = 0.05f;
+    static constexpr float GAIN_ELEMENT = 0.02f;
+    static constexpr float GAIN_BIAS_W = 4.0f; // W of unexplained heat per °C·s of innovation
 
     // heaterWatts / fullPowerRate give the capacity; waterDeadTimeS the sensor's delays; any <= 0 disables it.
     void configure(float heaterWatts, float fullPowerRate, float waterDeadTimeS, float inletTemp);
@@ -51,7 +49,7 @@ class ThermalObserver {
     float getSettling() const;
     // Share (0..1) of the group head's heat deficit (below its resting temperature) counted in getSettling(): after a
     // flush the cooled group keeps pulling the water down for minutes, which the heater can start putting back early.
-    float groupWeight = 0.25f;
+    float groupWeight = 0.0f;
     float getElement() const { return element; }
     float getGroup() const { return group; }
     float getBiasWatts() const { return biasW; }

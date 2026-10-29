@@ -219,7 +219,6 @@ struct Tuning {
     // and waterDeadS).
     bool observer = false;
     float observerGroupWeight = 0.0f;
-    float obsGainWater = -1.0f, obsGainBias = -1.0f; // < 0: ThermalObserver's defaults
 };
 
 struct Result {
@@ -268,10 +267,6 @@ static Result simulate(const Tuning &tu) {
     if (tu.observer)
         obs.configure(tu.modelW, tu.modelRate, tu.waterDeadS, tu.predictorInletC);
     obs.groupWeight = tu.observerGroupWeight;
-    if (tu.obsGainWater >= 0.0f)
-        obs.gainWater = tu.obsGainWater;
-    if (tu.obsGainBias >= 0.0f)
-        obs.gainBiasW = tu.obsGainBias;
     float obsLastFlow = 0.0f;
     bool obsPrimed = false;
     bool predictorStarted = false;
@@ -712,42 +707,6 @@ void test_observer_vs_predictor() {
            rps.dipMin, rps.waterLow, rps.peak, ros.dipMin, ros.waterLow, ros.peak);
 }
 
-static float worstSettle(Tuning base, float *worstOver) {
-    float worst = 0.0f;
-    *worstOver = 0.0f;
-    const float rates[] = {0.6f, 0.45f, 0.75f};
-    for (float rate : rates)
-        for (float inlet : {35.0f, 25.0f, 45.0f}) {
-            Tuning t = base;
-            t.modelRate = rate;
-            t.plantInletC = inlet;
-            const Result r = simulate(t);
-            worst = std::max(worst, r.waterSettledAt < 0.0f ? 999.0f : r.waterSettledAt);
-            *worstOver = std::max(*worstOver, r.waterOver);
-        }
-    return worst;
-}
-
-void test_observer_gain_sweep() {
-    Tuning pred = compensated();
-    float over = 0.0f;
-    const float predWorst = worstSettle(pred, &over);
-    printf("sweep: predictor Kp 60: worst water settle %.0f s, worst over %.2f\n", predWorst, over);
-    for (float kp : {80.0f, 100.0f, 120.0f})
-        for (float gw : {0.1f, 0.15f})
-            for (float gb : {1.0f, 2.0f, 4.0f}) {
-                Tuning o = compensated();
-                o.observer = true;
-                o.observerGroupWeight = 0.25f;
-                o.kp = kp;
-                o.obsGainWater = gw;
-                o.obsGainBias = gb;
-                const float w = worstSettle(o, &over);
-                printf("sweep: observer Kp %.0f water %.2f bias %.0f: worst water settle %.0f s, worst over %.2f\n", kp, gw, gb,
-                       w, over);
-            }
-}
-
 int main(int argc, char **argv) {
     UNITY_BEGIN();
     RUN_TEST(test_disabled_when_any_parameter_missing);
@@ -773,6 +732,5 @@ int main(int argc, char **argv) {
     RUN_TEST(test_bench_configurations);
     RUN_TEST(test_shot_feedforward);
     RUN_TEST(test_observer_vs_predictor);
-    RUN_TEST(test_observer_gain_sweep);
     return UNITY_END();
 }

@@ -4,7 +4,6 @@
 #include "HeatBalancePredictor.h"
 #include "Max31855Thermocouple.h"
 #include "TemperatureSensor.h"
-#include "ThermalObserver.h"
 #include <SimplePID/SimplePID.h>
 #include <atomic>
 #include <freertos/FreeRTOS.h>
@@ -57,7 +56,7 @@ class Heater {
     //   waterDeadTimeS: delay from water flowing to the sensor reacting (<= 0: same as sensorDeadTimeS)
     void setLagCompensation(float derivativeFilterS, float integralZoneC, float sensorDeadTimeS, float modelHeaterW,
                             float modelHeatRate, float modelLossW = 0.0f, float inletTempC = 0.0f, float waterDeadTimeS = 0.0f,
-                            bool reheatFullPower = false, bool thermalObserver = false);
+                            bool reheatFullPower = false);
     // True while a full-power reheat after a flush or shot overrides the PID (needs the predictor).
     bool isReheating() const { return eventDuty >= 1.0f; }
     float getControlTemperature() const { return controlTemperature; }
@@ -114,12 +113,6 @@ class Heater {
     // Lag compensation state (written from the comms task, read on the heater task)
     std::mutex lagMutex;
     HeatBalancePredictor predictor;
-    // Experimental (settings thermal_observer): the PID runs on the observer's settling temperature instead of
-    // measured + predictor correction. The predictor keeps running for the learned loss and reheat.
-    ThermalObserver observer;
-    bool observerEnabled = false;
-    bool observerPrimed = false;
-    float observerLastFlow = 0.0f;
     bool integralZoneActive = false;
     uint32_t integralHoldTailMs = 0;
     uint32_t lastFlowMs = 0;

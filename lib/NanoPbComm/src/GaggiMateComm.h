@@ -29,7 +29,6 @@ struct HeaterLagCompensation {
     float inletTempC = 0.0f;        // tank water temperature (degC) for the predictor and thermal feedforward, 0 = 23
     float waterDeadTimeS = 0.0f;    // heat-balance predictor: delay from water flowing to the sensor (s), 0 = dead time
     bool reheatFullPower = false;   // after a flush or shot, heat flat out until the predictor says nothing is owed
-    bool thermalObserver = false;   // experimental: control on the thermal observer's estimate instead of the predictor
 };
 
 // Per-component commands: drive several components atomically in one frame, comparable so callers send only deltas.

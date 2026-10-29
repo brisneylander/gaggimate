@@ -120,7 +120,6 @@ message HeaterSettings {
     float inlet_temp_c = 13;       // tank water temperature (degC) for the predictor and thermal feedforward, 0 = 23
     float water_dead_time_s = 14;  // heat-balance predictor: delay from water flowing to the sensor (s), 0 = dead time
     bool reheat_full_power = 15;   // after a flush or shot, heat flat out until the predictor says nothing is owed
-    bool thermal_observer = 16;    // experimental: control on the thermal observer's estimate instead of the predictor
 }
 
 message PumpSettings {

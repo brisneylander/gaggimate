@@ -105,9 +105,13 @@ budget for flushes looks unnecessary; recovery to 93 °C is a little slower (69�
 - **Two different delays.** The sensor sees a flush within ~5 s but heater heat only after ~20 s; the model uses one
   dead time for both. The heater ran at full power for only ~10–20 s and the whole overshoot is heat put in during
   the first ~25 s. Next experiment: a higher model heat-up rate (0.8–0.9 °C/s) so the predictor backs off sooner.
-- **Tank water temperature drifts.** It's ~25 °C normally but reached 40 °C after a few hours of testing, beside the
-  hot boiler. The setting (simon005) is a single fixed value; estimate it instead (machine on-time and water drawn)
-  or measure it with a cheap sensor in the tank. Set back to 0 (the upstream 23 °C default) after the flush tests.
+- **Tank water temperature drifts** (~25 °C fresh, 40 °C after hours beside the boiler; 15-45 °C over a year).
+  *Estimated from simon018:* `TankTemperature` warms from a seasonal fill temperature (tankFillC) towards fill + 18 °C
+  while on (~2 h), cools in standby, and resets on a refill (Tank refilled button, or the Alba level back to full).
+  *simon019:* after each plain flush from near target, the display replays the fitted plant over 3 min to find the tank
+  temperature the flush implies (`FlushTankCheck.h`; today's flushes: 31.0, 39.5, 32.5 °C with 32 measured, ±7 °C
+  each, ~4 °C low before the bias correction). Two flushes in a row 8 °C under the estimate count as a refill. The
+  constants are first guesses: refine with thermometer readings after ~1 h and ~3 h on.
 - **Pump flow calibration needs a Bluetooth scale.** Without one the screen can't save; let it accept a typed-in
   weight. A single weight was enough here (pump model read 18–21 % high; scaled to 8.644, 4.676, then confirmed
   within 3 % on a second run).

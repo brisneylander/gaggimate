@@ -1,6 +1,7 @@
 #ifndef CONTROLLER_H
 #define CONTROLLER_H
 
+#include "FlushTankCheck.h"
 #include "FlushToTarget.h"
 #include "GaggiMateClient.h"
 #include "PluginManager.h"
@@ -147,6 +148,7 @@ class Controller {
     // temperature is set, otherwise the fixed setting (0 = 23 °C).
     float getTankTempC() const { return tank.isEnabled() ? std::round(tank.get()) : settings.getInletTempC(); }
     float getTankEstimateC() const { return tank.isEnabled() ? tank.get() : 0.0f; }
+    float getFlushImpliedTankC() const { return lastFlushImpliedTank; } // last plain flush's verdict, 0 = none yet
     void onTankRefilled(); // fresh water in the tank (the UI's "Tank refilled", or the water level climbing to full)
     void onFlushRelease(); // ends a hold-to-flush; no-op otherwise
     int getWaterLevel() const {
@@ -312,6 +314,14 @@ class Controller {
     unsigned long lastTankMs = 0;
     float tankSentC = -1.0f; // tank temperature last sent to the controller
     void loopTank();
+    // After a plain flush from near target: 3 min of 1 Hz readings, replayed to catch a refill the estimate missed.
+    std::vector<flush_tank_check::Sample> flushRecord;
+    bool flushRecording = false;
+    bool flushRecordFlushEnded = false;
+    unsigned long flushRecordLastMs = 0;
+    flush_tank_check::RefillDetector refillDetector;
+    float lastFlushImpliedTank = 0.0f;
+    void loopFlushRecord();
     bool processCompleted = false;
     bool steamReady = false;
     bool steamSwitchOn = false;

@@ -588,7 +588,8 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
     doc["modelLossW"] = settings.getModelLossW();
     doc["inletTempC"] = settings.getInletTempC();
     doc["tankFillC"] = settings.getTankFillC();
-    doc["tankEstimateC"] = controller->getTankEstimateC(); // read-only: 0 while the estimate is off
+    doc["tankEstimateC"] = controller->getTankEstimateC();         // read-only: 0 while the estimate is off
+    doc["tankFlushImpliedC"] = controller->getFlushImpliedTankC(); // read-only: last plain flush, 0 = none
     doc["waterDeadTimeS"] = settings.getWaterDeadTimeS();
     doc["flushButtonToTarget"] = settings.isFlushButtonToTarget();
     doc["pid"] = settings.getPid();

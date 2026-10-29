@@ -700,8 +700,48 @@ void Controller::loopLogic() {
     if (mode != MODE_STANDBY && settings.getStandbyTimeout() > 0 && now > lastAction + settings.getStandbyTimeout())
         activateStandby();
 
+    loopFlushRecord();
     loopTank();
     loopControl();
+}
+
+void Controller::loopFlushRecord() {
+    if (!flushRecording)
+        return;
+    const unsigned long now = millis();
+    if (flushRecordLastMs != 0 && now - flushRecordLastMs < 1000)
+        return;
+    flushRecordLastMs = now != 0 ? now : 1;
+    // Anything after the flush itself (a shot, another flush, steam, hot water) spoils the replay.
+    const bool active = isActive();
+    if (!active)
+        flushRecordFlushEnded = true;
+    if (mode != MODE_BREW || (active && flushRecordFlushEnded)) {
+        flushRecording = false;
+        return;
+    }
+    flushRecord.push_back({getCurrentTemp(), std::min(std::max(currentHeaterPower / 100.0f, 0.0f), 1.0f), currentPumpFlow});
+    if (flushRecord.size() <= static_cast<size_t>(flush_tank_check::RECORD_S))
+        return;
+    flushRecording = false;
+    flush_tank_check::Plant plant;
+    if (settings.getModelHeaterW() > 0.0f && settings.getModelHeatRate() > 0.0f) {
+        plant.heaterW = settings.getModelHeaterW();
+        plant.capacity = settings.getModelHeaterW() / settings.getModelHeatRate();
+    }
+    plant.holdW = settings.getModelLossW() > 0.0f ? settings.getModelLossW() : 0.05f * plant.heaterW;
+    if (settings.getWaterDeadTimeS() > 0.0f)
+        plant.waterDeadS = settings.getWaterDeadTimeS();
+    float rms = 0.0f;
+    const float implied = flush_tank_check::impliedTank(flushRecord, plant, &rms);
+    flushRecord.clear();
+    ESP_LOGI(LOG_TAG, "Flush implies tank %.1f°C (fit %.2f°C rms); estimate %.1f°C", implied, rms, tank.get());
+    if (std::isfinite(implied))
+        lastFlushImpliedTank = implied;
+    if (tank.isEnabled() && refillDetector.onFlush(implied, tank.get())) {
+        ESP_LOGI(LOG_TAG, "Two flushes say the tank is much colder than estimated: counting it as a refill");
+        onTankRefilled();
+    }
 }
 
 void Controller::loopTank() {
@@ -1609,7 +1649,14 @@ void Controller::onFlush() {
         getCurrentTemp() >= profileManager->getSelectedProfile().temperature + flush_to_target::BUTTON_SURPLUS_C &&
         flushToTarget().reason == nullptr)
         return;
-    startFlush(static_cast<float>(settings.getFlushDuration()));
+    const bool nearTarget = std::fabs(getCurrentTemp() - profileManager->getSelectedProfile().temperature) < 1.0f;
+    if (startFlush(static_cast<float>(settings.getFlushDuration())) && nearTarget) {
+        flushRecord.clear();
+        flushRecord.reserve(static_cast<size_t>(flush_tank_check::RECORD_S) + 2);
+        flushRecording = true;
+        flushRecordFlushEnded = false;
+        flushRecordLastMs = 0;
+    }
 }
 
 flush_to_target::Plan Controller::flushToTarget() {

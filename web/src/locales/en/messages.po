@@ -160,8 +160,8 @@ msgid "A 5 s flush, logged and weighed"
 msgstr "A 5 s flush, logged and weighed"
 
 #: src/pages/Settings/tune/TuneMachine.jsx
-msgid "A Bluetooth scale is connected: put the cup on it and it weighs the flush; only the drip tray needs weighing by hand."
-msgstr "A Bluetooth scale is connected: put the cup on it and it weighs the flush; only the drip tray needs weighing by hand."
+#~ msgid "A Bluetooth scale is connected: put the cup on it and it weighs the flush; only the drip tray needs weighing by hand."
+#~ msgstr "A Bluetooth scale is connected: put the cup on it and it weighs the flush; only the drip tray needs weighing by hand."
 
 #: src/app/appSettings.js
 msgid "A brew started on the machine."
@@ -2799,8 +2799,8 @@ msgid "Measured and saved to the Machine Boiler Profile: heat-up rate {0} °C/s,
 msgstr "Measured and saved to the Machine Boiler Profile: heat-up rate {0} °C/s, dead time {1} s. Your PID gains are unchanged."
 
 #: src/pages/Settings/tune/TuneMachine.jsx
-msgid "Measures how soon flush water reaches the sensor, the water the valve dumps into the drip tray, and checks the pump calibration. Portafilter out, an empty cup under the group, drip tray emptied."
-msgstr "Measures how soon flush water reaches the sensor, the water the valve dumps into the drip tray, and checks the pump calibration. Portafilter out, an empty cup under the group, drip tray emptied."
+#~ msgid "Measures how soon flush water reaches the sensor, the water the valve dumps into the drip tray, and checks the pump calibration. Portafilter out, an empty cup under the group, drip tray emptied."
+#~ msgstr "Measures how soon flush water reaches the sensor, the water the valve dumps into the drip tray, and checks the pump calibration. Portafilter out, an empty cup under the group, drip tray emptied."
 
 #: src/pages/Settings/tune/TuneMachine.jsx
 #~ msgid "Measures the machine-specific settings from the machine's own readings. Each step proposes values; apply them to the form, then Save. Export the result as a machine profile from Machine → Boiler Lag Compensation."
@@ -3902,6 +3902,14 @@ msgstr "Pumped Water Stop"
 #: src/pages/ShotAnalyzer/services/analyzer/exitReasons.js
 msgid "Pumped-water target"
 msgstr "Pumped-water target"
+
+#: src/pages/Settings/tune/TuneMachine.jsx
+msgid "Put an empty cup on your Bluetooth scale under the group: it weighs the flush for you."
+msgstr "Put an empty cup on your Bluetooth scale under the group: it weighs the flush for you."
+
+#: src/pages/Settings/tune/TuneMachine.jsx
+msgid "Put an empty cup under the group. Weigh it first, or tare your kitchen scale with it."
+msgstr "Put an empty cup under the group. Weigh it first, or tare your kitchen scale with it."
 
 #: src/pages/Statistics/utils/statisticsSearchDsl.js
 msgid "Query clause {clauseNumber}: {valueError}"
@@ -5150,6 +5158,10 @@ msgctxt "Tuesday, one letter"
 msgid "T"
 msgstr "T"
 
+#: src/pages/Settings/tune/TuneMachine.jsx
+msgid "Take the portafilter out and empty the drip tray."
+msgstr "Take the portafilter out and empty the drip tray."
+
 #: src/pages/Settings/tabs/LagCompensationSection.jsx
 msgid "Tank fill temperature"
 msgstr "Tank fill temperature"
@@ -5486,10 +5498,18 @@ msgstr "This feature controls a Tasmota Plug to turn off your grinder after the 
 msgid "This scale model couldn't be set up."
 msgstr "This scale model couldn't be set up."
 
+#: src/pages/Settings/tune/TuneMachine.jsx
+msgid "This short flush shows how quickly fresh water reaches the temperature sensor, how much water the valve drops into the drip tray, and whether the pump reading is accurate."
+msgstr "This short flush shows how quickly fresh water reaches the temperature sensor, how much water the valve drops into the drip tray, and whether the pump reading is accurate."
+
 #: src/pages/Settings/PluginCard.jsx
 #: src/pages/ShotAnalyzer/components/shotDetails/ShotMainInfoCard.jsx
 msgid "Thursday"
 msgstr "Thursday"
+
+#: src/pages/Settings/tune/TuneMachine.jsx
+msgid "Tick the box below, wait for a steady temperature, then press Start flush. Leave everything alone for 2 minutes."
+msgstr "Tick the box below, wait for a steady temperature, then press Start flush. Leave everything alone for 2 minutes."
 
 #: src/pages/Settings/tune/TuneMachine.jsx
 msgid "tick the checklist above"
@@ -6128,8 +6148,8 @@ msgid "weeks"
 msgstr "weeks"
 
 #: src/pages/Settings/tune/TuneMachine.jsx
-msgid "Weigh the cup and drip tray afterwards (or pair a Bluetooth scale and it weighs the cup)."
-msgstr "Weigh the cup and drip tray afterwards (or pair a Bluetooth scale and it weighs the cup)."
+#~ msgid "Weigh the cup and drip tray afterwards (or pair a Bluetooth scale and it weighs the cup)."
+#~ msgstr "Weigh the cup and drip tray afterwards (or pair a Bluetooth scale and it weighs the cup)."
 
 #: src/pages/DashboardSettings/index.jsx
 #: src/pages/Home/cards/ProfileCard.jsx
@@ -6184,6 +6204,14 @@ msgstr "Weight Stop"
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "What percentage to run the pump at during steaming"
 msgstr "What percentage to run the pump at during steaming"
+
+#: src/pages/Settings/tune/TuneMachine.jsx
+msgid "When the results appear, weigh the water in the cup and in the drip tray, and enter both."
+msgstr "When the results appear, weigh the water in the cup and in the drip tray, and enter both."
+
+#: src/pages/Settings/tune/TuneMachine.jsx
+msgid "When the results appear, weigh the water in the drip tray and enter it."
+msgstr "When the results appear, weigh the water in the drip tray and enter it."
 
 #: src/pages/Settings/tabs/GeneralTab.jsx
 msgid "When the toggle is off, brightness will be set to 0"

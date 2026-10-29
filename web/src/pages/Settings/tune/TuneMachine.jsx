@@ -291,22 +291,49 @@ export function TuneMachine({ formData, setField }) {
             <Trans>A 5 s flush, logged and weighed</Trans>
           </strong>
           <div role='alert' className='alert alert-warning mt-2 block text-sm'>
-            <Trans>
-              Measures how soon flush water reaches the sensor, the water the valve dumps into the
-              drip tray, and checks the pump calibration. Portafilter out, an empty cup under the
-              group, drip tray emptied.
-            </Trans>{' '}
-            {live.scale ? (
+            <p>
               <Trans>
-                A Bluetooth scale is connected: put the cup on it and it weighs the flush; only the
-                drip tray needs weighing by hand.
+                This short flush shows how quickly fresh water reaches the temperature sensor, how
+                much water the valve drops into the drip tray, and whether the pump reading is
+                accurate.
               </Trans>
-            ) : (
-              <Trans>
-                Weigh the cup and drip tray afterwards (or pair a Bluetooth scale and it weighs the
-                cup).
-              </Trans>
-            )}
+            </p>
+            <ol className='mt-2 list-decimal space-y-1 pl-5'>
+              <li>
+                <Trans>Take the portafilter out and empty the drip tray.</Trans>
+              </li>
+              <li>
+                {live.scale ? (
+                  <Trans>
+                    Put an empty cup on your Bluetooth scale under the group: it weighs the flush
+                    for you.
+                  </Trans>
+                ) : (
+                  <Trans>
+                    Put an empty cup under the group. Weigh it first, or tare your kitchen scale
+                    with it.
+                  </Trans>
+                )}
+              </li>
+              <li>
+                <Trans>
+                  Tick the box below, wait for a steady temperature, then press Start flush. Leave
+                  everything alone for 2 minutes.
+                </Trans>
+              </li>
+              <li>
+                {live.scale ? (
+                  <Trans>
+                    When the results appear, weigh the water in the drip tray and enter it.
+                  </Trans>
+                ) : (
+                  <Trans>
+                    When the results appear, weigh the water in the cup and in the drip tray, and
+                    enter both.
+                  </Trans>
+                )}
+              </li>
+            </ol>
           </div>
           <label className='mt-2 flex items-center gap-2'>
             <input

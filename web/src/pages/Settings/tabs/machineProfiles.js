@@ -50,6 +50,24 @@ export const BUILT_IN_PROFILES = [
       pumpModelCoeffs: '8.644,4.676',
     },
   },
+  // Starting points only: the PID gains and temperature offset upstream documents for these machines
+  // (https://docs.gaggimate.eu/docs/usage-configuration/, as in upstream's setup-wizard presets). Nothing here was
+  // measured, so they leave the boiler model, delays and the rest alone: run Tune this machine for those.
+  {
+    name: 'Gaggia Classic / Classic Pro / Evo / E24',
+    startingPoint: true,
+    values: { pid: '58.397,1.027,249.055', kf: 0, temperatureOffset: 8 },
+  },
+  {
+    name: 'DeLonghi Dedica',
+    startingPoint: true,
+    values: { pid: '10,0.006,140', kf: 0.55, temperatureOffset: 10 },
+  },
+  {
+    name: 'DeLonghi ECP',
+    startingPoint: true,
+    values: { pid: '32,0.05,42', kf: 0.46, temperatureOffset: 15 },
+  },
 ];
 
 function sameValue(a, b) {

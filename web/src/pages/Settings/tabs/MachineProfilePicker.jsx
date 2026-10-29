@@ -92,7 +92,7 @@ export function MachineProfilePicker({ formData, setField }) {
           <option value=''>{t`Choose…`}</option>
           {BUILT_IN_PROFILES.map(p => (
             <option key={p.name} value={p.name}>
-              {p.name}
+              {p.startingPoint ? t`${p.name} (starting point)` : p.name}
             </option>
           ))}
         </select>
@@ -133,6 +133,15 @@ export function MachineProfilePicker({ formData, setField }) {
           <Trans>In use: custom values</Trans>
         )}
       </p>
+      {BUILT_IN_PROFILES.find(p => p.name === selected)?.startingPoint && (
+        <p className='text-sm'>
+          <Trans>
+            A starting point from the GaggiMate documentation: it sets only the PID gains and
+            temperature offset. Run Tune this machine (Calibration) to measure the rest, then Export
+            JSON to keep the result.
+          </Trans>
+        </p>
+      )}
       {note && <p className='text-sm'>{note}</p>}
     </div>
   );

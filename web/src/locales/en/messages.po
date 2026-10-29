@@ -63,6 +63,11 @@ msgstr "{0, plural, one {# profile} other {# profiles}}"
 msgid "{0, plural, one {# shot} other {# shots}}"
 msgstr "{0, plural, one {# shot} other {# shots}}"
 
+#. placeholder {0}: p.name
+#: src/pages/Settings/tabs/MachineProfilePicker.jsx
+msgid "{0} (starting point)"
+msgstr "{0} (starting point)"
+
 #: src/pages/Statistics/components/toolbar/helpers.js
 msgid "{candidateCount, plural, one {# candidate} other {# candidates}}"
 msgstr "{candidateCount, plural, one {# candidate} other {# candidates}}"
@@ -178,6 +183,10 @@ msgstr "A given alpha behaves faster in time at 80 SPS because it is applied mor
 #: src/pages/Settings/tune/TuneMachine.jsx
 msgid "a result is showing: empty the cup and tray, then Run again"
 msgstr "a result is showing: empty the cup and tray, then Run again"
+
+#: src/pages/Settings/tabs/MachineProfilePicker.jsx
+msgid "A starting point from the GaggiMate documentation: it sets only the PID gains and temperature offset. Run Tune this machine (Calibration) to measure the rest, then Export JSON to keep the result."
+msgstr "A starting point from the GaggiMate documentation: it sets only the PID gains and temperature offset. Run Tune this machine (Calibration) to measure the rest, then Export JSON to keep the result."
 
 #: src/pages/Settings/tune/TuneMachine.jsx
 msgid "a test is running"

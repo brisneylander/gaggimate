@@ -1724,7 +1724,13 @@ flush_to_target::Plan Controller::flushToTarget() {
     flushToTargetHoldUntil = millis() + static_cast<unsigned long>((plan.seconds + flushTargetHoldS()) * 1000.0f);
     if (flushToTargetHoldUntil == 0)
         flushToTargetHoldUntil = 1;
-    startFlush(plan.seconds);
+    // startFlush() refuses when a process started in the meantime: report that, and don't hold the heater off for a
+    // flush that isn't running (the tune routine once waited on a "successful" flush that never ran).
+    if (!startFlush(plan.seconds)) {
+        flushToTargetHoldUntil = 0;
+        plan.reason = "a shot or flush is already running";
+        plan.ml = plan.seconds = 0.0f;
+    }
     return plan;
 }
 

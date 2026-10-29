@@ -5372,6 +5372,10 @@ msgstr "The grinder reaches GaggiMate at this address, so both need to share a n
 msgid "The heater stops (until a restart) after this long near full power with no water flowing and the temperature not rising: a sensor off the boiler. Raise it for a slow sensor. 0 uses 60 s."
 msgstr "The heater stops (until a restart) after this long near full power with no water flowing and the temperature not rising: a sensor off the boiler. Raise it for a slow sensor. 0 uses 60 s."
 
+#: src/pages/Settings/tune/TuneMachine.jsx
+msgid "The machine accepted the flush to target but no water flowed."
+msgstr "The machine accepted the flush to target but no water flowed."
+
 #. placeholder {0}: reply?.reason || t`no reply`
 #: src/pages/Settings/tune/TuneMachine.jsx
 msgid "The machine didn't flush: {0}"

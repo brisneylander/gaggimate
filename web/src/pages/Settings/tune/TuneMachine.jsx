@@ -95,8 +95,8 @@ export function TuneMachine({ formData, setField }) {
   const steadyFor = steadySince ? now - steadySince : 0;
   const isSteady = steadyFor >= STEADY_S;
 
-  const startRecording = (seconds, onDone) => {
-    record.current = { samples: [], until: Date.now() / 1000 + seconds, onDone };
+  const startRecording = (seconds, onDone, kind = '') => {
+    record.current = { samples: [], until: Date.now() / 1000 + seconds, onDone, kind };
   };
 
   // Step 2: a 5 s flush the machine runs itself (the dead-time rule was checked on those), then weigh it.
@@ -152,25 +152,45 @@ export function TuneMachine({ formData, setField }) {
     }
     // From the flush's own start (the reading it flushed at), not the earlier peak.
     st.peak = live.ct > 0 ? Math.max(st.peak, live.ct) : st.peak;
-    startRecording(TARGET_RECORD_S, samples => {
-      steamRef.current = null;
-      const low = lowestAfterFlush(samples);
-      setTargetResult(
-        low
-          ? {
-              ...flushTargetFactor({
+    // Accepted should mean water within seconds; if none flows, stop rather than watch a landing that isn't there.
+    const acceptedAt = Date.now();
+    const flowCheck = setInterval(() => {
+      const rec = record.current;
+      if (!rec || rec.kind !== 'target') return clearInterval(flowCheck);
+      if (rec.samples.some(x => x.fl > 0.5)) return clearInterval(flowCheck);
+      if (Date.now() - acceptedAt > 10000) {
+        clearInterval(flowCheck);
+        record.current = null;
+        steamRef.current = null;
+        setTargetResult({
+          error: t`The machine accepted the flush to target but no water flowed.`,
+        });
+        setPhase('done');
+      }
+    }, 1000);
+    startRecording(
+      TARGET_RECORD_S,
+      samples => {
+        steamRef.current = null;
+        const low = lowestAfterFlush(samples);
+        setTargetResult(
+          low
+            ? {
+                ...flushTargetFactor({
+                  startC: st.peak,
+                  targetC: st.brewTarget,
+                  lowC: low.lowC,
+                  factor: Number(formRef.current.flushTargetFactor) || 1,
+                }),
                 startC: st.peak,
-                targetC: st.brewTarget,
                 lowC: low.lowC,
-                factor: Number(formRef.current.flushTargetFactor) || 1,
-              }),
-              startC: st.peak,
-              lowC: low.lowC,
-            }
-          : { error: t`no flush seen` },
-      );
-      setPhase('done');
-    });
+              }
+            : { error: t`no flush seen` },
+        );
+        setPhase('done');
+      },
+      'target',
+    );
   };
   startTargetFlushRef.current = startTargetFlush;
 
@@ -257,10 +277,12 @@ export function TuneMachine({ formData, setField }) {
               {formData.sensorDeadTimeS} s.
             </Trans>
           ) : (
-            <Trans>
-              Run Autotune above with the machine cold and the heater wattage from its rating plate:
-              it saves the heat-up rate, dead time and heater power.
-            </Trans>
+            <div role='alert' className='alert alert-warning mt-2 block text-sm'>
+              <Trans>
+                Run Autotune above with the machine cold and the heater wattage from its rating
+                plate: it saves the heat-up rate, dead time and heater power.
+              </Trans>
+            </div>
           )}
         </li>
 
@@ -268,7 +290,7 @@ export function TuneMachine({ formData, setField }) {
           <strong>
             <Trans>A 5 s flush, logged and weighed</Trans>
           </strong>
-          <div className='mt-1 opacity-70'>
+          <div role='alert' className='alert alert-warning mt-2 block text-sm'>
             <Trans>
               Measures how soon flush water reaches the sensor, the water the valve dumps into the
               drip tray, and checks the pump calibration. Portafilter out, an empty cup under the
@@ -398,7 +420,7 @@ export function TuneMachine({ formData, setField }) {
           <strong>
             <Trans>Flush to target after steam</Trans>
           </strong>
-          <div className='mt-1 opacity-70'>
+          <div role='alert' className='alert alert-warning mt-2 block text-sm'>
             <Trans>
               Heats {STEAM_OVERSHOOT_C} °C over the brew target in Steam, returns to Brew, flushes
               to target at the peak and watches where the boiler lands for {TARGET_RECORD_S / 60}{' '}

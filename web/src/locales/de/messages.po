@@ -5372,6 +5372,10 @@ msgstr "Die Mühle erreicht GaggiMate unter dieser Adresse, daher müssen beide 
 msgid "The heater stops (until a restart) after this long near full power with no water flowing and the temperature not rising: a sensor off the boiler. Raise it for a slow sensor. 0 uses 60 s."
 msgstr ""
 
+#: src/pages/Settings/tune/TuneMachine.jsx
+msgid "The machine accepted the flush to target but no water flowed."
+msgstr ""
+
 #. placeholder {0}: reply?.reason || t`no reply`
 #: src/pages/Settings/tune/TuneMachine.jsx
 msgid "The machine didn't flush: {0}"

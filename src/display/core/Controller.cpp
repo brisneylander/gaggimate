@@ -824,7 +824,18 @@ String Controller::getSystemStateMessage() const {
         return systemInfo.protocolVersion > gm_proto::PROTOCOL_VERSION ? "Version mismatch, update display"
                                                                        : "Version mismatch, update controller";
     case SYSTEM_ERROR:
-        return error == ERROR_CODE_RUNAWAY ? "Temperature error, restart..." : "Unknown error";
+        switch (error) {
+        case ERROR_CODE_RUNAWAY:
+            return "Temperature error, restart...";
+        case ERROR_CODE_HEATER_NO_RISE:
+            return "Heater on but not heating: check the temperature sensor, then restart";
+        case ERROR_CODE_SENSOR_JUMPS:
+            return "Temperature reading unstable: check the thermocouple, then restart";
+        case ERROR_CODE_FULL_POWER_TOO_LONG:
+            return "Heater at full power too long, restart...";
+        default:
+            return "Unknown error";
+        }
     case SYSTEM_WAITING_CONTROLLER:
         return "Waiting for controller...";
     case SYSTEM_STARTING:

@@ -482,8 +482,27 @@ void GaggiMateController::thermalRunawayShutdown() {
     } else {
         this->alt->set(false);
     }
-    errorState = ERROR_CODE_RUNAWAY;
-    _comms.sendError(ERROR_CODE_RUNAWAY);
+    // The heater safety layer's own stops get their own codes, so the display can say why.
+    int code = ERROR_CODE_RUNAWAY;
+    for (Heater *h : {heater, heater2}) {
+        if (h == nullptr)
+            continue;
+        switch (h->getSafetyReason()) {
+        case HeaterSafety::Reason::NoRise:
+            code = ERROR_CODE_HEATER_NO_RISE;
+            break;
+        case HeaterSafety::Reason::Jumps:
+            code = ERROR_CODE_SENSOR_JUMPS;
+            break;
+        case HeaterSafety::Reason::FullPowerTooLong:
+            code = ERROR_CODE_FULL_POWER_TOO_LONG;
+            break;
+        case HeaterSafety::Reason::None:
+            break;
+        }
+    }
+    errorState = code;
+    _comms.sendError(code);
 }
 
 void GaggiMateController::sendSensorData() {

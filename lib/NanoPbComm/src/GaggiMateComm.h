@@ -72,5 +72,9 @@ constexpr int ERROR_CODE_RUNAWAY = 4;
 constexpr int ERROR_CODE_TIMEOUT = 5;
 // Autotune saw no reaction within its test window (distinct from TIMEOUT): no PID persist, no watchdog-disconnect UX.
 constexpr int ERROR_CODE_AUTOTUNE_TIMEOUT = 6;
+// Heater safety layer (lib/GaggiMateController/src/peripherals/HeaterSafety.h): latched until a restart, like RUNAWAY.
+constexpr int ERROR_CODE_HEATER_NO_RISE = 7;
+constexpr int ERROR_CODE_SENSOR_JUMPS = 8;
+constexpr int ERROR_CODE_FULL_POWER_TOO_LONG = 9;
 
 #endif // GAGGIMATE_COMM_H

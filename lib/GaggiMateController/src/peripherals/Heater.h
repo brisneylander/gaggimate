@@ -2,6 +2,7 @@
 #define HEATER_H
 #include "Autotune/Autotune.h"
 #include "HeatBalancePredictor.h"
+#include "HeaterSafety.h"
 #include "Max31855Thermocouple.h"
 #include "TemperatureSensor.h"
 #include <SimplePID/SimplePID.h>
@@ -59,6 +60,8 @@ class Heater {
     float getControlTemperature() const { return controlTemperature; }
     // Predictor's learned standing loss (W), 0 while the predictor is off.
     float getLearnedLossWatts();
+    // Why the safety layer stopped the heater (HeaterSafety.h), None while it hasn't.
+    HeaterSafety::Reason getSafetyReason() const { return safety.reason(); }
 
   private:
     void setupPid();
@@ -110,6 +113,9 @@ class Heater {
     // Lag compensation state (written from the comms task, read on the heater task)
     std::mutex lagMutex;
     HeatBalancePredictor predictor;
+    HeaterSafety safety;
+    bool safetyReported = false;
+    void checkSafety(bool flowing);
     bool integralZoneActive = false;
     uint32_t integralHoldTailMs = 0;
     uint32_t lastFlowMs = 0;

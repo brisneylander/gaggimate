@@ -262,6 +262,9 @@ enum ErrorCode {
     ERROR_CODE_RUNAWAY = 4;
     ERROR_CODE_TIMEOUT = 5;
     ERROR_CODE_AUTOTUNE_TIMEOUT = 6;
+    ERROR_CODE_HEATER_NO_RISE = 7;        // heater safety layer: near full power, temperature not rising
+    ERROR_CODE_SENSOR_JUMPS = 8;          // heater safety layer: temperature reading jumping
+    ERROR_CODE_FULL_POWER_TOO_LONG = 9;   // heater safety layer: continuous full power too long
 }
 
 message Error {

@@ -193,6 +193,7 @@ void Heater::loopPid() {
     bool pidUpdated = simplePid->update();
 
     if (pidUpdated) {
+        checkSafety(pumpFlowRate != nullptr && *pumpFlowRate > 0.01f);
         plot(output, 1.0f, 1);
     }
 }
@@ -223,6 +224,7 @@ void Heater::loopAutotune() {
         if (autotuner->maxPowerOn) {
             output = TUNER_OUTPUT_SPAN;
         }
+        checkSafety(false);
         ESP_LOGI(LOG_TAG, "Autotuner Cycle: Temperature=%.2f", temperature);
         autotuner->update(temperature, millis() / 1000.0f);
         while (autotuning && micros() - microseconds < loopInterval) {
@@ -305,7 +307,21 @@ void Heater::requestOutput(bool on) {
         writeOutput(on);
 }
 
-void Heater::writeOutput(bool on) { digitalWrite(heaterPin, on ? HIGH : LOW); }
+// The only place the heater pin is driven: the safety layer has the last word.
+void Heater::writeOutput(bool on) { digitalWrite(heaterPin, on && safety.permits() ? HIGH : LOW); }
+
+void Heater::checkSafety(bool flowing) {
+    if (safety.observe(millis(), temperature, output / TUNER_OUTPUT_SPAN, flowing, setpoint))
+        return;
+    output = 0.0f;
+    writeOutput(false);
+    if (!safetyReported) {
+        safetyReported = true;
+        ESP_LOGE(LOG_TAG, "Heater safety stop: %s", HeaterSafety::describe(safety.reason()));
+        if (error_callback)
+            error_callback();
+    }
+}
 
 void Heater::plot(float optimumOutput, float outputScale, uint8_t everyNth) {
     if (plotCount >= everyNth) {

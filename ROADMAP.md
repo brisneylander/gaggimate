@@ -19,10 +19,17 @@ on 2026-10-28 left open. See [FORK.md](FORK.md) for building and releasing.
 3. **Calibrate from normal use, with the user in control.** Identify heat-up rate, dead time and losses from
    ordinary warm-ups; keep them per machine within sane limits (`lib/NanoPbComm/src/LagCompensationLimits.h`) and show
    them for approval. Machine presets (heater power, boiler size); raw PID numbers in an advanced section.
-4. **Finer heater control.** Switch the SSR on mains half-cycles (10 ms at 50 Hz, ~100 levels per second) instead of
+4. **Finer heater control.** *Not pursued (2026-10-29):* at a Silvia's ~4 % holding duty a 1 s window puts ~44 J into
+   ~1833 J/°C, ~0.02 °C of ripple the ~20 s sensor can't see, and the PID updates once a second anyway. Switch the SSR on mains half-cycles (10 ms at 50 Hz, ~100 levels per second) instead of
    the 1 s window, so output is smoother and sensor noise doesn't become heater chatter.
-5. **Safety separate from control.** Keep the hardware thermal fuse. Firmware hard limits (raw sensor above X → off,
-   lost link → off) in a tiny, separately tested layer the control code can't override.
+5. **Safety separate from control.** *Done in simon020:* `HeaterSafety` sits at the one place the heater pin is driven
+   (`Heater::writeOutput`), so no control path can bypass it, and latches off until a restart with its own error
+   code and display message. It stops the heater for: near full power with no water flowing and the reading not up
+   2 °C in 60 s (180 s at steam setpoints, for steaming milk) - the loose-thermocouple case the sensor's own checks
+   can't see; three >5 °C/s jumps within 30 s; continuous full power over 10 min. Replayed over all 52 bench logs of
+   2026-10-28/29 it never trips; the longest "full power, no rise" stretch was under 30 s. Steaming milk isn't in the
+   logs yet: watch for a false stop the first time. Kept as they were: the hardware fuse, the sensor's over-170 °C and
+   read-failure checks, the link watchdog. Later: move those into the same module.
 6. **Simulation and logging from day one.** Keep the plant model in the repo (`test/test_heat_balance_predictor`
    flush replay) and check every change against it. Log temperature, duty and flow at a few Hz into shot history so
    tuning can use real data.

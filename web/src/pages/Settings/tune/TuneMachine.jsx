@@ -62,6 +62,7 @@ export function TuneMachine({ formData, setField }) {
         fl: sample.fl,
         active: !!s.process?.a,
         scale: !!s.bluetoothConnected,
+        profile: s.selectedProfile || '',
       });
       const steady =
         s.mode === 1 && Math.abs(sample.ct - Number(s.targetTemperature)) <= STEADY_BAND_C;
@@ -299,6 +300,19 @@ export function TuneMachine({ formData, setField }) {
               </Trans>
             </p>
             <ol className='mt-2 list-decimal space-y-1 pl-5'>
+              <li>
+                <Trans>
+                  Select the brew profile you normally use and switch to Brew: the test runs at its
+                  temperature.
+                </Trans>{' '}
+                {live.mode === 1 ? (
+                  <Trans>
+                    Now: <strong>{live.profile}</strong>, {live.tt} °C.
+                  </Trans>
+                ) : (
+                  <Trans>The machine isn't in Brew mode yet.</Trans>
+                )}
+              </li>
               <li>
                 <Trans>Take the portafilter out and empty the drip tray.</Trans>
               </li>

@@ -3225,6 +3225,12 @@ msgstr "通知已被阻止。请在手机设置中允许 GaggiMate 发送通知�
 msgid "Now Brewing"
 msgstr "正在冲煮"
 
+#. placeholder {0}: live.profile
+#. placeholder {1}: live.tt
+#: src/pages/Settings/tune/TuneMachine.jsx
+msgid "Now: <0>{0}</0>, {1} °C."
+msgstr ""
+
 #: src/pages/ProfileEdit/ExtendedPhase.jsx
 #: src/pages/ProfileEdit/StandardProfileForm.jsx
 msgctxt "pump mode"
@@ -4506,6 +4512,10 @@ msgstr "选择简单曲线类型"
 msgid "Select statistics mode"
 msgstr "选择统计模式"
 
+#: src/pages/Settings/tune/TuneMachine.jsx
+msgid "Select the brew profile you normally use and switch to Brew: the test runs at its temperature."
+msgstr ""
+
 #: src/pages/ProfileEdit/ExtendedPhase.jsx
 #: src/pages/ProfileEdit/StandardProfileForm.jsx
 msgid "Select the type of brew phase"
@@ -5486,6 +5496,10 @@ msgstr ""
 #: src/app/appSettings.js
 msgid "The machine has been in steam mode for 5 minutes."
 msgstr "咖啡机已处于蒸汽模式 5 分钟。"
+
+#: src/pages/Settings/tune/TuneMachine.jsx
+msgid "The machine isn't in Brew mode yet."
+msgstr ""
 
 #: src/pages/Settings/PluginCard.jsx
 msgid "The profile's dose is saved to the shot history."

@@ -51,9 +51,10 @@ switching reheat on → off should be re-checked with a single flush.)
 | **4** | **simon010 (counts 85 % of the shown surplus)** | **106.56 °C** | **68 ml, 7.8 s** | **92.24 °C** | **146 s** |
 | **5** | **simon010** | **106.73 °C** | **68 ml** | **91.85 °C** | **149 s** |
 | **6** | **simon010** | **108.13 °C** | **74 ml** | **92.18 °C** | **157 s** |
+| **7** | **simon014 (+ 5 g valve dump, factor 0.91), target 88 °C (Londonium)** | **106.64 °C** | **92 ml, 10.8 s** | **87.70 °C** | **169 s** |
 
 Run 4 was within 1 °C 56 s after the flush, bottomed out 2 min later, and held 93.0 °C from ~4 min. The remaining
-−0.8 °C dip is the heater's dead time after the 30 s hold, not the volume. The 0.85 factor held over three runs (lowest 91.85–92.24 °C, within 0.5 °C after 146–157 s).
+−0.8 °C dip is the heater's dead time after the 30 s hold, not the volume. The 0.85 factor held over three runs (lowest 91.85–92.24 °C, within 0.5 °C after 146–157 s). Run 7, with the valve dump counted, came down from above with no undershoot (within 1 °C after 145 s, settled 87.7-88.0 °C) on a bigger 19 °C drop to a different target.
 
 **Boost after flush (simon011) is worse; leave it off.** Alternating pairs, 5 s flush from 93 °C, boost 5 °C,
 2026-10-29: plain flushes were within 0.5 °C after 74 and 84 s; boosted ones reached 97.75 °C ~3 min after the flush,

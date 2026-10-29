@@ -767,6 +767,10 @@ msgstr "By Profile"
 msgid "By Shots"
 msgstr "By Shots"
 
+#: src/pages/Settings/tune/TuneMachine.jsx
+msgid "Calculate flush to brew target temperature"
+msgstr "Calculate flush to brew target temperature"
+
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "Calibrate Load Cell 1"
 msgstr "Calibrate Load Cell 1"
@@ -2015,8 +2019,8 @@ msgid "Flush to brew target when hot"
 msgstr "Flush to brew target when hot"
 
 #: src/pages/Settings/tune/TuneMachine.jsx
-msgid "Flush to target after steam"
-msgstr "Flush to target after steam"
+#~ msgid "Flush to target after steam"
+#~ msgstr "Flush to target after steam"
 
 #: src/pages/Settings/tabs/LagCompensationSection.jsx
 msgid "Flush to target factor"

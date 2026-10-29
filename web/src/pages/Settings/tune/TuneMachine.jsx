@@ -466,7 +466,7 @@ export function TuneMachine({ formData, setField }) {
 
         <li>
           <strong>
-            <Trans>Flush to target after steam</Trans>
+            <Trans>Calculate flush to brew target temperature</Trans>
           </strong>
           <div className='mt-2 text-sm'>
             <p>

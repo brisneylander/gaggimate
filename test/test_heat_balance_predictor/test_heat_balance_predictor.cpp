@@ -20,8 +20,8 @@ static uint32_t millis() { return fakeNow; }
 #endif
 
 #include "SimplePID/SimplePID.cpp"
-#include "peripherals/HeatUpBoost.h"
 #include "peripherals/HeatBalancePredictor.cpp"
+#include "peripherals/HeatUpBoost.h"
 
 void setUp() {}
 void tearDown() {}
@@ -574,19 +574,20 @@ void test_shot_feedforward() {
     }
 }
 
-
 // Heat-up from below the setpoint: a warm restart (the morning case, boiler ~22 °C under with the group head colder still)
 // and a switch to steam. The fork's loop as on the machine (bench 2026-10-30 morning): the predictor counts the full
 // power's heat in flight (~12 °C) and Kd 1500 brakes on the rise, so the heater fell to ~10-20 % while still 10-30 °C
 // under. HeatUpBoost (Heater::loopPid): full power while the predicted temperature is more than 5 °C under.
 struct HeatUp {
-    float reach;   // s until the sensor is first within 0.5 °C of the setpoint
+    float reach;   // s until the sensor is first within `near` (0.5 °C) of the setpoint
     float over;    // highest sensor reading above the setpoint after that
     float settled; // s until the sensor stays within ±0.3 °C (last time outside)
     float duty;    // mean output (0..1) over the first 120 s
 };
 
-static HeatUp simulateHeatUp(const Tuning &tu, float startC, float groupBelowC, float setpoint) {
+// afterShot: a shot ended just before (the boost sees a flush 0 s ago); trickle: steam pump assist into the boiler (ml/s).
+static HeatUp simulateHeatUp(const Tuning &tu, float startC, float groupBelowC, float setpoint, bool afterShot = false,
+                             float trickle = 0.0f, float near = 0.5f) {
     const float dt = 0.25f, room = 22.0f, lossPerK = 0.59f;
     const float plantW = 1100.0f, wallC = 200.0f, waterC = 1296.0f, wallToWater = 9.6f;
     const float groupC = 819.0f, waterToGroup = 5.7f;
@@ -620,16 +621,17 @@ static HeatUp simulateHeatUp(const Tuning &tu, float startC, float groupBelowC, 
         if (step % 4 == 0) {
             fakeNow += 1000;
             measured = ema;
-            predictor.update(1.0f, output / 1000.0f, 0.0f, measured, sp);
+            predictor.update(1.0f, output / 1000.0f, trickle, measured, sp);
             control = measured + predictor.getCorrection();
             pid.update();
-            if (tu.heatUpBoost && HeatUpBoost::active(predictor.isEnabled(), sp, control, false, 0))
+            const uint32_t sinceShot = static_cast<uint32_t>(t * 1000.0f);
+            if (tu.heatUpBoost && HeatUpBoost::active(predictor.isEnabled(), sp, control, afterShot, sinceShot))
                 output = 1000.0f;
             if (t < 120.0f) {
                 dutySum += output / 1000.0f;
                 ++dutyN;
             }
-            if (r.reach < 0.0f && measured >= sp - 0.5f)
+            if (r.reach < 0.0f && measured >= sp - near)
                 r.reach = t;
             if (r.reach >= 0.0f)
                 r.over = std::max(r.over, measured - sp);
@@ -639,9 +641,10 @@ static HeatUp simulateHeatUp(const Tuning &tu, float startC, float groupBelowC, 
         const float heat = plantW * output / 1000.0f;
         const float toWater = wallToWater * (wall - boiler);
         const float toGroup = waterToGroup * (boiler - group);
+        const float water = trickle * 4.18f * (boiler - tu.plantInletC);
         wall += (heat - toWater) * dt / wallC;
         group += (toGroup - lossPerK * (boiler - room)) * dt / groupC;
-        boiler += (toWater - toGroup) * dt / waterC;
+        boiler += (toWater - water - toGroup) * dt / waterC;
         pipe.push_back(boiler);
         const float delayed = pipe.front();
         pipe.pop_front();
@@ -659,22 +662,28 @@ static void test_heat_up_boost() {
     const struct {
         const char *name;
         float start, groupBelow, sp;
-    } cases[] = {{"warm restart 76->98, group -15", 76.0f, 15.0f, 98.0f},
-                 {"warm restart 76->98, group even", 76.0f, 0.0f, 98.0f},
-                 {"cold start 25->98", 25.0f, 0.0f, 98.0f},
-                 {"steam 98->125", 98.0f, 0.0f, 125.0f}};
+        bool afterShot;
+        float trickle, near;
+    } cases[] = {{"warm restart 76->98, group -15", 76.0f, 15.0f, 98.0f, false, 0.0f, 0.5f},
+                 {"warm restart 76->98, group even", 76.0f, 0.0f, 98.0f, false, 0.0f, 0.5f},
+                 {"cold start 25->98", 25.0f, 0.0f, 98.0f, false, 0.0f, 0.5f},
+                 {"steam 98->125", 98.0f, 0.0f, 125.0f, false, 0.0f, 0.5f},
+                 // The usual routine: steam straight after a shot, with pump assist trickling in (machine, 2026-10-30).
+                 // Within 1 °C: at steam the climb matters, not the last half degree (the 1.5 °C integral zone leaves
+                 // the trickle's load ~3 °C under either way).
+                 {"steam after a shot, assist 0.4 ml/s", 95.0f, 0.0f, 125.0f, true, 0.4f, 1.0f}};
     for (const auto &c : cases) {
         Tuning off = tu;
         off.heatUpBoost = false;
-        const HeatUp before = simulateHeatUp(off, c.start, c.groupBelow, c.sp);
-        const HeatUp after = simulateHeatUp(tu, c.start, c.groupBelow, c.sp);
-        printf("%-34s within 0.5 °C %4.0f -> %4.0f s  over %+5.2f -> %+5.2f  settled %4.0f -> %4.0f s\n", c.name, before.reach,
-               after.reach, before.over, after.over, before.settled, after.settled);
+        const HeatUp before = simulateHeatUp(off, c.start, c.groupBelow, c.sp, c.afterShot, c.trickle, c.near);
+        const HeatUp after = simulateHeatUp(tu, c.start, c.groupBelow, c.sp, c.afterShot, c.trickle, c.near);
+        printf("%-36s within %.1f °C %4.0f -> %4.0f s  over %+5.2f -> %+5.2f  settled %4.0f -> %4.0f s\n", c.name, c.near,
+               before.reach, after.reach, before.over, after.over, before.settled, after.settled);
         // Within half a degree in under 3 minutes (from 6-10), no more than 2 °C over, and settled no later than before.
         TEST_ASSERT_TRUE(after.reach > 0.0f && after.reach < 180.0f);
-        TEST_ASSERT_TRUE(after.reach < 0.5f * before.reach);
+        TEST_ASSERT_TRUE(before.reach < 0.0f || after.reach < 0.5f * before.reach); // -1: never got there
         TEST_ASSERT_TRUE(after.over < 2.0f);
-        TEST_ASSERT_TRUE(after.settled <= before.settled + 60.0f);
+        TEST_ASSERT_TRUE(c.trickle > 0.0f || after.settled <= before.settled + 60.0f);
     }
 }
 

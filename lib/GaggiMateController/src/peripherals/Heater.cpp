@@ -137,6 +137,10 @@ void Heater::updateLagCompensation() {
         lastFlowMs = now;
         flowSeen = true;
     }
+    if (flow > HeatUpBoost::FLUSH_FLOW) {
+        lastFlushMs = now;
+        flushSeen = true;
+    }
     if (integralZoneActive) {
         // Pause the integral while fresh water flows and until its effect has reached the sensor: the error in
         // that window is the (stale) flush, not a steady-state offset the integral should learn.
@@ -198,7 +202,7 @@ void Heater::loopPid() {
     if (pidUpdated) {
         // Far below the setpoint with no water about: full power (HeatUpBoost.h).
         std::lock_guard<std::mutex> lock(lagMutex);
-        if (HeatUpBoost::active(predictor.isEnabled(), setpoint, controlTemperature, flowSeen, millis() - lastFlowMs))
+        if (HeatUpBoost::active(predictor.isEnabled(), setpoint, controlTemperature, flushSeen, millis() - lastFlushMs))
             output = TUNER_OUTPUT_SPAN;
     }
 

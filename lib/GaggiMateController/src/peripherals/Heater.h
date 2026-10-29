@@ -123,6 +123,8 @@ class Heater {
     uint32_t integralHoldTailMs = 0;
     uint32_t lastFlowMs = 0;
     bool flowSeen = false;
+    uint32_t lastFlushMs = 0; // flow above HeatUpBoost::FLUSH_FLOW (a flush or shot, not steam pump assist)
+    bool flushSeen = false;
     uint32_t lastPredictorMs = 0;
     bool predictorPrimed = false;
 

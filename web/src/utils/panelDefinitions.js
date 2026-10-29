@@ -121,7 +121,6 @@ export const PANEL_DEFINITIONS = [
       clear: ds.clear,
       startFlush: ds.startFlush,
       stopFlush: ds.stopFlush,
-      flushToTarget: ds.flushToTarget,
       warnings: ds.warnings,
       systemMessage: ds.systemMessage,
       currentTemperature: ds.currentTemperature,

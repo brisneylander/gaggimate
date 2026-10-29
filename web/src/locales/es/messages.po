@@ -1887,30 +1887,21 @@ msgctxt "settings section"
 msgid "Flush"
 msgstr "Enjuague"
 
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "Flush button flushes to target when hot"
+msgstr ""
+
 #: src/pages/Settings/tabs/GeneralTab.jsx
 msgid "Flush Duration"
 msgstr "Duración del enjuague"
-
-#: src/pages/Home/cards/ActionCard.jsx
-msgid "Flush just enough tank water to bring the boiler back to target. Remove the portafilter first."
-msgstr ""
 
 #: src/utils/warnings.js
 msgid "Flush recommended"
 msgstr "Enjuague recomendado"
 
-#. placeholder {0}: Math.round(targetTemperature)
-#: src/pages/Home/cards/ActionCard.jsx
-msgid "Flush to {0}°"
-msgstr ""
-
 #: src/pages/Home/FlushButton.jsx
 msgid "Flush water"
 msgstr "Enjuagar con agua"
-
-#: src/pages/Home/cards/ActionCard.jsx
-msgid "Flushing {ml} ml ({seconds} s) to reach target"
-msgstr ""
 
 #: src/pages/Settings/tabs/LagCompensationSection.jsx
 msgid "For boilers where the temperature sensor reacts long after the heater. Heater power, heat-up rate and dead time together enable a heat-balance predictor, so the PID backs off before the overshoot shows. Leave a field at 0 to disable it."
@@ -1946,6 +1937,10 @@ msgstr "Viernes"
 msgctxt "date range start"
 msgid "From"
 msgstr "Desde"
+
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "From 2 °C over the selected profile's temperature (after steaming, say), the flush button runs just enough water to bring the boiler back to it. Closer than that it runs the normal flush. Needs heater power and heat-up rate."
+msgstr ""
 
 #: src/pages/DashboardSettings/index.jsx
 msgctxt "panel view"
@@ -2827,10 +2822,6 @@ msgstr "Sin fechas"
 msgid "No favorites — mark profiles as ★ in the profile list"
 msgstr "Sin favoritos: marca perfiles con ★ en la lista de perfiles"
 
-#: src/pages/Home/cards/ActionCard.jsx
-msgid "No flush: {reason}"
-msgstr ""
-
 #: src/pages/ProfileEdit/ProfileImageUpload.jsx
 msgid "No image"
 msgstr "Sin imagen"
@@ -2930,10 +2921,6 @@ msgstr "Ninguno"
 msgctxt "relay function"
 msgid "None"
 msgstr "Ninguna"
-
-#: src/pages/Home/cards/ActionCard.jsx
-msgid "not available"
-msgstr ""
 
 #: src/components/PumpFlowCalibration/Footer.jsx
 msgid "Not connected to the machine"

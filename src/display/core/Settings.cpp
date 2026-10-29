@@ -171,6 +171,7 @@ void Settings::setWaterDeadTimeS(float seconds) {
 }
 
 void Settings::setReheatFullPower(bool enabled) { reheatFullPower.set(enabled); }
+void Settings::setFlushButtonToTarget(bool enabled) { flushButtonToTarget.set(enabled); }
 void Settings::setFlushBoostC(float degrees) { flushBoostC.set(lag_limits::clampOrOff(degrees, lag_limits::FLUSH_BOOST_C)); }
 
 void Settings::setPumpModelCoeffs(const String &pumpModelCoeffs) { this->pumpModelCoeffs.set(pumpModelCoeffs); }

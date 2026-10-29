@@ -106,6 +106,29 @@ export function LagCompensationSection({ formData, onChange }) {
           PID. Needs heater power, heat-up rate and dead time.
         </Trans>
       </p>
+      <label
+        htmlFor='flushButtonToTarget'
+        className='label mt-4 cursor-pointer justify-start gap-3'
+      >
+        <input
+          id='flushButtonToTarget'
+          name='flushButtonToTarget'
+          type='checkbox'
+          className='toggle toggle-primary'
+          checked={!!formData.flushButtonToTarget}
+          onChange={onChange('flushButtonToTarget')}
+        />
+        <span>
+          <Trans>Flush button flushes to target when hot</Trans>
+        </span>
+      </label>
+      <p className='text-sm opacity-70'>
+        <Trans>
+          From 2 °C over the selected profile's temperature (after steaming, say), the flush button
+          runs just enough water to bring the boiler back to it. Closer than that it runs the normal
+          flush. Needs heater power and heat-up rate.
+        </Trans>
+      </p>
       {learnedLoss > 0 && (
         <p className='mt-4 text-sm opacity-70'>
           <Trans>

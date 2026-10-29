@@ -1587,6 +1587,11 @@ bool Controller::isHardwareScaleHealthy() const {
 }
 
 void Controller::onFlush() {
+    // Well over the target (after steaming, say) the flush button takes the surplus off instead of a fixed flush.
+    if (settings.isFlushButtonToTarget() && mode == MODE_BREW &&
+        getCurrentTemp() >= profileManager->getSelectedProfile().temperature + flush_to_target::BUTTON_SURPLUS_C &&
+        flushToTarget().reason == nullptr)
+        return;
     const bool boost = settings.getFlushBoostC() > 0.0f && mode == MODE_BREW;
     if (startFlush(static_cast<float>(settings.getFlushDuration())))
         boostAfterFlush = boost;

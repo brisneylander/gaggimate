@@ -13,7 +13,10 @@ namespace flush_to_target {
 constexpr float WATER_SPECIFIC_HEAT = 4.18f; // J/(g·°C), 1 ml = 1 g
 constexpr float MIN_SURPLUS_C = 0.5f;        // smaller surpluses aren't worth a flush (and are within sensor noise)
 constexpr float MIN_SECONDS = 0.5f;          // shorter pulses mostly fill the group, not the boiler
-constexpr float MAX_SECONDS = 30.0f;         // one press never empties more than this; press again if still hot
+// The flush button flushes to target from this far over it (settings flushButtonToTarget); closer, it runs the normal
+// flush. Well clear of the PID's own overshoot after a flush (+0.5-0.75 °C on a Silvia), so a cleaning flush stays one.
+constexpr float BUTTON_SURPLUS_C = 2.0f;
+constexpr float MAX_SECONDS = 30.0f; // one press never empties more than this; press again if still hot
 constexpr float DEFAULT_INLET_TEMP_C = 23.0f;
 constexpr float DEFAULT_LOSS_FRACTION = 0.05f; // standing-loss guess while none has been learned (as the predictor)
 // Share of the shown surplus that is really in the boiler. Straight after steaming the water at the thermocouple is

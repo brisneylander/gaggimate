@@ -1,6 +1,6 @@
 import PropTypes from 'prop-types';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { Trans, useLingui } from '@lingui/react/macro';
+import { useLingui } from '@lingui/react/macro';
 import { getPrimaryIcon, getPrimaryLabel } from '../utils.js';
 import { WarningIcon } from '../../../components/WarningIcon.jsx';
 import { activeWarnings, WARNING_LEVEL } from '../../../utils/warnings.js';
@@ -22,7 +22,6 @@ export function ActionCard({
   clear,
   startFlush,
   stopFlush,
-  flushToTarget,
   inCard = false,
   currentTemperature,
   targetTemperature,
@@ -43,20 +42,6 @@ export function ActionCard({
   const showSteam = mode === 2;
 
   const showFlush = isBrewing && (isFlushing || (!isActive && !isFinished)); // stays mounted while held
-  // Offered once the boiler is clearly above target (after steaming, or an overshoot); the firmware sizes the flush.
-  const showFlushToTarget =
-    showFlush && !isFlushing && flushToTarget && currentTemperature - targetTemperature >= 0.5;
-  const [flushNote, setFlushNote] = useState('');
-  const onFlushToTarget = async () => {
-    const res = await flushToTarget();
-    const ml = res?.ml;
-    const seconds = res?.seconds;
-    const reason = res?.reason || t`not available`;
-    setFlushNote(
-      res?.success ? t`Flushing ${ml} ml (${seconds} s) to reach target` : t`No flush: ${reason}`,
-    );
-    setTimeout(() => setFlushNote(''), 8000);
-  };
   const grindValue =
     grindTarget === 1 && volumetricAvailable
       ? `${grindTargetVolume}g`
@@ -130,17 +115,6 @@ export function ActionCard({
       )}
       {!showStandby && (
         <div className='flex items-center justify-end gap-1'>
-          {flushNote && <span className='text-base-content/70 mr-auto text-xs'>{flushNote}</span>}
-          {showFlushToTarget && (
-            <button
-              type='button'
-              className='btn btn-ghost btn-sm text-base-content/60 hover:text-base-content rounded-full text-sm'
-              onClick={onFlushToTarget}
-              title={t`Flush just enough tank water to bring the boiler back to target. Remove the portafilter first.`}
-            >
-              <Trans>Flush to {Math.round(targetTemperature)}°</Trans>
-            </button>
-          )}
           {showFlush && (
             <FlushButton
               className='btn btn-ghost btn-sm text-base-content/60 hover:text-base-content rounded-full text-sm'
@@ -168,7 +142,6 @@ ActionCard.propTypes = {
   clear: PropTypes.func.isRequired,
   startFlush: PropTypes.func.isRequired,
   stopFlush: PropTypes.func.isRequired,
-  flushToTarget: PropTypes.func,
   inCard: PropTypes.bool,
   warnings: PropTypes.array,
   systemMessage: PropTypes.string,

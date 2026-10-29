@@ -68,6 +68,7 @@ const CHECKBOX_KEYS = [
   'momentaryButtons',
   'heaterCoordinationEnabled',
   'reheatFullPower',
+  'flushButtonToTarget',
   'delayAdjust',
   'clock24hFormat',
   'autowakeupEnabled',

@@ -282,6 +282,10 @@ msgctxt "dashboard view"
 msgid "Advanced"
 msgstr "Advanced"
 
+#: src/pages/Settings/tune/TuneMachine.jsx
+msgid "After steaming, the boiler is far hotter than brewing needs. Flush to target works out how much fresh tank water would bring it back down to the brew temperature, from how far over it is, the boiler's size and the tank temperature, and flushes just that much. The flush button does this by itself whenever the boiler is 2 °C or more over target."
+msgstr "After steaming, the boiler is far hotter than brewing needs. Flush to target works out how much fresh tank water would bring it back down to the brew temperature, from how far over it is, the boiler's size and the tank temperature, and flushes just that much. The flush button does this by itself whenever the boiler is 2 °C or more over target."
+
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "Alba Settings"
 msgstr "Alba Settings"
@@ -2216,8 +2220,8 @@ msgstr "Heating in Steam to {0} °C, then back to Brew; it coasts on from there.
 
 #. placeholder {0}: TARGET_RECORD_S / 60
 #: src/pages/Settings/tune/TuneMachine.jsx
-msgid "Heats {STEAM_OVERSHOOT_C} °C over the brew target in Steam, returns to Brew, flushes to target at the peak and watches where the boiler lands for {0} minutes. Save the earlier steps first: the flush uses the saved settings."
-msgstr "Heats {STEAM_OVERSHOOT_C} °C over the brew target in Steam, returns to Brew, flushes to target at the peak and watches where the boiler lands for {0} minutes. Save the earlier steps first: the flush uses the saved settings."
+#~ msgid "Heats {STEAM_OVERSHOOT_C} °C over the brew target in Steam, returns to Brew, flushes to target at the peak and watches where the boiler lands for {0} minutes. Save the earlier steps first: the flush uses the saved settings."
+#~ msgstr "Heats {STEAM_OVERSHOOT_C} °C over the brew target in Steam, returns to Brew, flushes to target at the peak and watches where the boiler lands for {0} minutes. Save the earlier steps first: the flush uses the saved settings."
 
 #: src/components/SettingsFormField.jsx
 msgid "Hidden / Available"
@@ -3572,6 +3576,10 @@ msgstr "Presets..."
 msgid "Press <0><1/></0> to build a statistic."
 msgstr "Press <0><1/></0> to build a statistic."
 
+#: src/pages/Settings/tune/TuneMachine.jsx
+msgid "Press Start and leave the machine alone for about 6 minutes."
+msgstr "Press Start and leave the machine alone for about 6 minutes."
+
 #: src/components/ExtendedProfileChart.jsx
 #: src/pages/Home/cards/ProfileCard.jsx
 #: src/pages/Home/cards/RecentShotsCard.jsx
@@ -3921,6 +3929,10 @@ msgstr "Pumped Water Stop"
 #: src/pages/ShotAnalyzer/services/analyzer/exitReasons.js
 msgid "Pumped-water target"
 msgstr "Pumped-water target"
+
+#: src/pages/Settings/tune/TuneMachine.jsx
+msgid "Put a jug under the group (about 70-90 ml comes out) and keep the steam wand closed."
+msgstr "Put a jug under the group (about 70-90 ml comes out) and keep the steam wand closed."
 
 #: src/pages/Settings/tune/TuneMachine.jsx
 msgid "Put an empty cup on your Bluetooth scale under the group: it weighs the flush for you."
@@ -4287,6 +4299,10 @@ msgstr "Save profile"
 #: src/pages/Settings/StickyFormFooter.jsx
 msgid "Save Settings"
 msgstr "Save Settings"
+
+#: src/pages/Settings/tune/TuneMachine.jsx
+msgid "Save the earlier steps first: the flush uses the saved settings."
+msgstr "Save the earlier steps first: the flush uses the saved settings."
 
 #: src/pages/ProfileEdit/ProfileImageUpload.jsx
 msgid "Save the profile first to add an image."
@@ -5520,6 +5536,11 @@ msgstr "This scale model couldn't be set up."
 #: src/pages/Settings/tune/TuneMachine.jsx
 msgid "This short flush shows how quickly fresh water reaches the temperature sensor, how much water the valve drops into the drip tray, and whether the pump reading is accurate."
 msgstr "This short flush shows how quickly fresh water reaches the temperature sensor, how much water the valve drops into the drip tray, and whether the pump reading is accurate."
+
+#. placeholder {0}: TARGET_RECORD_S / 60
+#: src/pages/Settings/tune/TuneMachine.jsx
+msgid "This step checks that sum on your machine. It heats {STEAM_OVERSHOOT_C} °C over the brew target in Steam, goes back to Brew, flushes to target at the peak, and watches where the boiler lands for {0} minutes. If it lands too low, the flush took out too much heat and the correction factor is lowered; too high, and it is raised."
+msgstr "This step checks that sum on your machine. It heats {STEAM_OVERSHOOT_C} °C over the brew target in Steam, goes back to Brew, flushes to target at the peak, and watches where the boiler lands for {0} minutes. If it lands too low, the flush took out too much heat and the correction factor is lowered; too high, and it is raised."
 
 #: src/pages/Settings/PluginCard.jsx
 #: src/pages/ShotAnalyzer/components/shotDetails/ShotMainInfoCard.jsx

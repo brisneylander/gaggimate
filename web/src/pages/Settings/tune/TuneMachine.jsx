@@ -455,11 +455,38 @@ export function TuneMachine({ formData, setField }) {
             <Trans>Flush to target after steam</Trans>
           </strong>
           <div role='alert' className='alert alert-warning mt-2 block text-sm'>
-            <Trans>
-              Heats {STEAM_OVERSHOOT_C} °C over the brew target in Steam, returns to Brew, flushes
-              to target at the peak and watches where the boiler lands for {TARGET_RECORD_S / 60}{' '}
-              minutes. Save the earlier steps first: the flush uses the saved settings.
-            </Trans>
+            <p>
+              <Trans>
+                After steaming, the boiler is far hotter than brewing needs. Flush to target works
+                out how much fresh tank water would bring it back down to the brew temperature, from
+                how far over it is, the boiler's size and the tank temperature, and flushes just
+                that much. The flush button does this by itself whenever the boiler is 2 °C or more
+                over target.
+              </Trans>
+            </p>
+            <p className='mt-2'>
+              <Trans>
+                This step checks that sum on your machine. It heats {STEAM_OVERSHOOT_C} °C over the
+                brew target in Steam, goes back to Brew, flushes to target at the peak, and watches
+                where the boiler lands for {TARGET_RECORD_S / 60} minutes. If it lands too low, the
+                flush took out too much heat and the correction factor is lowered; too high, and it
+                is raised.
+              </Trans>
+            </p>
+            <ol className='mt-2 list-decimal space-y-1 pl-5'>
+              <li>
+                <Trans>Save the earlier steps first: the flush uses the saved settings.</Trans>
+              </li>
+              <li>
+                <Trans>
+                  Put a jug under the group (about 70-90 ml comes out) and keep the steam wand
+                  closed.
+                </Trans>
+              </li>
+              <li>
+                <Trans>Press Start and leave the machine alone for about 6 minutes.</Trans>
+              </li>
+            </ol>
           </div>
           <button
             type='button'

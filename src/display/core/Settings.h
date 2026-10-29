@@ -119,6 +119,9 @@ class Settings {
     bool isFlushButtonToTarget() const { return flushButtonToTarget.get(); }
     String getPid() const { return pid.get(); }
     String getPumpModelCoeffs() const { return pumpModelCoeffs.get(); }
+    // Last machine profile applied in the web UI, and a fingerprint of its values (so the UI can tell if they changed).
+    String getMachineProfileName() const { return machineProfileName.get(); }
+    String getMachineProfileHash() const { return machineProfileHash.get(); }
     String getPumpSlipCoeffs() const { return pumpSlipCoeffs.get(); }
     String getWifiSsid() const { return wifiSsid.get(); }
     String getWifiPassword() const { return wifiPassword.get(); }
@@ -250,6 +253,7 @@ class Settings {
     void setWaterDeadTimeS(float seconds);
     void setFlushButtonToTarget(bool enabled);
     void setPumpModelCoeffs(const String &pumpModelCoeffs);
+    void setMachineProfile(const String &name, const String &hash);
     void setPumpSlipCoeffs(const String &pumpSlipCoeffs);
     void setWifiSsid(const String &wifiSsid);
     void setWifiPassword(const String &wifiPassword);
@@ -462,6 +466,8 @@ class Settings {
 
     // Pump settings
     Property<String> pumpModelCoeffs{registry, "pmc", DEFAULT_PUMP_MODEL_COEFFS};
+    Property<String> machineProfileName{registry, "mp_name", ""};
+    Property<String> machineProfileHash{registry, "mp_hash", ""};
     Property<String> pumpSlipCoeffs{registry, "psc", DEFAULT_PUMP_SLIP_COEFFS};
     Property<float> commutationGain{registry, "p_cm", DEFAULT_COMMUTATION_GAIN};
     Property<float> convergenceGain{registry, "p_cv", DEFAULT_CONVERGENCE_GAIN};

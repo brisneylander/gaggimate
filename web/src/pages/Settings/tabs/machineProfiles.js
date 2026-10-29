@@ -59,6 +59,36 @@ function sameValue(a, b) {
   return as.length === bs.length && as.every((x, i) => Math.abs(Number(x) - Number(bs[i])) < 1e-6);
 }
 
+// A short fingerprint of the profile fields' values (FNV-1a over a normalised list), saved with the profile's name so
+// the page can tell later whether the settings are still that profile.
+export function profileHash(formData) {
+  const norm = v =>
+    String(v ?? '')
+      .split(',')
+      .map(x => (x.trim() === '' ? '' : String(Number(x))))
+      .join(',');
+  const text = Object.keys(PROFILE_FIELDS)
+    .map(key => `${key}=${norm(formData[key])}`)
+    .join(';');
+  let h = 0x811c9dc5;
+  for (let i = 0; i < text.length; i++) {
+    h ^= text.charCodeAt(i);
+    h = Math.imul(h, 0x01000193) >>> 0;
+  }
+  return h.toString(16).padStart(8, '0');
+}
+
+// Which profile the settings are: a built-in they match, else the last applied profile if they still match its
+// fingerprint. { name, changedFrom }: name null = custom values (changedFrom: the profile they started from).
+export function profileInUse(formData) {
+  const builtIn = matchingProfile(formData);
+  if (builtIn) return { name: builtIn.name, changedFrom: null };
+  const saved = formData.machineProfileName;
+  if (saved && formData.machineProfileHash && profileHash(formData) === formData.machineProfileHash)
+    return { name: saved, changedFrom: null };
+  return { name: null, changedFrom: saved || null };
+}
+
 // The built-in profile the form's values match (every value in it), or null: custom values.
 export function matchingProfile(formData) {
   return (

@@ -402,3 +402,8 @@ void Settings::doSave() {
         vTaskDelay(5000 / portTICK_PERIOD_MS);
     }
 }
+
+void Settings::setMachineProfile(const String &name, const String &hash) {
+    machineProfileName.set(name.substring(0, 64)); // NVS strings: keep it short
+    machineProfileHash.set(hash.substring(0, 32));
+}

@@ -399,6 +399,8 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
                 settings->setFlushButtonToTarget(parseBoolArg(request->arg("flushButtonToTarget")));
             if (request->hasArg("pid"))
                 settings->setPid(request->arg("pid"));
+            if (request->hasArg("machineProfileName") && request->hasArg("machineProfileHash"))
+                settings->setMachineProfile(request->arg("machineProfileName"), request->arg("machineProfileHash"));
             if (request->hasArg("pumpModelCoeffs"))
                 settings->setPumpModelCoeffs(request->arg("pumpModelCoeffs"));
             if (request->hasArg("pumpSlipCoeffs"))
@@ -615,6 +617,8 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
     doc["flushButtonToTarget"] = settings.isFlushButtonToTarget();
     doc["pid"] = settings.getPid();
     doc["pumpModelCoeffs"] = settings.getPumpModelCoeffs();
+    doc["machineProfileName"] = settings.getMachineProfileName();
+    doc["machineProfileHash"] = settings.getMachineProfileHash();
     doc["pumpSlipCoeffs"] = settings.getPumpSlipCoeffs();
     doc["wifiSsid"] = settings.getWifiSsid();
     doc["wifiPassword"] = apMode ? "---unchanged---" : settings.getWifiPassword();

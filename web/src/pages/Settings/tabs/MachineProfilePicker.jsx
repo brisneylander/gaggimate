@@ -2,26 +2,32 @@ import { useEffect, useRef, useState } from 'preact/hooks';
 import { Trans, useLingui } from '@lingui/react/macro';
 import {
   BUILT_IN_PROFILES,
-  matchingProfile,
   profileFromForm,
+  profileHash,
+  profileInUse,
   validateProfile,
 } from './machineProfiles.js';
 
 // Pick a built-in machine profile, or import / export one as JSON. Applying fills the form; Save stores it.
 export function MachineProfilePicker({ formData, setField }) {
   const { t } = useLingui();
-  // The profile the settings match: shown in use, and preselected once the settings have loaded.
-  const inUse = matchingProfile(formData);
+  // The profile the settings are (a built-in they match, or the last one applied if unchanged): shown in use, and a
+  // built-in is preselected once the settings have loaded.
+  const inUse = profileInUse(formData);
   const [selected, setSelected] = useState('');
   const [note, setNote] = useState('');
   const fileInput = useRef(null);
   useEffect(() => {
-    if (inUse && selected === '') setSelected(inUse.name);
-  }, [inUse?.name]);
+    if (inUse.name && selected === '' && BUILT_IN_PROFILES.some(p => p.name === inUse.name))
+      setSelected(inUse.name);
+  }, [inUse.name]);
 
   const apply = (values, label) => {
     for (const [key, value] of Object.entries(values)) setField(key, value);
-    setNote(t`${label} applied to the form: review, then Save.`);
+    // Remember which profile this is (saved with the settings), so the page can name it later.
+    setField('machineProfileName', label);
+    setField('machineProfileHash', profileHash({ ...formData, ...values }));
+    setNote(t`${label} applied to the machine profile: review, then Save.`);
   };
 
   const onApply = () => {
@@ -30,7 +36,10 @@ export function MachineProfilePicker({ formData, setField }) {
   };
 
   const onExport = () => {
-    const name = window.prompt(t`Name for this machine profile`, t`My machine`);
+    const name = window.prompt(
+      t`Name for this machine profile`,
+      inUse.name || formData.machineProfileName || t`My machine`,
+    );
     if (!name) return;
     const blob = new Blob([JSON.stringify(profileFromForm(name, formData), null, 2)], {
       type: 'application/json',
@@ -116,10 +125,12 @@ export function MachineProfilePicker({ formData, setField }) {
         </Trans>
       </p>
       <p className='text-sm'>
-        {inUse ? (
+        {inUse.name ? (
           <Trans>In use: {inUse.name}</Trans>
+        ) : inUse.changedFrom ? (
+          <Trans>In use: custom values (changed from {inUse.changedFrom})</Trans>
         ) : (
-          <Trans>In use: custom values (no built-in profile matches)</Trans>
+          <Trans>In use: custom values</Trans>
         )}
       </p>
       {note && <p className='text-sm'>{note}</p>}

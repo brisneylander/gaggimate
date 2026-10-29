@@ -84,7 +84,11 @@ msgid "{host} isn't answering. Make sure the machine is on and your phone is on 
 msgstr "{host} ne répond pas. Vérifiez que la machine est allumée et que votre téléphone est sur le même réseau Wi-Fi."
 
 #: src/pages/Settings/tabs/MachineProfilePicker.jsx
-msgid "{label} applied to the form: review, then Save."
+#~ msgid "{label} applied to the form: review, then Save."
+#~ msgstr ""
+
+#: src/pages/Settings/tabs/MachineProfilePicker.jsx
+msgid "{label} applied to the machine profile: review, then Save."
 msgstr ""
 
 #: src/pages/Settings/tabs/GeneralTab.jsx
@@ -2375,8 +2379,17 @@ msgid "In use: {0}"
 msgstr ""
 
 #: src/pages/Settings/tabs/MachineProfilePicker.jsx
-msgid "In use: custom values (no built-in profile matches)"
+msgid "In use: custom values"
 msgstr ""
+
+#. placeholder {0}: inUse.changedFrom
+#: src/pages/Settings/tabs/MachineProfilePicker.jsx
+msgid "In use: custom values (changed from {0})"
+msgstr ""
+
+#: src/pages/Settings/tabs/MachineProfilePicker.jsx
+#~ msgid "In use: custom values (no built-in profile matches)"
+#~ msgstr ""
 
 #: src/pages/ShotAnalyzer/components/shotChart/controls/chartReplayControls.jsx
 msgid "Include legend"

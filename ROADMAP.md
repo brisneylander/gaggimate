@@ -55,6 +55,11 @@ switching reheat on → off should be re-checked with a single flush.)
 Run 4 was within 1 °C 56 s after the flush, bottomed out 2 min later, and held 93.0 °C from ~4 min. The remaining
 −0.8 °C dip is the heater's dead time after the 30 s hold, not the volume. The 0.85 factor held over three runs (lowest 91.85–92.24 °C, within 0.5 °C after 146–157 s).
 
+**Boost after flush (simon011) is worse; leave it off.** Alternating pairs, 5 s flush from 93 °C, boost 5 °C,
+2026-10-29: plain flushes were within 0.5 °C after 74 and 84 s; boosted ones reached 97.75 °C ~3 min after the flush,
+flushed again, and were within 0.5 °C only after 366-375 s. Heating to +5 °C takes as long as a plain recovery, and the
+closing flush starts a second recovery. `flushBoostC` stays 0; candidate for removal.
+
 **Simulator plant fitted to the Silvia** (2026-10-29, `scripts/fit_plant.py`): the test plant in
 `test/test_heat_balance_predictor` now has three nodes fitted to the bench logs. Heater heat reaches the water with a
 ~21 s time constant; the group head (819 J/°C, ~2.4 min to the water) carries the standing loss and keeps pulling the

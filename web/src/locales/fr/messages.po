@@ -292,8 +292,12 @@ msgid "Advanced"
 msgstr "Avancé"
 
 #: src/pages/Settings/tabs/GeneralTab.jsx
-msgid "After steaming, or any time the boiler is 2 °C or more over the selected profile's temperature, the flush button runs just enough fresh water to bring it back down to the brew temperature, then holds the heater off briefly while it settles. Closer to target it runs the normal flush. Needs heater power and heat-up rate in the Machine Boiler Profile."
+msgid "After steaming, or any time the boiler is 2 °C or more over the selected profile's temperature, the flush button runs just enough fresh water to bring it back down to the brew temperature, then holds the heater off briefly while it settles. Closer to target it runs the normal flush. Needs <0>Heater power</0> and <1>Full-power heat-up rate</1> in the Machine Boiler Profile."
 msgstr ""
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+#~ msgid "After steaming, or any time the boiler is 2 °C or more over the selected profile's temperature, the flush button runs just enough fresh water to bring it back down to the brew temperature, then holds the heater off briefly while it settles. Closer to target it runs the normal flush. Needs heater power and heat-up rate in the Machine Boiler Profile."
+#~ msgstr ""
 
 #: src/pages/Settings/tune/TuneMachine.jsx
 #~ msgid "After steaming, the boiler is far hotter than brewing needs. Flush to target works out how much fresh tank water would bring it back down to the brew temperature, from how far over it is, the boiler's size and the tank temperature, and flushes just that much."

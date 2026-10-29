@@ -5,6 +5,7 @@ import { OverviewChart } from '../../../components/OverviewChart.jsx';
 import { Spinner } from '../../../components/Spinner.jsx';
 import Section from '../../../components/Card.jsx';
 import PumpFlowCalibration from '../../../components/PumpFlowCalibration/index.jsx';
+import { TuneMachine } from '../tune/TuneMachine.jsx';
 import { SettingsFormField } from '../../../components/SettingsFormField.jsx';
 
 export function CalibrationTab({ formData, onChange, setField }) {
@@ -259,6 +260,8 @@ export function CalibrationTab({ formData, onChange, setField }) {
           onApplied={coeffs => setField('pumpModelCoeffs', coeffs)}
         />
       </Section>
+
+      <TuneMachine formData={formData} setField={setField} />
     </div>
   );
 }

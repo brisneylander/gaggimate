@@ -7,6 +7,14 @@ msgstr ""
 "X-Generator: @lingui/cli\n"
 "Language: en\n"
 
+#: src/pages/Settings/tune/TuneMachine.jsx
+msgid ": the pump calibration is fine."
+msgstr ": the pump calibration is fine."
+
+#: src/pages/Settings/tune/TuneMachine.jsx
+msgid ": the pump coefficients will be scaled to match."
+msgstr ": the pump coefficients will be scaled to match."
+
 #: src/pages/Statistics/components/StatisticsSearchHelp.jsx
 msgid "(exact)"
 msgstr "(exact)"
@@ -142,6 +150,10 @@ msgstr "0 (off) or {min}–{max} {unit}"
 #: src/pages/ShotAnalyzer/components/shotDetails/ShotMainInfoCard.jsx
 msgid "1 year ago"
 msgstr "1 year ago"
+
+#: src/pages/Settings/tune/TuneMachine.jsx
+msgid "A 5 s flush, logged and weighed"
+msgstr "A 5 s flush, logged and weighed"
 
 #: src/app/appSettings.js
 msgid "A brew started on the machine."
@@ -339,6 +351,10 @@ msgstr "App Settings"
 msgid "Appearance"
 msgstr "Appearance"
 
+#: src/pages/Settings/tune/TuneMachine.jsx
+msgid "Applied to the form: Save to keep them."
+msgstr "Applied to the form: Save to keep them."
+
 #: src/pages/Settings/tabs/MachineProfilePicker.jsx
 msgid "Apply"
 msgstr "Apply"
@@ -346,6 +362,10 @@ msgstr "Apply"
 #: src/pages/Settings/tabs/CalibrationTab.jsx
 msgid "Apply suggested gains"
 msgstr "Apply suggested gains"
+
+#: src/pages/Settings/tune/TuneMachine.jsx
+msgid "Apply to the form"
+msgstr "Apply to the form"
 
 #: src/pages/ShotAnalyzer/components/library/LibraryPanel.jsx
 msgid "Are you sure you want to delete \"{itemName}\"?"
@@ -399,6 +419,10 @@ msgstr "Autotune Complete!"
 #: src/pages/Settings/tabs/CalibrationTab.jsx
 msgid "Autotune Failed"
 msgstr "Autotune Failed"
+
+#: src/pages/Settings/tune/TuneMachine.jsx
+msgid "Autotune from a cold boiler"
+msgstr "Autotune from a cold boiler"
 
 #: src/pages/Settings/tabs/CalibrationTab.jsx
 msgid "Autotune in Progress"
@@ -522,6 +546,11 @@ msgstr "Avg. Weight Flow"
 #: src/pages/Settings/tabs/SystemTab.jsx
 msgid "Back"
 msgstr "Back"
+
+#. placeholder {0}: live.ct?.toFixed(1)
+#: src/pages/Settings/tune/TuneMachine.jsx
+msgid "Back in Brew, waiting for the peak: {0} °C…"
+msgstr "Back in Brew, waiting for the peak: {0} °C…"
 
 #: src/pages/ShotAnalyzer/shotAnalyzer/ActiveAnalysisView.jsx
 msgid "Back to analyzer"
@@ -1048,6 +1077,11 @@ msgstr "Could not remove image"
 msgid "Could not restore previous profile: {message}"
 msgstr "Could not restore previous profile: {message}"
 
+#. placeholder {0}: e.message
+#: src/pages/Settings/tune/TuneMachine.jsx
+msgid "Could not set the flush duration: {0}"
+msgstr "Could not set the flush duration: {0}"
+
 #: src/pages/Settings/tabs/BluetoothTab.jsx
 msgid "Couldn't connect to {errorAddress}"
 msgstr "Couldn't connect to {errorAddress}"
@@ -1380,6 +1414,13 @@ msgstr "Do you really want to export all {count} filtered shots? (Shots are down
 msgid "Done"
 msgstr "Done"
 
+#. placeholder {0}: formData.modelHeaterW
+#. placeholder {1}: formData.modelHeatRate
+#. placeholder {2}: formData.sensorDeadTimeS
+#: src/pages/Settings/tune/TuneMachine.jsx
+msgid "done: {0} W, {1} °C/s, dead time {2} s."
+msgstr "done: {0} W, {1} °C/s, dead time {2} s."
+
 #: src/pages/ProfileEdit/ProfileMainInformation.jsx
 msgid "Dose"
 msgstr "Dose"
@@ -1427,6 +1468,10 @@ msgstr "Drag disabled on search result"
 #: src/pages/ProfileList/index.jsx
 msgid "Drag to reorder"
 msgstr "Drag to reorder"
+
+#: src/pages/Settings/tune/TuneMachine.jsx
+msgid "Drip tray (g)"
+msgstr "Drip tray (g)"
 
 #: src/pages/ShotAnalyzer/components/library/AnalyzerPanelSlot.jsx
 msgid "Drop shot or profile JSON here"
@@ -1919,6 +1964,10 @@ msgstr "Flush Duration"
 msgid "Flush recommended"
 msgstr "Flush recommended"
 
+#: src/pages/Settings/tune/TuneMachine.jsx
+msgid "Flush to target after steam"
+msgstr "Flush to target after steam"
+
 #: src/pages/Settings/tabs/LagCompensationSection.jsx
 msgid "Flush to target factor"
 msgstr "Flush to target factor"
@@ -1930,6 +1979,15 @@ msgstr "Flush to target heater hold"
 #: src/pages/Home/FlushButton.jsx
 msgid "Flush water"
 msgstr "Flush water"
+
+#. placeholder {0}: live.ct?.toFixed(1)
+#: src/pages/Settings/tune/TuneMachine.jsx
+msgid "Flushed to target; watching the landing: {0} °C…"
+msgstr "Flushed to target; watching the landing: {0} °C…"
+
+#: src/pages/Settings/tune/TuneMachine.jsx
+msgid "Flushing and logging for {FLUSH_RECORD_S} s…"
+msgstr "Flushing and logging for {FLUSH_RECORD_S} s…"
 
 #: src/pages/Settings/tabs/LagCompensationSection.jsx
 msgid "For boilers where the temperature sensor reacts long after the heater. Heater power, heat-up rate and dead time together enable a heat-balance predictor, so the PID backs off before the overshoot shows. Leave a field at 0 to disable it."
@@ -1965,6 +2023,15 @@ msgstr "Friday"
 msgctxt "date range start"
 msgid "From"
 msgstr "From"
+
+#. placeholder {0}: targetResult.startC.toFixed(1)
+#. placeholder {1}: targetResult.lowC.toFixed(1)
+#. placeholder {2}: targetResult.landedC >= 0 ? '+' : ''
+#. placeholder {3}: targetResult.landedC.toFixed(1)
+#. placeholder {4}: targetResult.factor
+#: src/pages/Settings/tune/TuneMachine.jsx
+msgid "From {0} °C it landed at {1} °C ({2}{3} °C). Suggested flush to target factor: {4}."
+msgstr "From {0} °C it landed at {1} °C ({2}{3} °C). Suggested flush to target factor: {4}."
 
 #: src/pages/Settings/tabs/LagCompensationSection.jsx
 msgid "From 2 °C over the selected profile's temperature (after steaming, say), the flush button runs just enough water to bring the boiler back to it. Closer than that it runs the normal flush. Needs heater power and heat-up rate."
@@ -2101,6 +2168,16 @@ msgstr "Heater Wattage (W)"
 #: src/pages/Settings/tabs/CalibrationTab.jsx
 msgid "Heater wattage in Watts (e.g. Gaggia Classic: 1360 W, Rancilio Silvia 120V: 950W, Rancilio Silvia 230V: 1100W)."
 msgstr "Heater wattage in Watts (e.g. Gaggia Classic: 1360 W, Rancilio Silvia 120V: 950W, Rancilio Silvia 230V: 1100W)."
+
+#. placeholder {0}: live.ct?.toFixed(1)
+#: src/pages/Settings/tune/TuneMachine.jsx
+msgid "Heating in Steam: {0} °C…"
+msgstr "Heating in Steam: {0} °C…"
+
+#. placeholder {0}: TARGET_RECORD_S / 60
+#: src/pages/Settings/tune/TuneMachine.jsx
+msgid "Heats {STEAM_OVERSHOOT_C} °C over the brew target in Steam, returns to Brew, flushes to target at the peak and watches where the boiler lands for {0} minutes. Save the earlier steps first: the flush uses the saved settings."
+msgstr "Heats {STEAM_OVERSHOOT_C} °C over the brew target in Steam, returns to Brew, flushes to target at the peak and watches where the boiler lands for {0} minutes. Save the earlier steps first: the flush uses the saved settings."
 
 #: src/components/SettingsFormField.jsx
 msgid "Hidden / Available"
@@ -2674,6 +2751,14 @@ msgstr "Maximum Pump Power (0 - 1)"
 msgid "Measured and saved for Boiler Lag Compensation: heat-up rate {0} °C/s, dead time {1} s. Your PID gains are unchanged."
 msgstr "Measured and saved for Boiler Lag Compensation: heat-up rate {0} °C/s, dead time {1} s. Your PID gains are unchanged."
 
+#: src/pages/Settings/tune/TuneMachine.jsx
+msgid "Measures how soon flush water reaches the sensor, the water the valve dumps into the drip tray, and checks the pump calibration. Portafilter out, an empty cup under the group, drip tray emptied."
+msgstr "Measures how soon flush water reaches the sensor, the water the valve dumps into the drip tray, and checks the pump calibration. Portafilter out, an empty cup under the group, drip tray emptied."
+
+#: src/pages/Settings/tune/TuneMachine.jsx
+msgid "Measures the machine-specific settings from the machine's own readings. Each step proposes values; apply them to the form, then Save. Export the result as a machine profile from Machine → Boiler Lag Compensation."
+msgstr "Measures the machine-specific settings from the machine's own readings. Each step proposes values; apply them to the form, then Save. Export the result as a machine profile from Machine → Boiler Lag Compensation."
+
 #: src/pages/ShotAnalyzer/services/ReplayVideoExportService.js
 msgid "MediaRecorder is not supported in this browser."
 msgstr "MediaRecorder is not supported in this browser."
@@ -2893,6 +2978,10 @@ msgstr "No dates"
 #: src/pages/Home/cards/FavoriteProfilesCard.jsx
 msgid "No favorites — mark profiles as ★ in the profile list"
 msgstr "No favorites — mark profiles as ★ in the profile list"
+
+#: src/pages/Settings/tune/TuneMachine.jsx
+msgid "no flush seen"
+msgstr "no flush seen"
 
 #: src/pages/ProfileEdit/ProfileImageUpload.jsx
 msgid "No image"
@@ -3340,6 +3429,10 @@ msgstr "Plugins"
 #: src/pages/ProfileEdit/ProfileImageUpload.jsx
 msgid "PNG, JPEG, WebP or BMP. GIFs are not supported. The image is cropped to a square and scaled to 300×300 pixels for the display."
 msgstr "PNG, JPEG, WebP or BMP. GIFs are not supported. The image is cropped to a square and scaled to 300×300 pixels for the display."
+
+#: src/pages/Settings/tune/TuneMachine.jsx
+msgid "Portafilter out, cup in place, drip tray empty"
+msgstr "Portafilter out, cup in place, drip tray empty"
 
 #: src/pages/ProfileEdit/ExtendedPhase.jsx
 #: src/pages/ProfileEdit/StandardProfileForm.jsx
@@ -4001,6 +4094,10 @@ msgstr "Review the stop reason for this phase. The algorithm was only able to id
 #: src/pages/Statistics/components/StatisticsSearchHelp.jsx
 msgid "Rules are separated with <0>;</0>. Visual filters and DSL are combined with AND."
 msgstr "Rules are separated with <0>;</0>. Visual filters and DSL are combined with AND."
+
+#: src/pages/Settings/tune/TuneMachine.jsx
+msgid "Run Autotune above with the machine cold and the heater wattage from its rating plate: it saves the heat-up rate, dead time and heater power."
+msgstr "Run Autotune above with the machine cold and the heater wattage from its rating plate: it saves the heat-up rate, dead time and heater power."
 
 #: src/components/PumpFlowCalibration/Footer.jsx
 msgid "Running shot..."
@@ -4673,6 +4770,7 @@ msgid "Standby Timeout"
 msgstr "Standby Timeout"
 
 #: src/pages/Settings/tabs/CleaningSection.jsx
+#: src/pages/Settings/tune/TuneMachine.jsx
 msgid "Start"
 msgstr "Start"
 
@@ -4710,6 +4808,10 @@ msgstr "Start calibration"
 #: src/pages/Statistics/components/toolbar/subcomponents.jsx
 msgid "Start date"
 msgstr "Start date"
+
+#: src/pages/Settings/tune/TuneMachine.jsx
+msgid "Start flush"
+msgstr "Start flush"
 
 #: src/pages/ProfileEdit/ExtendedPhase.jsx
 msgid "Start from previous setpoint"
@@ -4766,6 +4868,11 @@ msgstr "Statistics Search DSL"
 #: src/pages/Statistics/components/MetricsTable.jsx
 msgid "Std Dev"
 msgstr "Std Dev"
+
+#. placeholder {0}: live.ct?.toFixed(1)
+#: src/pages/Settings/tune/TuneMachine.jsx
+msgid "Steady at {0} °C"
+msgstr "Steady at {0} °C"
 
 #: src/pages/Settings/tabs/LagCompensationSection.jsx
 #~ msgid "Steady rise at full power, measured mid-warm-up (autotune logs it as k')."
@@ -4908,6 +5015,10 @@ msgstr "Switch import mode to Save to Browser"
 #: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarButtons.jsx
 msgid "Switch import mode to View temporarily"
 msgstr "Switch import mode to View temporarily"
+
+#: src/pages/Settings/tune/TuneMachine.jsx
+msgid "Switch to Brew"
+msgstr "Switch to Brew"
 
 #: src/pages/DashboardSettings/index.jsx
 msgid "Switch to compact view"
@@ -5434,6 +5545,10 @@ msgstr "Try again"
 msgid "Tuesday"
 msgstr "Tuesday"
 
+#: src/pages/Settings/tune/TuneMachine.jsx
+msgid "Tune this machine"
+msgstr "Tune this machine"
+
 #: src/pages/Settings/PluginCard.jsx
 msgid "Turn off at target"
 msgstr "Turn off at target"
@@ -5689,6 +5804,12 @@ msgstr "Valve"
 msgid "Valve closed"
 msgstr "Valve closed"
 
+#. placeholder {0}: weighed.valveDumpMl
+#. placeholder {1}: (weighed.pumpRatio * 100).toFixed(0)
+#: src/pages/Settings/tune/TuneMachine.jsx
+msgid "Valve dump {0} ml. The cup got {1} % of the pump reading"
+msgstr "Valve dump {0} ml. The cup got {1} % of the pump reading"
+
 #: src/pages/Settings/tabs/LagCompensationSection.jsx
 msgid "Valve dump per flush"
 msgstr "Valve dump per flush"
@@ -5779,6 +5900,13 @@ msgctxt "weekday initial: Wednesday"
 msgid "W"
 msgstr "W"
 
+#. placeholder {0}: live.tt
+#. placeholder {1}: live.ct?.toFixed(1)
+#. placeholder {2}: Math.round(steadyFor)
+#: src/pages/Settings/tune/TuneMachine.jsx
+msgid "Waiting for a steady {0} °C ({1} °C now, {2} of {STEADY_S} s)"
+msgstr "Waiting for a steady {0} °C ({1} °C now, {2} of {STEADY_S} s)"
+
 #: src/utils/warnings.js
 msgctxt "warning level"
 msgid "Warn"
@@ -5823,9 +5951,20 @@ msgstr "Water Button Behavior"
 msgid "Water dead time"
 msgstr "Water dead time"
 
+#. placeholder {0}: flushResult.dead.seconds.toFixed(1)
+#. placeholder {1}: flushResult.dead.depth.toFixed(1)
+#. placeholder {2}: flushResult.readingMl.toFixed(1)
+#: src/pages/Settings/tune/TuneMachine.jsx
+msgid "Water dead time {0} s (dip {1} °C). Pump reading {2} ml."
+msgstr "Water dead time {0} s (dip {1} °C). Pump reading {2} ml."
+
 #: src/pages/ProfileEdit/ExtendedPhaseTarget.jsx
 msgid "Water drawn"
 msgstr "Water drawn"
+
+#: src/pages/Settings/tune/TuneMachine.jsx
+msgid "Water in the cup (g)"
+msgstr "Water in the cup (g)"
 
 #: src/utils/metricDefinitions.js
 msgid "Water Level"

@@ -686,6 +686,13 @@ void Controller::loopLogic() {
     if (processEnded)
         afterDeactivate();
     dispatchEvents(events);
+    if (processEnded && boostAfterFlush) {
+        boostAfterFlush = false;
+        flushBoost.start(millis());
+        ESP_LOGI(LOG_TAG, "Boost after flush: heating %.1f°C over target", settings.getFlushBoostC());
+    }
+    if (flushBoost.isActive())
+        loopFlushBoost();
     if (newBrewDelay >= 0) {
         settings.setBrewDelay(newBrewDelay);
     }
@@ -1046,6 +1053,9 @@ void Controller::updateControl() {
         else
             flushToTargetHoldUntil = 0;
     }
+    // Boost after flush: aim above the target until the closing flush to target (see loopFlushBoost()).
+    if (flushBoost.isActive() && targetTemp > 0.0f)
+        targetTemp += settings.getFlushBoostC();
 
     bool altRelayActive = false;
     if (active && proc->isAltRelayActive()) {
@@ -1165,6 +1175,8 @@ void Controller::updateControl() {
 
 void Controller::activate(bool ignoreWarnings) {
     flushToTargetHoldUntil = 0; // a shot wants the heater back straight away
+    boostAfterFlush = false;
+    flushBoost.cancel();
     // Never create a process while startup is incomplete or the controller is
     // absent. The UI can be reached by tapping through the startup screen, and
     // previously its Start action ran against a half-initialized BLE session.
@@ -1574,7 +1586,32 @@ bool Controller::isHardwareScaleHealthy() const {
     return lastMeasurement != 0 && millis() - lastMeasurement < HARDWARE_GRACE_PERIOD_MS;
 }
 
-void Controller::onFlush() { startFlush(static_cast<float>(settings.getFlushDuration())); }
+void Controller::onFlush() {
+    const bool boost = settings.getFlushBoostC() > 0.0f && mode == MODE_BREW;
+    if (startFlush(static_cast<float>(settings.getFlushDuration())))
+        boostAfterFlush = boost;
+}
+
+void Controller::loopFlushBoost() {
+    if (mode != MODE_BREW) {
+        flushBoost.cancel();
+        return;
+    }
+    const float target = profileManager->getSelectedProfile().temperature;
+    switch (flushBoost.step(millis(), currentTemp, target, settings.getFlushBoostC())) {
+    case flush_boost::Action::Flush: {
+        const flush_to_target::Plan plan = flushToTarget();
+        if (plan.reason != nullptr)
+            ESP_LOGI(LOG_TAG, "Boost after flush at %.1f°C: no closing flush (%s)", currentTemp, plan.reason);
+        break;
+    }
+    case flush_boost::Action::GiveUp:
+        ESP_LOGI(LOG_TAG, "Boost after flush: gave up at %.1f°C, back to the target", currentTemp);
+        break;
+    case flush_boost::Action::None:
+        break;
+    }
+}
 
 flush_to_target::Plan Controller::flushToTarget() {
     float coeffs[2] = {NAN, NAN};
@@ -1597,6 +1634,7 @@ flush_to_target::Plan Controller::flushToTarget() {
     // The flush is sized so the boiler lands on target with only its standing loss after it. Left alone, the predictor
     // sees the cold water and the PID heats at full power (17.7 kJ, ~10 °C of rebound, on the first bench run), so the
     // heater stays off for the flush and until its effect has reached the sensor.
+    flushBoost.cancel();
     flushToTargetHoldUntil = millis() + static_cast<unsigned long>((plan.seconds + FLUSH_TO_TARGET_HOLD_S) * 1000.0f);
     if (flushToTargetHoldUntil == 0)
         flushToTargetHoldUntil = 1;
@@ -1604,7 +1642,7 @@ flush_to_target::Plan Controller::flushToTarget() {
     return plan;
 }
 
-void Controller::startFlush(float duration) {
+bool Controller::startFlush(float duration) {
     // Allocate outside the lock; reachable from the UI, AsyncTCP and BLE tasks (GM-147).
     Profile profile = FLUSH_PROFILE;
     profile.temperature = profileManager->getSelectedProfile().temperature;
@@ -1616,7 +1654,7 @@ void Controller::startFlush(float duration) {
         std::lock_guard<std::recursive_mutex> guard(processMutex);
         if (isActiveLocked()) {
             delete flush;
-            return;
+            return false;
         }
         clearLocked(events);
         startProcessLocked(flush, events);
@@ -1625,6 +1663,7 @@ void Controller::startFlush(float duration) {
     }
     updateControl(); // same immediate send as startProcess()
     dispatchEvents(events);
+    return true;
 }
 
 // Every hold-to-flush source (physical button, touch, web) funnels its release through here.

@@ -379,6 +379,8 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
                 settings->setInletTempC(request->arg("inletTempC").toFloat());
             if (request->hasArg("waterDeadTimeS"))
                 settings->setWaterDeadTimeS(request->arg("waterDeadTimeS").toFloat());
+            if (request->hasArg("flushBoostC"))
+                settings->setFlushBoostC(request->arg("flushBoostC").toFloat());
             if (request->hasArg("reheatFullPower"))
                 settings->setReheatFullPower(parseBoolArg(request->arg("reheatFullPower")));
             if (request->hasArg("pid"))
@@ -587,6 +589,7 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
     doc["inletTempC"] = settings.getInletTempC();
     doc["waterDeadTimeS"] = settings.getWaterDeadTimeS();
     doc["reheatFullPower"] = settings.isReheatFullPower();
+    doc["flushBoostC"] = settings.getFlushBoostC();
     doc["pid"] = settings.getPid();
     doc["pumpModelCoeffs"] = settings.getPumpModelCoeffs();
     doc["pumpSlipCoeffs"] = settings.getPumpSlipCoeffs();

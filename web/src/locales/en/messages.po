@@ -577,6 +577,10 @@ msgstr "Boiler Lag Compensation"
 msgid "Boiler Refill Plugin"
 msgstr "Boiler Refill Plugin"
 
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "Boost after flush"
+msgstr "Boost after flush"
+
 #: src/app/machineStatus.js
 #: src/pages/Home/utils.js
 #: src/pages/Settings/tabs/GeneralTab.jsx
@@ -1677,6 +1681,10 @@ msgstr "Expand shot details"
 #: src/pages/Statistics/components/toolbar/subcomponents.jsx
 msgid "Expand statistics toolbar"
 msgstr "Expand statistics toolbar"
+
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "Experimental. After a flush, heat this far over the target, then flush the surplus off with a flush to target. Water runs through the group twice, so only with an empty portafilter."
+msgstr "Experimental. After a flush, heat this far over the target, then flush the surplus off with a flush to target. Water runs through the group twice, so only with an empty portafilter."
 
 #: src/pages/ShotAnalyzer/components/shotChart/controls/chartReplayControls.jsx
 msgid "Explain WebM export"

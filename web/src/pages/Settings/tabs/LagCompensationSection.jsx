@@ -13,6 +13,7 @@ const FIELDS = [
   { key: 'modelHeaterW', unit: 'W', min: 200, max: 2500 },
   { key: 'modelHeatRate', unit: '°C/s', min: 0.05, max: 3 },
   { key: 'inletTempC', unit: '°C', min: 5, max: 70 },
+  { key: 'flushBoostC', unit: '°C', min: 1, max: 10 },
 ];
 
 const inRangeOrOff = (value, min, max) => {
@@ -30,6 +31,7 @@ export function LagCompensationSection({ formData, onChange }) {
     modelHeaterW: t`Heater power`,
     modelHeatRate: t`Full-power heat-up rate`,
     inletTempC: t`Tank water temperature`,
+    flushBoostC: t`Boost after flush`,
   };
   const help = {
     derivativeFilterS: t`Smooths the D term so thermocouple steps don't switch the heater. Try 2 s; long filters delay its braking.`,
@@ -39,6 +41,7 @@ export function LagCompensationSection({ formData, onChange }) {
     modelHeaterW: t`Element power, e.g. 1100 W for a 230 V Rancilio Silvia.`,
     modelHeatRate: t`Steady rise at full power, measured mid-warm-up (autotune logs it as k').`,
     inletTempC: t`Temperature of the water drawn in by a shot or flush. A tank beside the boiler warms up; 0 assumes 23 °C.`,
+    flushBoostC: t`Experimental. After a flush, heat this far over the target, then flush the surplus off with a flush to target. Water runs through the group twice, so only with an empty portafilter.`,
   };
   const learnedLoss = Math.round(Number(formData.modelLossW) || 0);
   return (

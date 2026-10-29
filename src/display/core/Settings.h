@@ -109,6 +109,7 @@ class Settings {
     float getInletTempC() const { return inletTempC.get(); }
     float getWaterDeadTimeS() const { return waterDeadTimeS.get(); }
     bool isReheatFullPower() const { return reheatFullPower.get(); }
+    float getFlushBoostC() const { return flushBoostC.get(); }
     String getPid() const { return pid.get(); }
     String getPumpModelCoeffs() const { return pumpModelCoeffs.get(); }
     String getPumpSlipCoeffs() const { return pumpSlipCoeffs.get(); }
@@ -233,6 +234,7 @@ class Settings {
     void setInletTempC(float degrees);
     void setWaterDeadTimeS(float seconds);
     void setReheatFullPower(bool enabled);
+    void setFlushBoostC(float degrees);
     void setPumpModelCoeffs(const String &pumpModelCoeffs);
     void setPumpSlipCoeffs(const String &pumpSlipCoeffs);
     void setWifiSsid(const String &wifiSsid);
@@ -391,6 +393,7 @@ class Settings {
     Property<float> inletTempC{registry, "lc_it", 0.0f};
     Property<float> waterDeadTimeS{registry, "lc_wd", 0.0f};
     Property<bool> reheatFullPower{registry, "lc_rh", false};
+    Property<float> flushBoostC{registry, "lc_fb", 0.0f}; // 0 = off
 
     // Display settings
     Property<int> mainBrightness{registry, "main_b", 16};

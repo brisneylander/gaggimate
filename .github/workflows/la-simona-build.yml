@@ -1,0 +1,123 @@
+# Builds one upstream GaggiMate ref with two changes, and publishes it here:
+#   1. the La Simona standby logo (secret STANDBY_LOGO_C_GZ_B64: the generated ui_image_logo.c, gzipped, base64)
+#   2. RELEASE_URL pointing at this repo, so the machine keeps updating from these builds
+# Version: the upstream release tag + "-vanilla" (v1.9.0-vanilla; a nightly is v1.9.0-vanilla-135-gb78beee). The
+# firmware installs only newer versions, and "vanilla" sorts after the earlier "simon"/"thermaltune" builds.
+# Build steps follow upstream's .github/workflows/build.yml, without its uploads to the official update server.
+name: La Simona build
+
+on:
+  workflow_call:
+    inputs:
+      ref:
+        type: string
+        required: true
+      base_tag:
+        type: string
+        required: true
+      kind: # release | nightly
+        type: string
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout upstream
+        uses: actions/checkout@v4
+        with:
+          repository: jniebuhr/gaggimate
+          ref: ${{ inputs.ref }}
+          fetch-tags: true
+          fetch-depth: 0
+          submodules: "recursive"
+          persist-credentials: false
+      - name: Version
+        run: |
+          base="$(git rev-list -n 1 "${{ inputs.base_tag }}")"
+          git tag -l | xargs -r git tag -d >/dev/null
+          git tag "${{ inputs.base_tag }}-vanilla" "$base"
+          mkdir -p out
+      - name: La Simona logo and update address
+        env:
+          STANDBY_LOGO: ${{ secrets.STANDBY_LOGO_C_GZ_B64 }}
+        run: |
+          f=src/display/ui/default/eez/images/ui_image_logo.c
+          if [ -z "$STANDBY_LOGO" ]; then echo "secret STANDBY_LOGO_C_GZ_B64 missing" >&2; exit 1; fi
+          printf '%s' "$STANDBY_LOGO" | base64 -d | gunzip > "$f"
+          grep -q 'img_logo_map' "$f"
+          u=src/display/plugins/WebUIPlugin.h
+          sed -i "s#github.com/jniebuhr/gaggimate/releases/#github.com/${{ github.repository }}/releases/#" "$u"
+          grep -q "github.com/${{ github.repository }}/releases/" "$u"
+          # Keep `git describe --dirty` (the firmware version) clean.
+          git update-index --skip-worktree "$f" "$u"
+          git describe --tags --dirty --match "v*" | tee out/version.txt
+          grep -qv dirty out/version.txt
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/pip
+            ~/.platformio/.cache
+          key: ${{ runner.os }}-pio
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install PlatformIO Core
+        run: pip install --upgrade platformio
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: "npm"
+          cache-dependency-path: web/package-lock.json
+      - name: Build Web
+        run: ./scripts/build_webui.sh
+      - name: Package app web bundle
+        run: |
+          if [ -x web/scripts/package-app-bundle.sh ]; then
+            BUNDLE_VERSION="$(cat out/version.txt)" web/scripts/package-app-bundle.sh out "${{ inputs.kind == 'nightly' && 'nightly' || format('{0}-vanilla', inputs.base_tag) }}"
+          fi
+      - name: Build controller
+        run: |
+          pio run -e controller
+          cp .pio/build/controller/firmware.bin out/board-firmware.bin
+          cp .pio/build/controller/partitions.bin out/board-partitions.bin
+          cp .pio/build/controller/bootloader.bin out/board-bootloader.bin
+      - name: Build display FS
+        run: |
+          pio run -t buildfs -e display
+          cp .pio/build/display/littlefs.bin out/display-filesystem.bin
+          cp .pio/build/display/littlefs.bin out/display-headless-filesystem.bin
+      - name: Build display
+        run: |
+          pio run -e display
+          cp .pio/build/display/firmware.bin out/display-firmware.bin
+          cp .pio/build/display/partitions.bin out/display-partitions.bin
+          cp .pio/build/display/bootloader.bin out/display-bootloader.bin
+      - name: Build headless
+        run: |
+          pio run -e display-headless
+          cp .pio/build/display-headless/firmware.bin out/display-headless-firmware.bin
+          cp .pio/build/display-headless/partitions.bin out/display-headless-partitions.bin
+          cp .pio/build/display-headless/bootloader.bin out/display-headless-bootloader.bin
+      - name: Publish
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+        run: |
+          version="$(cat out/version.txt)"
+          upstream_sha="$(git rev-parse HEAD)"
+          if [ "${{ inputs.kind }}" = "release" ]; then
+            tag="${{ inputs.base_tag }}-vanilla"
+            gh release delete "$tag" -R "$REPO" --cleanup-tag -y 2>/dev/null || true
+            gh release create "$tag" out/* -R "$REPO" --target "$GITHUB_SHA" --latest \
+              --title "La Simona ${{ inputs.base_tag }}" \
+              --notes "Stock GaggiMate [${{ inputs.base_tag }}](https://github.com/jniebuhr/gaggimate/releases/tag/${{ inputs.base_tag }}) with the La Simona standby logo, updating from this repository. Firmware version \`$version\`."
+          else
+            gh release delete nightly -R "$REPO" --cleanup-tag -y 2>/dev/null || true
+            gh release create nightly out/* -R "$REPO" --target "$GITHUB_SHA" --prerelease \
+              --title "La Simona nightly $upstream_sha" \
+              --notes "Stock GaggiMate master ([$upstream_sha](https://github.com/jniebuhr/gaggimate/commit/$upstream_sha)) with the La Simona standby logo, for the Nightly update channel. Firmware version \`$version\`."
+          fi

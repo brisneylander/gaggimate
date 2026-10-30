@@ -1,0 +1,81 @@
+# Once a day: build stock GaggiMate (jniebuhr/gaggimate) with the La Simona standby logo, publishing to this repo's
+# releases, which is where these builds look for updates.
+#   - A new upstream release vX.Y.Z  -> release vX.Y.Z-vanilla here (the Stable update channel)
+#   - upstream master has moved      -> the `nightly` pre-release here (the Nightly update channel)
+# Nothing is built when upstream hasn't changed. Run workflow builds on demand (force rebuilds either).
+name: La Simona
+
+on:
+  schedule:
+    - cron: "0 17 * * *" # 17:00 UTC = 3 am in Brisbane
+  workflow_dispatch:
+    inputs:
+      force_release:
+        description: Rebuild the release even if it exists
+        type: boolean
+        default: false
+      force_nightly:
+        description: Rebuild the nightly even if master hasn't moved
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+concurrency:
+  group: la-simona
+  cancel-in-progress: false
+
+env:
+  UPSTREAM: jniebuhr/gaggimate
+
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+    outputs:
+      release_tag: ${{ steps.plan.outputs.release_tag }}
+      build_release: ${{ steps.plan.outputs.build_release }}
+      master_sha: ${{ steps.plan.outputs.master_sha }}
+      build_nightly: ${{ steps.plan.outputs.build_nightly }}
+    steps:
+      - id: plan
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          rel="$(gh release view -R "$UPSTREAM" --json tagName -q .tagName)"
+          echo "release_tag=$rel" >> "$GITHUB_OUTPUT"
+          if [ "${{ inputs.force_release }}" = "true" ] || ! gh release view "$rel-vanilla" -R "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "build_release=true" >> "$GITHUB_OUTPUT"; echo "release $rel: build"
+          else
+            echo "build_release=false" >> "$GITHUB_OUTPUT"; echo "release $rel: already built"
+          fi
+          head="$(gh api "repos/$UPSTREAM/commits/master" --jq .sha)"
+          echo "master_sha=$head" >> "$GITHUB_OUTPUT"
+          # The nightly release is titled "La Simona nightly <upstream commit>".
+          built="$(gh release view nightly -R "$GITHUB_REPOSITORY" --json name -q .name 2>/dev/null | awk '{print $NF}')"
+          if [ "${{ inputs.force_nightly }}" = "true" ] || [ "$built" != "$head" ]; then
+            echo "build_nightly=true" >> "$GITHUB_OUTPUT"; echo "master $head: build (last nightly: ${built:-none})"
+          else
+            echo "build_nightly=false" >> "$GITHUB_OUTPUT"; echo "master $head: already built"
+          fi
+
+  release:
+    needs: plan
+    if: needs.plan.outputs.build_release == 'true'
+    uses: ./.github/workflows/la-simona-build.yml
+    with:
+      ref: ${{ needs.plan.outputs.release_tag }}
+      base_tag: ${{ needs.plan.outputs.release_tag }}
+      kind: release
+    secrets: inherit
+
+  nightly:
+    needs: [plan, release]
+    # After the release job (or its skip), so a first run doesn't race two publishes.
+    if: always() && needs.plan.outputs.build_nightly == 'true' && needs.release.result != 'failure'
+    uses: ./.github/workflows/la-simona-build.yml
+    with:
+      ref: ${{ needs.plan.outputs.master_sha }}
+      base_tag: ${{ needs.plan.outputs.release_tag }}
+      kind: nightly
+    secrets: inherit

@@ -22,6 +22,7 @@
         --stock: #c2410c;
         --stock-bg: #fdeee6;
         --gm: #7c3aed;
+        --tuned: #2563eb;
         --band: rgba(15, 118, 110, 0.1);
         --code: #f2eee8;
       }
@@ -39,6 +40,7 @@
           --stock: #fb923c;
           --stock-bg: #3a2418;
           --gm: #a78bfa;
+          --tuned: #60a5fa;
           --band: rgba(45, 212, 191, 0.12);
           --code: #2a2521;
         }
@@ -403,6 +405,10 @@
             <div class="v">0.35 °C</div>
           </div>
           <div class="stat">
+            <div class="k">Autotuned PID values, no compensation</div>
+            <div class="v">0.4–0.7 °C</div>
+          </div>
+          <div class="stat">
             <div class="k">Upstream's Silvia PID values</div>
             <div class="v">0.4–0.7 °C</div>
           </div>
@@ -414,6 +420,10 @@
         <div class="chart">
           <div class="legend">
             <span><i style="background: var(--accent)"></i>This fork</span>
+            <span
+              ><i style="background: var(--tuned)"></i>Autotuned PID values, no
+              compensation</span
+            >
             <span
               ><i style="background: var(--stock)"></i>Upstream's Silvia PID
               values</span
@@ -427,7 +437,7 @@
             id="hold-chart"
             viewBox="0 0 900 380"
             role="img"
-            aria-label="Five minutes of holding at 93 °C: the fork stays within about 0.35 °C, upstream's Silvia values swing about 0.7 °C, GaggiMate's defaults about 1.5 °C."
+            aria-label="Five minutes of holding at 93 °C: the fork stays within about 0.35 °C, the autotuned PID values alone about 0.4 to 0.7 °C, upstream's Silvia values about 0.7 °C, GaggiMate's defaults about 1.5 °C."
           ></svg>
           <p class="caption">
             Hold tests from 2026-10-30, two per setup (one shown each). The
@@ -435,8 +445,10 @@
             at 0, a close stand-in for upstream rather than upstream itself. The
             sensor sits on the boiler wall and the water swings less, so read
             this as a comparison between setups, not the spread of the shots
-            themselves. The autotuned PID values alone, without the
-            compensation, held 0.4–0.7 °C.
+            themselves. The autotuned PID values (60 / 0.658 / 1500) hold close
+            to target without the compensation too, but less repeatably: 0.41 °C
+            in one test, 0.72 °C in the other; the compensation calms the heater
+            (0–7 % against 0–20 %) and keeps the band at 0.33–0.35 °C.
           </p>
         </div>
       </section>
@@ -2136,6 +2148,7 @@
           series: [
             [BENCH.hold.gm, "--gm"],
             [BENCH.hold.silvia, "--stock"],
+            [BENCH.hold.tuned, "--tuned"],
             [BENCH.hold.fork, "--accent"],
           ],
           y0: 91.5,

@@ -11,6 +11,8 @@ on:
     tags:
       - "v*-thermaltune*"
       - "v*-simon*"
+  # By hand, on a tag (gh workflow run "Fork Release" --ref v1.9.0-thermaltuneNNN), when GitHub misses the tag push.
+  workflow_dispatch:
 
 name: Fork Release
 jobs:

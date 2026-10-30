@@ -1,18 +1,14 @@
-# Fork-only head build for brisneylander/gaggimate: every push to master rebuilds the firmware and replaces the
-# `nightly` pre-release here, which is what the firmware's Nightly update channel reads
+# Fork-only head build for brisneylander/gaggimate: once a day, if master has moved since the last one, rebuilds the
+# firmware and replaces the `nightly` pre-release here, which is what the firmware's Nightly update channel reads
 # (RELEASE_URL + "tag/nightly" in src/display/plugins/WebUIPlugin.cpp, version from its version.txt).
-# Same build as Fork Release (no -DNIGHTLY_BUILD), so a head build is the next simonNNN release candidate.
-# Its version is `git describe`, e.g. v1.9.0-simon033-3-g6bb7704: newer than simon033, older than simon034,
-# so switching back to Stable picks up the next release. Docs-only pushes don't build.
+# Same build as Fork Release (no -DNIGHTLY_BUILD), so a head build is the next thermaltuneNNN release candidate.
+# Its version is `git describe`, e.g. v1.9.0-thermaltune036-3-g6bb7704: newer than thermaltune036, older than
+# thermaltune037, so switching back to Stable picks up the next release.
+# Daily rather than on every push: building on each push tripped GitHub's Actions limit for forks (2026-10-30).
+# Build now: Actions → Fork Nightly → Run workflow (builds even if master hasn't moved).
 on:
-  push:
-    branches:
-      - master
-    paths-ignore:
-      - "**.md"
-      - "docs/**"
-      - "site/**"
-      - ".github/workflows/fork-pages.yml"
+  schedule:
+    - cron: "0 17 * * *" # 17:00 UTC = 3 am in Brisbane
   workflow_dispatch:
 
 concurrency:
@@ -21,7 +17,26 @@ concurrency:
 
 name: Fork Nightly
 jobs:
+  # The nightly release is named "Head build <commit>": skip a scheduled run when master is still that commit.
+  changed:
+    runs-on: ubuntu-latest
+    outputs:
+      build: ${{ steps.check.outputs.build }}
+    steps:
+      - id: check
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          built="$(gh release view nightly -R "$GITHUB_REPOSITORY" --json name -q .name 2>/dev/null | awk '{print $NF}')"
+          if [ "$GITHUB_EVENT_NAME" = "schedule" ] && [ "$built" = "$GITHUB_SHA" ]; then
+            echo "master is still $GITHUB_SHA, already built"
+            echo "build=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "build=true" >> "$GITHUB_OUTPUT"
+          fi
   ota-testbench:
+    needs: changed
+    if: needs.changed.outputs.build == 'true'
     uses: ./.github/workflows/ota-testbench.yml
   build:
     needs: ota-testbench

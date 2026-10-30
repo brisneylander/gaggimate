@@ -10,7 +10,7 @@ firmware over Wi-Fi while staying in sync with upstream.
 | ------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `src/display/plugins/WebUIPlugin.h`         | `RELEASE_URL` points at this fork's releases, so OTA updates come from here.                                                                                                                                                                                                                    |
 | `.github/workflows/fork-release.yml`        | Fork-only copy of `build.yml`: builds the firmware on `v*-thermaltune*` (and the older `v*-simon*`) tags and publishes a GitHub release here. It leaves out the steps that upload to the official update server.                                                                                |
-| `.github/workflows/fork-nightly.yml`        | Same build on every push to `master`, published as the `nightly` pre-release for the Nightly update channel.                                                                                                                                                                                    |
+| `.github/workflows/fork-nightly.yml`        | Same build once a day if `master` has moved (3 am Brisbane), published as the `nightly` pre-release for the Nightly update channel.                                                                                                                                                             |
 | `site/`, `.github/workflows/fork-pages.yml` | The fork's front page, published to GitHub Pages at https://brisneylander.github.io/gaggimate/ on pushes that change it.                                                                                                                                                                        |
 | Boiler control                              | Lag compensation, flush to target, tank estimate, heater safety layer, machine profiles and the Tune this machine routine: goal, bench observations and how the code addresses them in [docs/boiler-control.md](docs/boiler-control.md); bench data and open items in [ROADMAP.md](ROADMAP.md). |
 | `FORK.md`                                   | This file.                                                                                                                                                                                                                                                                                      |
@@ -35,8 +35,9 @@ Releases are called **Thermal Tune N** (from 34; 1–33 were tagged `simonNNN`).
    after _Save Channel & Refresh_.
 
 **Stable** installs this fork's tagged releases. **Nightly** installs the head of `master`: the
-**Fork Nightly** workflow (`.github/workflows/fork-nightly.yml`) rebuilds the `nightly` pre-release on every push
-(docs-only pushes excepted), about 10–15 min after it. A head build reports e.g. `v1.9.0-thermaltune034-3-g6bb7704`,
+**Fork Nightly** workflow (`.github/workflows/fork-nightly.yml`) rebuilds the `nightly` pre-release once a day
+at 3 am Brisbane time, only if `master` has moved; **Actions → Fork Nightly → Run workflow** builds it now. Building
+on every push tripped GitHub's Actions limit for forks (2026-10-30). A head build reports e.g. `v1.9.0-thermaltune034-3-g6bb7704`,
 newer than thermaltune034 and older than thermaltune035, so going back to Stable picks up the next release.
 **Upstream** installs the official GaggiMate release, even an older one (see below).
 

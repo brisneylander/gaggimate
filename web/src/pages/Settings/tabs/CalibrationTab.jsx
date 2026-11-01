@@ -47,6 +47,8 @@ export function CalibrationTab({ formData, setField }) {
         suggested: msg.suggested,
         heatRate: Number(msg.heatRate) || 0,
         deadTime: Number(msg.deadTime) || 0,
+        modelSaved: msg.modelSaved !== false,
+        startC: Number(msg.startC) || 0,
       });
     });
     const failedListener = apiService.on('evt:autotune-failed', () => {
@@ -97,7 +99,15 @@ export function CalibrationTab({ formData, setField }) {
                   <Trans>Autotune Complete!</Trans>
                 </h3>
                 <div className='text-sm'>
-                  {autotuneResult.heatRate > 0 ? (
+                  {autotuneResult.heatRate > 0 && !autotuneResult.modelSaved ? (
+                    <Trans>
+                      Measured heat-up rate {autotuneResult.heatRate.toFixed(3)} °C/s, dead time{' '}
+                      {autotuneResult.deadTime.toFixed(1)} s, but not saved: the boiler started at{' '}
+                      {autotuneResult.startC.toFixed(0)} °C. A warm boiler loses heat as it climbs,
+                      so the rate reads low. Run autotune from a cold machine (below 50 °C) to
+                      update the Machine Boiler Profile. Your PID gains are unchanged.
+                    </Trans>
+                  ) : autotuneResult.heatRate > 0 ? (
                     <Trans>
                       Measured and saved to the Machine Boiler Profile: heat-up rate{' '}
                       {autotuneResult.heatRate.toFixed(3)} °C/s, dead time{' '}

@@ -14,6 +14,8 @@ export const PROFILE_FIELDS = {
   derivativeFilterS: { min: 0.5, max: 10 },
   integralZone: { min: 0.5, max: 5 },
   valveDumpMl: { min: 0.5, max: 30 },
+  groupHeatCapacity: { min: 100, max: 5000 },
+  groupCoupling: { min: 0.5, max: 30 },
   flushTargetFactor: { min: 0.5, max: 1.2 },
   flushTargetHoldS: { min: 1, max: 120 },
   tankRiseC: { min: 1, max: 40 },
@@ -26,7 +28,8 @@ export const PROFILE_FIELDS = {
   pumpModelCoeffs: { csv: 2 },
 };
 
-// Measured on a Rancilio Silvia 230 V with a GaggiMate Pro, 2026-10-28/29 (ROADMAP.md, bench results).
+// Measured on a Rancilio Silvia 230 V with a GaggiMate Pro, 2026-10-28/29 (ROADMAP.md, bench results); group head fitted
+// to logged warm-ups, 2026-11-02 (scripts/fit_warmup.py).
 export const BUILT_IN_PROFILES = [
   {
     name: 'Rancilio Silvia 230 V',
@@ -38,6 +41,8 @@ export const BUILT_IN_PROFILES = [
       derivativeFilterS: 2,
       integralZone: 1.5,
       valveDumpMl: 5,
+      groupHeatCapacity: 1343,
+      groupCoupling: 4.3,
       flushTargetFactor: 0.91,
       flushTargetHoldS: 30,
       tankRiseC: 18,

@@ -551,10 +551,12 @@ void WebSocketHandler::broadcastJson(JsonDocument &doc) {
 void WebSocketHandler::sendAutotuneResult() {
     JsonDocument doc(&psramAllocator);
     doc["tp"] = "evt:autotune-result";
-    doc["pid"] = controller->getSettings().getPid();          // in use (unchanged unless the controller is older)
-    doc["suggested"] = controller->getAutotuneSuggestedPid(); // autotune's gains, applied with req:autotune:apply
-    doc["heatRate"] = controller->getLastAutotuneHeatRate();  // saved as the full-power heat-up rate, 0 = not measured
-    doc["deadTime"] = controller->getLastAutotuneDeadTimeS(); // saved as the sensor dead time
+    doc["pid"] = controller->getSettings().getPid();             // in use (unchanged unless the controller is older)
+    doc["suggested"] = controller->getAutotuneSuggestedPid();    // autotune's gains, applied with req:autotune:apply
+    doc["heatRate"] = controller->getLastAutotuneHeatRate();     // saved as the full-power heat-up rate, 0 = not measured
+    doc["deadTime"] = controller->getLastAutotuneDeadTimeS();    // saved as the sensor dead time
+    doc["modelSaved"] = controller->wasLastAutotuneModelSaved(); // false: started warm, the measurements were not saved
+    doc["startC"] = controller->getAutotuneStartC();
     broadcastJson(doc);
 }
 

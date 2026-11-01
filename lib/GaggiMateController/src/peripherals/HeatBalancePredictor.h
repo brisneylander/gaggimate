@@ -2,6 +2,7 @@
 #define HEATBALANCEPREDICTOR_H
 
 #include <algorithm>
+#include <cmath>
 #include <deque>
 
 // Smith-predictor style lag compensation for a boiler whose thermocouple sees heater power only after a
@@ -48,6 +49,9 @@ class HeatBalancePredictor {
     float getLossWatts() const { return lossPerC * LOSS_REFERENCE_DELTA_C; } // at the reference temperature
     // Water the valve dumps into the drip tray as the flow stops (ml, <= 0 = none): boiler water the flow didn't count.
     void setValveDump(float ml) { valveDumpMl = ml > 0.0f ? ml : 0.0f; }
+    // Heat leaving the water for something else right now (W, e.g. a cold group head's uptake, GroupHeadEstimate):
+    // counted like the standing loss, so the predictor doesn't take it for heat on its way to the sensor.
+    void setExtraLossWatts(float watts) { extraLossW = std::isfinite(watts) && watts > 0.0f ? watts : 0.0f; }
     float getLossWattsAt(float temp) const { return lossPerC * std::max(temp - AMBIENT_C, 0.0f); }
 
   private:
@@ -61,6 +65,7 @@ class HeatBalancePredictor {
     float correction = 0.0f;
     float lossPerC = 0.0f; // W per °C above AMBIENT_C
     float valveDumpMl = 0.0f;
+    float extraLossW = 0.0f;
     bool lossSeeded = false;
     float lastFlow = 0.0f; // ml/s at the previous step: its fall to 0 is the valve's dump
 

@@ -31,6 +31,10 @@ constexpr Range VALVE_DUMP_ML{0.5f, 30.0f};
 // Heater safety: how long near full power with no rise may last (HeaterSafety.h; 0 = its 60 / 300 s defaults).
 constexpr Range NO_RISE_BREW_S{30.0f, 300.0f};
 constexpr Range NO_RISE_STEAM_S{60.0f, 900.0f};
+// Group head estimate (GroupHeadEstimate.h): its heat capacity and coupling to the water. A Silvia, fitted to logged
+// warm-ups (2026-11-02): 1343 J/°C, 4.3 W/°C.
+constexpr Range GROUP_HEAT_CAPACITY{100.0f, 5000.0f};
+constexpr Range GROUP_COUPLING{0.5f, 30.0f};
 // Display only: flush to target's share of the shown surplus (0 = 1.0) and heater hold after it (0 = 30 s); the tank
 // estimate's warming above the fill temperature (0 = 18 °C) and its time constant in minutes (0 = 120).
 constexpr Range FLUSH_TARGET_FACTOR{0.5f, 1.2f};

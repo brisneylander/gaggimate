@@ -154,6 +154,8 @@ class Controller {
     const String &getAutotuneSuggestedPid() const { return autotuneSuggestedPid; }
     float getLastAutotuneHeatRate() const { return lastAutotuneHeatRate; }
     float getLastAutotuneDeadTimeS() const { return lastAutotuneDeadTimeS; }
+    bool wasLastAutotuneModelSaved() const { return lastAutotuneModelSaved; }
+    float getAutotuneStartC() const { return autotuneStartC; }
     void applyAutotuneGains();
     void onFlushRelease(); // ends a hold-to-flush; no-op otherwise
     int getWaterLevel() const {
@@ -320,6 +322,12 @@ class Controller {
     StrayFlowGuard strayFlowGuard; // see StrayFlowGuard.h
     String autotuneSuggestedPid;
     float lastAutotuneHeatRate = 0.0f, lastAutotuneDeadTimeS = 0.0f;
+    // The boiler's shown temperature when the autotune started. Its full-power heat-up rate only reads true from cold: from
+    // a 93 °C boiler the standing loss slows the rise (0.46 instead of 0.6 °C/s on a Silvia, 2026-11-02), which would
+    // make flush to target flush ~30 % too much. So the measured model is saved only from a start below this.
+    static constexpr float AUTOTUNE_COLD_C = 50.0f;
+    float autotuneStartC = NAN;
+    bool lastAutotuneModelSaved = false;
     TankTemperature tank;
     unsigned long lastTankMs = 0;
     float tankSentC = -1.0f; // tank temperature last sent to the controller

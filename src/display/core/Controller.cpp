@@ -361,10 +361,15 @@ void Controller::setupBluetooth() {
             return;
         }
         // The boiler model it measured goes straight into the lag-compensation settings (each setter clamps to its
-        // range; 0 = not measured by this controller, leave as is). The gains are only offered: applyAutotuneGains().
-        if (std::isfinite(heatRate) && heatRate > 0.0f)
+        // range; 0 = not measured by this controller, leave as is), but only from a cold start (AUTOTUNE_COLD_C). The
+        // gains are only offered: applyAutotuneGains().
+        lastAutotuneModelSaved = std::isfinite(autotuneStartC) && autotuneStartC < AUTOTUNE_COLD_C;
+        if (!lastAutotuneModelSaved)
+            ESP_LOGW(LOG_TAG, "Autotune started at %.1f°C: heat-up rate and dead time not saved (needs < %.0f°C)", autotuneStartC,
+                     AUTOTUNE_COLD_C);
+        if (lastAutotuneModelSaved && std::isfinite(heatRate) && heatRate > 0.0f)
             settings.setModelHeatRate(heatRate);
-        if (std::isfinite(deadTimeS) && deadTimeS > 0.0f)
+        if (lastAutotuneModelSaved && std::isfinite(deadTimeS) && deadTimeS > 0.0f)
             settings.setSensorDeadTimeS(deadTimeS);
         if (std::isfinite(heaterW) && heaterW > 0.0f)
             settings.setModelHeaterW(heaterW);
@@ -886,6 +891,7 @@ void Controller::autotune(int testTime, int samples, int heaterWattage) {
     if (mode != MODE_STANDBY) {
         activateStandby();
     }
+    autotuneStartC = getCurrentTemp();
     autotuning = true;
     comms.sendAutotune(testTime, samples, heaterWattage);
     pluginManager->trigger("controller:autotune:start");
@@ -1036,6 +1042,8 @@ void Controller::setHeaterSettings() {
     tankSentC = lag.inletTempC;
     lag.waterDeadTimeS = settings.getWaterDeadTimeS();
     lag.valveDumpMl = settings.getValveDumpMl();
+    lag.groupHeatCapacity = settings.getGroupHeatCapacity();
+    lag.groupCoupling = settings.getGroupCoupling();
     lag.noRiseBrewS = settings.getNoRiseBrewS();
     lag.noRiseSteamS = settings.getNoRiseSteamS();
     comms.sendHeaterSettings(pid[0], pid[1], pid[2], pid[3], settings.isHeaterCoordinationEnabled(),

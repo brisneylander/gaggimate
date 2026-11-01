@@ -123,7 +123,9 @@ message HeaterSettings {
     reserved 16;                   // was thermal_observer (rolled back)
     float valve_dump_ml = 17;           // water the valve dumps when a flush or shot ends (ml), 0 = none
     float safety_no_rise_brew_s = 18;   // heater safety: full power, no rise, at brew setpoints (s), 0 = 60
-    float safety_no_rise_steam_s = 19;  // heater safety: the same at steam setpoints (s), 0 = 180
+    float safety_no_rise_steam_s = 19;  // heater safety: the same at steam setpoints (s), 0 = 300
+    float group_heat_capacity = 20;     // group head estimate: heat capacity (J/degC), 0 = off (GroupHeadEstimate.h)
+    float group_coupling = 21;          // group head estimate: water to group head coupling (W/degC)
 }
 
 message PumpSettings {

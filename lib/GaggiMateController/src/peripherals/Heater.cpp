@@ -54,6 +54,9 @@ void Heater::loop() {
         std::lock_guard<std::mutex> lock(lagMutex);
         predictor.reset(); // heat in flight is no longer tracked while off; start clean on re-enable
         predictorPrimed = false;
+        setpointReached = false; // the next warm-up starts afresh
+        if (!sensor->isErrorState())
+            updateGroupHead(millis()); // keeps cooling with the boiler, so a warm-up knows how cold the brass is
         return;
     }
     simplePid->setMode(SimplePID::Control::automatic);
@@ -62,6 +65,10 @@ void Heater::loop() {
 }
 
 void Heater::setSetpoint(float setpoint) {
+    if (setpoint >= this->setpoint + 3.0f) {
+        std::lock_guard<std::mutex> lock(lagMutex);
+        setpointReached = false; // a jump up (steam) is a warm-up of its own
+    }
     if (this->setpoint != setpoint) {
         this->setpoint = setpoint;
         ESP_LOGV(LOG_TAG, "Set setpoint %f°C", setpoint);
@@ -100,7 +107,7 @@ void Heater::setFeedforwardScale(float combinedKff) {
 
 void Heater::setLagCompensation(float derivativeFilterS, float integralZoneC, float sensorDeadTimeS, float modelHeaterW,
                                 float modelHeatRate, float modelLossW, float inletTempC, float waterDeadTimeS, float valveDumpMl,
-                                float noRiseBrewS, float noRiseSteamS) {
+                                float noRiseBrewS, float noRiseSteamS, float groupHeatCapacity, float groupCoupling) {
     std::lock_guard<std::mutex> lock(lagMutex);
     simplePid->setDerivativeFilterTime(derivativeFilterS);
     simplePid->setIntegralZone(integralZoneC);
@@ -115,11 +122,33 @@ void Heater::setLagCompensation(float derivativeFilterS, float integralZoneC, fl
     predictor.seedLoss(modelLossW);
     predictor.setValveDump(valveDumpMl);
     safety.setNoRiseLimits(noRiseBrewS, noRiseSteamS);
+    groupHead.configure(groupHeatCapacity, groupCoupling,
+                        predictor.getLossWatts() / HeatBalancePredictor::LOSS_REFERENCE_DELTA_C);
     ESP_LOGI(LOG_TAG,
              "Lag compensation: D filter %.1fs, I zone %.2f°C, dead time %.1fs, predictor %s (%.0fW, %.3f°C/s, water %.1fs), "
              "inlet %.1f°C",
              derivativeFilterS, integralZoneC, sensorDeadTimeS, predictor.isEnabled() ? "on" : "off", modelHeaterW, modelHeatRate,
              predictor.getWaterDeadTime(), incomingWaterTemp);
+}
+
+// Advances the group head estimate to now (call with lagMutex held). Its loss to the room is the predictor's learned
+// standing loss, so a machine needs only the group head's heat capacity and coupling.
+void Heater::updateGroupHead(uint32_t now) {
+    if (!groupHead.isEnabled()) {
+        lastGroupMs = now;
+        return;
+    }
+    if (lastGroupMs == 0) {
+        lastGroupMs = now;
+        groupHead.update(0.001f, temperature); // starts at the boiler's temperature
+        return;
+    }
+    const float dt = static_cast<float>(now - lastGroupMs) / 1000.0f;
+    if (dt < 1.0f)
+        return;
+    lastGroupMs = now;
+    groupHead.setLossPerK(predictor.getLossWatts() / HeatBalancePredictor::LOSS_REFERENCE_DELTA_C);
+    groupHead.update(std::min(dt, 10.0f), temperature);
 }
 
 float Heater::getLearnedLossWatts() {
@@ -158,6 +187,12 @@ void Heater::updateLagCompensation() {
         // One step per PWM window; `output` is the duty that was applied over it.
         const float dt = static_cast<float>(now - lastPredictorMs) / 1000.0f;
         lastPredictorMs = now;
+        // After a cold start the group head keeps soaking up heat for minutes. Counted only once the setpoint has been
+        // reached: during the climb it would make the predictor discount heat in flight, and the boost overshoot.
+        if (temperature >= setpoint - 0.5f)
+            setpointReached = true;
+        updateGroupHead(now);
+        predictor.setExtraLossWatts(setpointReached ? groupHead.getUptakeWatts() : 0.0f);
         predictor.update(dt, output / TUNER_OUTPUT_SPAN, flowing ? flow : 0.0f, temperature, setpoint);
     }
     controlTemperature = temperature + predictor.getCorrection();

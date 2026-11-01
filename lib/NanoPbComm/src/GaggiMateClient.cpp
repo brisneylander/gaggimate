@@ -96,6 +96,8 @@ gm::Payload GaggiMateClient::buildHeaterSettings(float kp, float ki, float kd, f
     p.content.heater.valve_dump_ml = lag.valveDumpMl;
     p.content.heater.safety_no_rise_brew_s = lag.noRiseBrewS;
     p.content.heater.safety_no_rise_steam_s = lag.noRiseSteamS;
+    p.content.heater.group_heat_capacity = lag.groupHeatCapacity;
+    p.content.heater.group_coupling = lag.groupCoupling;
     return p;
 }
 

@@ -30,7 +30,9 @@ struct HeaterLagCompensation {
     float waterDeadTimeS = 0.0f;    // heat-balance predictor: delay from water flowing to the sensor (s), 0 = dead time
     float valveDumpMl = 0.0f;       // water the valve dumps when a flush or shot ends (ml), 0 = none
     float noRiseBrewS = 0.0f;       // heater safety: full power, no rise, at brew setpoints (s), 0 = 60
-    float noRiseSteamS = 0.0f;      // heater safety: the same at steam setpoints (s), 0 = 180
+    float noRiseSteamS = 0.0f;      // heater safety: the same at steam setpoints (s), 0 = 300
+    float groupHeatCapacity = 0.0f; // group head estimate: heat capacity (J/°C), 0 = off
+    float groupCoupling = 0.0f;     // group head estimate: water to group head coupling (W/°C)
 };
 
 // Per-component commands: drive several components atomically in one frame, comparable so callers send only deltas.

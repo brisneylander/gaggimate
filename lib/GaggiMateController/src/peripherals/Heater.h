@@ -1,6 +1,7 @@
 #ifndef HEATER_H
 #define HEATER_H
 #include "Autotune/Autotune.h"
+#include "GroupHeadEstimate.h"
 #include "HeatBalancePredictor.h"
 #include "HeaterSafety.h"
 #include "Max31855Thermocouple.h"
@@ -59,7 +60,8 @@ class Heater {
     //   waterDeadTimeS: delay from water flowing to the sensor reacting (<= 0: same as sensorDeadTimeS)
     void setLagCompensation(float derivativeFilterS, float integralZoneC, float sensorDeadTimeS, float modelHeaterW,
                             float modelHeatRate, float modelLossW = 0.0f, float inletTempC = 0.0f, float waterDeadTimeS = 0.0f,
-                            float valveDumpMl = 0.0f, float noRiseBrewS = 0.0f, float noRiseSteamS = 0.0f);
+                            float valveDumpMl = 0.0f, float noRiseBrewS = 0.0f, float noRiseSteamS = 0.0f,
+                            float groupHeatCapacity = 0.0f, float groupCoupling = 0.0f);
     float getControlTemperature() const { return controlTemperature; }
     // Predictor's learned standing loss (W), 0 while the predictor is off.
     float getLearnedLossWatts();
@@ -116,6 +118,12 @@ class Heater {
     // Lag compensation state (written from the comms task, read on the heater task)
     std::mutex lagMutex;
     HeatBalancePredictor predictor;
+    // The group head's uptake after a cold start, counted by the predictor as a loss once the setpoint has been reached
+    // (GroupHeadEstimate.h). Runs in Standby too, so a warm-up knows how cold the brass is.
+    GroupHeadEstimate groupHead;
+    bool setpointReached = false;
+    uint32_t lastGroupMs = 0;
+    void updateGroupHead(uint32_t now);
     HeaterSafety safety;
     bool safetyReported = false;
     void checkSafety(bool flowing);

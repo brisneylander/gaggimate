@@ -301,6 +301,10 @@ msgctxt "dashboard view"
 msgid "Advanced"
 msgstr "Advanced"
 
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "After a cold start the brass group head keeps soaking up heat for about 10 minutes after the boiler first reaches its target, so the boiler sagged 2-3.5 °C below it. The controller tracks the group head's temperature and counts that heat, so it keeps heating through the sag. Fitted to logged warm-ups."
+msgstr "After a cold start the brass group head keeps soaking up heat for about 10 minutes after the boiler first reaches its target, so the boiler sagged 2-3.5 °C below it. The controller tracks the group head's temperature and counts that heat, so it keeps heating through the sag. Fitted to logged warm-ups."
+
 #: src/pages/Settings/tabs/GeneralTab.jsx
 msgid "After steaming, or any time the boiler is 2 °C or more over the selected profile's temperature, the flush button runs just enough fresh water to bring it back down to the brew temperature, then holds the heater off briefly while it settles. Closer to target it runs the normal flush. Needs <0>Heater power</0> and <1>Full-power heat-up rate</1> in the Machine Boiler Profile."
 msgstr "After steaming, or any time the boiler is 2 °C or more over the selected profile's temperature, the flush button runs just enough fresh water to bring it back down to the brew temperature, then holds the heater off briefly while it settles. Closer to target it runs the normal flush. Needs <0>Heater power</0> and <1>Full-power heat-up rate</1> in the Machine Boiler Profile."
@@ -2230,6 +2234,14 @@ msgstr "Grind target"
 msgid "Grinding"
 msgstr "Grinding"
 
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "Group head coupling"
+msgstr "Group head coupling"
+
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "Group head heat capacity"
+msgstr "Group head heat capacity"
+
 #: src/pages/Settings/tabs/SystemTab.jsx
 msgid "Hardware"
 msgstr "Hardware"
@@ -2361,6 +2373,10 @@ msgid "How far above the fill temperature the tank water settles after hours bes
 msgstr "How far above the fill temperature the tank water settles after hours beside the hot boiler: 25 °C fresh water ends up around 43 °C at 18 °C."
 
 #: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "How fast heat moves from the boiler water into the group head (4.3 W/°C on a Silvia)."
+msgstr "How fast heat moves from the boiler water into the group head (4.3 W/°C on a Silvia)."
+
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
 msgid "How long the heater stays off after a flush to target, so the flush's cooling reaches the slow sensor before the PID reacts and it doesn't heat into a dip that's already corrected."
 msgstr "How long the heater stays off after a flush to target, so the flush's cooling reaches the slow sensor before the PID reacts and it doesn't heat into a dip that's already corrected."
 
@@ -2371,6 +2387,14 @@ msgstr "How long the heater stays off after a flush to target, until the flush's
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "How many ml/s to pump into the boiler during steaming"
 msgstr "How many ml/s to pump into the boiler during steaming"
+
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "How much heat the group head holds. With the coupling it tracks how cold the group head is, so a warm-up keeps heating it instead of sagging below the target. 0 turns it off (1343 J/°C on a Silvia)."
+msgstr "How much heat the group head holds. With the coupling it tracks how cold the group head is, so a warm-up keeps heating it instead of sagging below the target. 0 turns it off (1343 J/°C on a Silvia)."
+
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "How quickly the group head takes heat from the boiler water. Together with the heat capacity: a big, slowly coupled group head soaks up heat for longer."
+msgstr "How quickly the group head takes heat from the boiler water. Together with the heat capacity: a big, slowly coupled group head soaks up heat for longer."
 
 #: src/pages/Settings/tabs/LagCompensationSection.jsx
 msgid "How quickly the tank approaches that warmer temperature while the machine is on. It cools 1.5× slower in standby and resets to the fill temperature on a refill."
@@ -2920,6 +2944,13 @@ msgstr "Maximum Pump Power (0 - 1)"
 #: src/pages/Settings/tabs/CalibrationTab.jsx
 msgid "Measured and saved to the Machine Boiler Profile: heat-up rate {0} °C/s, dead time {1} s. Your PID gains are unchanged."
 msgstr "Measured and saved to the Machine Boiler Profile: heat-up rate {0} °C/s, dead time {1} s. Your PID gains are unchanged."
+
+#. placeholder {0}: autotuneResult.heatRate.toFixed(3)
+#. placeholder {1}: autotuneResult.deadTime.toFixed(1)
+#. placeholder {2}: autotuneResult.startC.toFixed(0)
+#: src/pages/Settings/tabs/CalibrationTab.jsx
+msgid "Measured heat-up rate {0} °C/s, dead time {1} s, but not saved: the boiler started at {2} °C. A warm boiler loses heat as it climbs, so the rate reads low. Run autotune from a cold machine (below 50 °C) to update the Machine Boiler Profile. Your PID gains are unchanged."
+msgstr "Measured heat-up rate {0} °C/s, dead time {1} s, but not saved: the boiler started at {2} °C. A warm boiler loses heat as it climbs, so the rate reads low. Run autotune from a cold machine (below 50 °C) to update the Machine Boiler Profile. Your PID gains are unchanged."
 
 #: src/pages/Settings/tune/TuneMachine.jsx
 #~ msgid "Measures how soon flush water reaches the sensor, the water the valve dumps into the drip tray, and checks the pump calibration. Portafilter out, an empty cup under the group, drip tray emptied."
@@ -6241,6 +6272,10 @@ msgstr "waiting for a steady temperature"
 #: src/pages/Settings/tune/TuneMachine.jsx
 msgid "waiting for the machine's readings"
 msgstr "waiting for the machine's readings"
+
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "Warm-up"
+msgstr "Warm-up"
 
 #: src/utils/warnings.js
 msgctxt "warning level"

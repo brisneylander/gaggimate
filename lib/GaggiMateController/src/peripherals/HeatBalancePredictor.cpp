@@ -64,11 +64,11 @@ float HeatBalancePredictor::update(float dt, float duty, float flow, float measu
     // Learned per degree above the room, so a value learned at brew temperature also holds at steam temperature.
     const float aboveRoom = measuredTemp - AMBIENT_C;
     if (flow == 0.0f && setpoint > 0.0f && std::fabs(measuredTemp - setpoint) < LOSS_LEARN_BAND && aboveRoom > 10.0f) {
-        lossPerC += (heaterPower / aboveRoom - lossPerC) * dt / (LOSS_LEARN_TAU + dt);
+        lossPerC += (std::max(heaterPower - extraLossW, 0.0f) / aboveRoom - lossPerC) * dt / (LOSS_LEARN_TAU + dt);
     }
     const float lossWatts = lossPerC * std::max(aboveRoom, 0.0f);
 
-    window.push_back({dt, (heaterPower - lossWatts) * dt / heatCapacity, waterJ / heatCapacity});
+    window.push_back({dt, (heaterPower - lossWatts - extraLossW) * dt / heatCapacity, waterJ / heatCapacity});
     windowTime += dt;
     // Steps older than both delays have reached the sensor; they are in measuredTemp already.
     const float longest = std::max(deadTime, waterDeadTime);

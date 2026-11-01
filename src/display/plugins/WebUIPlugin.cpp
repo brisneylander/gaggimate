@@ -388,6 +388,10 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
                 settings->setModelLossW(request->arg("modelLossW").toFloat());
             if (request->hasArg("valveDumpMl"))
                 settings->setValveDumpMl(request->arg("valveDumpMl").toFloat());
+            if (request->hasArg("groupHeatCapacity"))
+                settings->setGroupHeatCapacity(request->arg("groupHeatCapacity").toFloat());
+            if (request->hasArg("groupCoupling"))
+                settings->setGroupCoupling(request->arg("groupCoupling").toFloat());
             if (request->hasArg("flushTargetFactor"))
                 settings->setFlushTargetFactor(request->arg("flushTargetFactor").toFloat());
             if (request->hasArg("flushTargetHoldS"))
@@ -616,6 +620,8 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
     doc["inletTempC"] = settings.getInletTempC();
     doc["tankFillC"] = settings.getTankFillC();
     doc["valveDumpMl"] = settings.getValveDumpMl();
+    doc["groupHeatCapacity"] = settings.getGroupHeatCapacity();
+    doc["groupCoupling"] = settings.getGroupCoupling();
     doc["flushTargetFactor"] = settings.getFlushTargetFactor();
     doc["flushTargetHoldS"] = settings.getFlushTargetHoldS();
     doc["tankRiseC"] = settings.getTankRiseC();

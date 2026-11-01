@@ -109,6 +109,8 @@ class Settings {
     float getInletTempC() const { return inletTempC.get(); }
     float getTankFillC() const { return tankFillC.get(); }
     float getValveDumpMl() const { return valveDumpMl.get(); }
+    float getGroupHeatCapacity() const { return groupHeatCapacity.get(); }
+    float getGroupCoupling() const { return groupCoupling.get(); }
     float getFlushTargetFactor() const { return flushTargetFactor.get(); }
     float getFlushTargetHoldS() const { return flushTargetHoldS.get(); }
     float getTankRiseC() const { return tankRiseC.get(); }
@@ -244,6 +246,8 @@ class Settings {
     void setInletTempC(float degrees);
     void setTankFillC(float degrees);
     void setValveDumpMl(float value);
+    void setGroupHeatCapacity(float value);
+    void setGroupCoupling(float value);
     void setFlushTargetFactor(float value);
     void setFlushTargetHoldS(float value);
     void setTankRiseC(float value);
@@ -411,6 +415,8 @@ class Settings {
     Property<float> inletTempC{registry, "lc_it", 0.0f};
     Property<float> tankFillC{registry, "tk_fill", 0.0f};        // fresh tank water (°C) for the tank estimate, 0 = off
     Property<float> valveDumpMl{registry, "lc_vd", 0.0f};        // ml the valve dumps after a flush or shot, 0 = none
+    Property<float> groupHeatCapacity{registry, "lc_gc", 0.0f};  // group head estimate: heat capacity (J/°C), 0 = off
+    Property<float> groupCoupling{registry, "lc_gk", 0.0f};      // group head estimate: water to group coupling (W/°C)
     Property<float> flushTargetFactor{registry, "ft_fac", 0.0f}; // flush to target's share of the surplus, 0 = 1.0
     Property<float> flushTargetHoldS{registry, "ft_hold", 0.0f}; // heater off after a flush to target (s), 0 = 30
     Property<float> tankRiseC{registry, "tk_rise", 0.0f};        // tank warming above the fill temperature (°C), 0 = 18

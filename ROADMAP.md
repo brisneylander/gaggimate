@@ -37,6 +37,21 @@ on 2026-10-28 left open. See [FORK.md](FORK.md) for building and releasing.
 
 ## Bench results so far
 
+**Startup sag and the group head estimate** (2026-11-02, logger on OMV, `tools/logger`). Both warm-ups that morning
+reached the target fast (boost) but then sagged: from 23 °C, +1.0 °C over then **−3.5 °C**, back at 93 °C after ~10 min;
+from 58 °C, +3.2 °C then −2.0 °C, ~7 min. The heater ran only 7–20 % through the sag: the cold group head kept soaking up
+heat, the predictor counted that heat as in the water, and the integral zone (1.5 °C) left only P acting. The flush-fitted
+simulator plant missed these warm-ups by 2.2–3.2 °C rms; refitted to them (`scripts/fit_warmup.py`, standing loss pinned
+to the logged 47 W holding power) it tracks them to ~1 °C and reproduces the sag closed loop. Tried in simulation: a wider
+integral zone (settles a little sooner, sag unchanged), a group-uptake feedforward (removes the sag, but +3–6 °C
+overshoot), the uptake as a predictor loss throughout (overshoot doubles). Kept: `GroupHeadEstimate` tracks the group
+head (1343 J/°C, 4.3 W/°C on a Silvia; loss = the predictor's learned one), running in Standby too, and once the setpoint
+has been reached its uptake counts as a loss in the predictor. Simulated: sag −3.75 → −1.75 °C from cold and
+−2.25 → −1.5 °C from warm, settled 728 → 447 s and 442 → 381 s, overshoot unchanged, flushes and shots identical. La Simona 2.
+
+Also 2026-11-02: an autotune run from a 93 °C boiler saved a heat-up rate of 0.46 °C/s (0.6 from cold), which would have
+made flush to target flush ~30 % too much. The measured model is now saved only when the autotune started below 50 °C.
+
 **Against stock settings, after steam** (2026-10-30, issue #1, `out/diag/steam-*.csv`, script `scripts/bench/steam_benchmark.mjs`).
 Each run: settle at 93 °C on the fork settings, switch to the run's settings, 5 min idle hold test, Steam to 100 °C, back
 to Brew, act at the peak, log 7 min. Stock setups run the fork's firmware with every compensation setting at 0 (D on

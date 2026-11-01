@@ -165,6 +165,10 @@ void Settings::setModelHeatRate(float degreesPerSecond) {
 void Settings::setModelLossW(float watts) { modelLossW.set(lag_limits::clampOrOff(watts, lag_limits::STANDING_LOSS_W)); }
 
 void Settings::setValveDumpMl(float value) { valveDumpMl.set(lag_limits::clampOrOff(value, lag_limits::VALVE_DUMP_ML)); }
+void Settings::setGroupHeatCapacity(float value) {
+    groupHeatCapacity.set(lag_limits::clampOrOff(value, lag_limits::GROUP_HEAT_CAPACITY));
+}
+void Settings::setGroupCoupling(float value) { groupCoupling.set(lag_limits::clampOrOff(value, lag_limits::GROUP_COUPLING)); }
 void Settings::setFlushTargetFactor(float value) {
     flushTargetFactor.set(lag_limits::clampOrOff(value, lag_limits::FLUSH_TARGET_FACTOR));
 }

@@ -20,6 +20,7 @@ static uint32_t millis() { return fakeNow; }
 #endif
 
 #include "SimplePID/SimplePID.cpp"
+#include "peripherals/GroupHeadEstimate.h"
 #include "peripherals/HeatBalancePredictor.cpp"
 #include "peripherals/HeatUpBoost.h"
 
@@ -230,6 +231,8 @@ struct Tuning {
     // Thermal feedforward as Heater::loopPid (settings kf, output units per watt; 1000 / 1100 W = the water's heat exactly).
     float kff = 0.0f;
     bool heatUpBoost = true; // as Heater::loopPid (HeatUpBoost.h)
+    // Group head estimate (Heater::updateGroupHead): heat capacity and coupling, 0 = off. The Silvia profile: 1343, 4.3.
+    float groupC = 0.0f, groupK = 0.0f;
 };
 
 struct Result {
@@ -242,6 +245,18 @@ struct Result {
     float backAt;    // s after the flush starts until the sensor first climbs back to setpoint
     float waterLow;  // lowest boiler water temperature (not the sensor) from the flush/shot start to 2 min after
 };
+
+// As Heater::updateLagCompensation: the group head estimate follows the reading (its loss is the predictor's learned
+// one), and once the setpoint has been reached its uptake counts as a loss in the predictor.
+static void stepGroupHead(GroupHeadEstimate &g, HeatBalancePredictor &p, float measured, float sp, bool &reached) {
+    if (!g.isEnabled())
+        return;
+    if (measured >= sp - 0.5f)
+        reached = true;
+    g.setLossPerK(p.getLossWatts() / HeatBalancePredictor::LOSS_REFERENCE_DELTA_C);
+    g.update(1.0f, measured);
+    p.setExtraLossWatts(reached ? g.getUptakeWatts() : 0.0f);
+}
 
 static constexpr float SILVIA_VALVE_DUMP_ML = 5.0f; // weighed on the bench, 2026-10-29
 
@@ -283,6 +298,9 @@ static Result simulate(const Tuning &tu) {
     };
     if (tu.predictorStartS <= 0.0f)
         startPredictor();
+    GroupHeadEstimate groupEst;
+    groupEst.configure(tu.groupC, tu.groupK, 0.0f);
+    bool groupReached = false;
     const uint32_t holdTailMs = tu.modelDeadS > 0.0f ? static_cast<uint32_t>(tu.modelDeadS * 1000.0f) : 0;
     uint32_t lastFlowMs = 0;
     bool flowSeen = false;
@@ -315,8 +333,10 @@ static Result simulate(const Tuning &tu) {
                 pid.setIntegralHold(flow > 0.0f || (flowSeen && fakeNow - lastFlowMs < holdTailMs));
             if (!predictorStarted && t >= tu.predictorStartS)
                 startPredictor();
-            if (predictorStarted)
+            if (predictorStarted) {
+                stepGroupHead(groupEst, predictor, measured, sp, groupReached);
                 predictor.update(1.0f, output / 1000.0f, flow, measured, sp);
+            }
             control = measured + predictor.getCorrection();
             if (tu.kff > 0.0f && flow > 0.01f) {
                 // Heater::calculateDisturbanceFeedforwardGain + calculateSafetyScaling (without its smoothing)
@@ -586,11 +606,23 @@ struct HeatUp {
 };
 
 // afterShot: a shot ended just before (the boost sees a flush 0 s ago); trickle: steam pump assist into the boiler (ml/s).
+// Plant for the heat-up runs: the flush fit (default), or the fit to logged warm-ups (scripts/fit_warmup.py, 2026-11-02:
+// the 6:45 and 8:09 warm-ups, standing loss pinned to the 47 W holding power). It reproduces those warm-ups closed loop
+// (overshoot, then a 2-3.5 °C sag for ~10 min while the group head soaks up heat); the flush fit doesn't.
+struct Plant {
+    float wallC, waterC, wallToWater, groupC, waterToGroup, lossPerK;
+};
+static constexpr Plant FLUSH_PLANT{200.0f, 1296.0f, 9.6f, 819.0f, 5.7f, 0.59f};
+static constexpr Plant WARMUP_PLANT{215.8f, 1213.9f, 9.2f, 1342.8f, 4.3f, 47.0f / 76.0f};
+static Plant heatUpPlant = FLUSH_PLANT;
+static float lastHeatUpSag = 0.0f; // lowest reading under the setpoint after first reaching it (last simulateHeatUp)
+
 static HeatUp simulateHeatUp(const Tuning &tu, float startC, float groupBelowC, float setpoint, bool afterShot = false,
                              float trickle = 0.0f, float near = 0.5f) {
-    const float dt = 0.25f, room = 22.0f, lossPerK = 0.59f;
-    const float plantW = 1100.0f, wallC = 200.0f, waterC = 1296.0f, wallToWater = 9.6f;
-    const float groupC = 819.0f, waterToGroup = 5.7f;
+    const float dt = 0.25f, room = 22.0f, lossPerK = heatUpPlant.lossPerK;
+    const float plantW = 1100.0f, wallC = heatUpPlant.wallC, waterC = heatUpPlant.waterC, wallToWater = heatUpPlant.wallToWater;
+    const float groupC = heatUpPlant.groupC, waterToGroup = heatUpPlant.waterToGroup;
+    lastHeatUpSag = 0.0f;
     const float delayS = 4.6f, lagS = 15.0f;
     const int delaySteps = static_cast<int>(delayS / dt);
     const float holdW = lossPerK * (startC - room);
@@ -611,6 +643,9 @@ static HeatUp simulateHeatUp(const Tuning &tu, float startC, float groupBelowC, 
     HeatBalancePredictor predictor;
     predictor.configure(tu.modelW, tu.modelRate, tu.modelDeadS, tu.predictorInletC, tu.waterDeadS);
     predictor.seedLoss(tu.lossSeedW);
+    GroupHeadEstimate groupEst;
+    groupEst.configure(tu.groupC, tu.groupK, 0.0f);
+    bool groupReached = false;
     HeatUp r{-1.0f, -1e9f, 0.0f, 0.0f};
     float dutySum = 0.0f, lastOut = -1.0f;
     int dutyN = 0;
@@ -621,6 +656,7 @@ static HeatUp simulateHeatUp(const Tuning &tu, float startC, float groupBelowC, 
         if (step % 4 == 0) {
             fakeNow += 1000;
             measured = ema;
+            stepGroupHead(groupEst, predictor, measured, sp, groupReached);
             predictor.update(1.0f, output / 1000.0f, trickle, measured, sp);
             control = measured + predictor.getCorrection();
             pid.update();
@@ -633,8 +669,10 @@ static HeatUp simulateHeatUp(const Tuning &tu, float startC, float groupBelowC, 
             }
             if (r.reach < 0.0f && measured >= sp - near)
                 r.reach = t;
-            if (r.reach >= 0.0f)
+            if (r.reach >= 0.0f) {
                 r.over = std::max(r.over, measured - sp);
+                lastHeatUpSag = std::min(lastHeatUpSag, measured - sp);
+            }
             if (std::fabs(measured - sp) > 0.3f)
                 lastOut = t;
         }
@@ -687,6 +725,42 @@ static void test_heat_up_boost() {
     }
 }
 
+// The group head estimate on the plant fitted to the 2026-11-02 warm-ups: from 28 °C (the 6:45 wake-up) and 63 °C (8:09)
+// the boiler overshot, then sagged 2-3.5 °C for ~10 min. With the estimate the sag shrinks and settles sooner, the
+// overshoot doesn't grow, and flushes and shots (on the flush-fitted plant) are unchanged.
+static void test_group_head_estimate() {
+    Tuning off = compensated();
+    off.lossSeedW = 33.0f;
+    Tuning on = off;
+    on.groupC = 1343.0f;
+    on.groupK = 4.3f;
+    heatUpPlant = WARMUP_PLANT;
+    for (float start : {28.2f, 63.0f}) {
+        const HeatUp b = simulateHeatUp(off, start, 0.0f, 98.0f);
+        const float sagB = lastHeatUpSag;
+        const HeatUp a = simulateHeatUp(on, start, 0.0f, 98.0f);
+        const float sagA = lastHeatUpSag;
+        printf("warm-up from %4.1f: over %+5.2f -> %+5.2f  sag %+5.2f -> %+5.2f  settled %4.0f -> %4.0f s\n", start, b.over,
+               a.over, sagB, sagA, b.settled, a.settled);
+        TEST_ASSERT_TRUE(a.over <= b.over + 0.1f);
+        TEST_ASSERT_TRUE(sagA >= 0.7f * sagB); // at most 70 % of the sag left (sags are negative)
+        TEST_ASSERT_TRUE(a.settled < b.settled);
+    }
+    const HeatUp sb = simulateHeatUp(off, 98.0f, 0.0f, 125.0f), sa = simulateHeatUp(on, 98.0f, 0.0f, 125.0f);
+    printf("steam heat-up: over %+5.2f -> %+5.2f  settled %4.0f -> %4.0f s\n", sb.over, sa.over, sb.settled, sa.settled);
+    heatUpPlant = FLUSH_PLANT;
+    const Result fb = simulate(off), fa = simulate(on);
+    Tuning shotOff = off, shotOn = on;
+    shotOff.flowProfile = LONDONIUM_SHOT;
+    shotOn.flowProfile = LONDONIUM_SHOT;
+    const Result hb = simulate(shotOff), ha = simulate(shotOn);
+    printf("flush: peak %.2f -> %.2f, back %.0f -> %.0f s | shot: low %.2f -> %.2f, peak %.2f -> %.2f\n", fb.peak, fa.peak,
+           fb.backAt, fa.backAt, hb.dipMin, ha.dipMin, hb.peak, ha.peak);
+    TEST_ASSERT_FLOAT_WITHIN(0.26f, fb.peak, fa.peak);
+    TEST_ASSERT_FLOAT_WITHIN(0.26f, hb.dipMin, ha.dipMin);
+    TEST_ASSERT_FLOAT_WITHIN(0.26f, hb.peak, ha.peak);
+}
+
 int main(int argc, char **argv) {
     UNITY_BEGIN();
     RUN_TEST(test_disabled_when_any_parameter_missing);
@@ -711,5 +785,6 @@ int main(int argc, char **argv) {
     RUN_TEST(test_bench_configurations);
     RUN_TEST(test_shot_feedforward);
     RUN_TEST(test_heat_up_boost);
+    RUN_TEST(test_group_head_estimate);
     return UNITY_END();
 }

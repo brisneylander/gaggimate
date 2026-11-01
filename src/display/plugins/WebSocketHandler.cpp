@@ -234,6 +234,11 @@ void WebSocketHandler::handleWebSocketData(AsyncWebSocket *server, AsyncWebSocke
                 } else if (msgType == "req:process:deactivate") {
                     controller->deactivate();
                     controller->clear();
+                } else if (msgType == "req:autotune:apply") {
+                    controller->applyAutotuneGains();
+                    sendAutotuneResult();
+                } else if (msgType == "req:tank:refilled") {
+                    controller->onTankRefilled();
                 } else if (msgType == "req:process:clear") {
                     controller->clear();
                 } else if (msgType == "req:grind:activate") {
@@ -288,6 +293,8 @@ void WebSocketHandler::handleWebSocketData(AsyncWebSocket *server, AsyncWebSocke
                     handleFlushStart(client->id(), doc);
                 } else if (msgType == "req:scale:tare") {
                     controller->getClientController()->tare();
+                } else if (msgType == "req:flush:to-target") {
+                    handleFlushToTarget(client->id(), doc);
                 } else if (msgType == "req:flush:stop") {
                     handleFlushStop(client->id(), doc);
                 } else if (auto it = pluginRequestHandlers.find(msgType); it != pluginRequestHandlers.end()) {
@@ -544,7 +551,10 @@ void WebSocketHandler::broadcastJson(JsonDocument &doc) {
 void WebSocketHandler::sendAutotuneResult() {
     JsonDocument doc(&psramAllocator);
     doc["tp"] = "evt:autotune-result";
-    doc["pid"] = controller->getSettings().getPid();
+    doc["pid"] = controller->getSettings().getPid();          // in use (unchanged unless the controller is older)
+    doc["suggested"] = controller->getAutotuneSuggestedPid(); // autotune's gains, applied with req:autotune:apply
+    doc["heatRate"] = controller->getLastAutotuneHeatRate();  // saved as the full-power heat-up rate, 0 = not measured
+    doc["deadTime"] = controller->getLastAutotuneDeadTimeS(); // saved as the sensor dead time
     broadcastJson(doc);
 }
 
@@ -554,6 +564,20 @@ void WebSocketHandler::sendAutotuneFailed() {
     JsonDocument doc(&psramAllocator);
     doc["tp"] = "evt:autotune-failed";
     broadcastJson(doc);
+}
+
+void WebSocketHandler::handleFlushToTarget(uint32_t clientId, JsonDocument &request) {
+    const flush_to_target::Plan plan = controller->flushToTarget();
+
+    JsonDocument response(&psramAllocator);
+    response["tp"] = "res:flush:to-target";
+    response["rid"] = request["rid"];
+    response["success"] = plan.reason == nullptr;
+    response["ml"] = round(plan.ml);
+    response["seconds"] = round(plan.seconds * 10.0f) / 10.0f;
+    if (plan.reason != nullptr)
+        response["reason"] = plan.reason;
+    ws.text(clientId, toWsBuffer(response));
 }
 
 void WebSocketHandler::handleFlushStart(uint32_t clientId, JsonDocument &request) {

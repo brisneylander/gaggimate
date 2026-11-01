@@ -5,9 +5,10 @@ import { OverviewChart } from '../../../components/OverviewChart.jsx';
 import { Spinner } from '../../../components/Spinner.jsx';
 import Section from '../../../components/Card.jsx';
 import PumpFlowCalibration from '../../../components/PumpFlowCalibration/index.jsx';
+import { TuneMachine } from '../tune/TuneMachine.jsx';
 import { SettingsFormField } from '../../../components/SettingsFormField.jsx';
 
-export function CalibrationTab({ formData, onChange, setField }) {
+export function CalibrationTab({ formData, setField }) {
   const { t } = useLingui();
   const apiService = useContext(ApiServiceContext);
 
@@ -17,7 +18,13 @@ export function CalibrationTab({ formData, onChange, setField }) {
   const [autotuneFailed, setAutotuneFailed] = useState(false);
   const [autotuneTime, setAutotuneTime] = useState(120);
   const [autotuneSamples, setAutotuneSamples] = useState(6);
-  const [autotuneWattage, setAutotuneWattage] = useState(1360);
+  // Defaults to the heater power already set for lag compensation (Machine Boiler Profile), else a Gaggia Classic's.
+  const [autotuneWattage, setAutotuneWattage] = useState(
+    Number(formData?.modelHeaterW) > 0 ? Number(formData.modelHeaterW) : 1360,
+  );
+  useEffect(() => {
+    if (Number(formData?.modelHeaterW) > 0) setAutotuneWattage(Number(formData.modelHeaterW));
+  }, [formData?.modelHeaterW]);
 
   const onStartAutotune = useCallback(() => {
     apiService.send({
@@ -35,7 +42,12 @@ export function CalibrationTab({ formData, onChange, setField }) {
     const resultListener = apiService.on('evt:autotune-result', msg => {
       setAutotuneActive(false);
       setAutotuneFailed(false);
-      setAutotuneResult(msg.pid);
+      setAutotuneResult({
+        pid: msg.pid,
+        suggested: msg.suggested,
+        heatRate: Number(msg.heatRate) || 0,
+        deadTime: Number(msg.deadTime) || 0,
+      });
     });
     const failedListener = apiService.on('evt:autotune-failed', () => {
       setAutotuneActive(false);
@@ -85,15 +97,41 @@ export function CalibrationTab({ formData, onChange, setField }) {
                   <Trans>Autotune Complete!</Trans>
                 </h3>
                 <div className='text-sm'>
-                  <Trans>Your new PID values have been saved successfully.</Trans>
+                  {autotuneResult.heatRate > 0 ? (
+                    <Trans>
+                      Measured and saved to the Machine Boiler Profile: heat-up rate{' '}
+                      {autotuneResult.heatRate.toFixed(3)} °C/s, dead time{' '}
+                      {autotuneResult.deadTime.toFixed(1)} s. Your PID gains are unchanged.
+                    </Trans>
+                  ) : (
+                    <Trans>Your new PID values have been saved successfully.</Trans>
+                  )}
                 </div>
               </div>
             </div>
             <div className='mockup-code bg-base-200 mx-auto max-w-md'>
               <pre data-prefix='$'>
-                <code>{autotuneResult}</code>
+                <code>
+                  {autotuneResult.heatRate > 0 ? autotuneResult.suggested : autotuneResult.pid}
+                </code>
               </pre>
             </div>
+            {autotuneResult.heatRate > 0 &&
+              autotuneResult.suggested &&
+              autotuneResult.suggested !== autotuneResult.pid && (
+                <div className='space-y-2'>
+                  <p className='text-sm opacity-70'>
+                    <Trans>Suggested gains above; in use: {autotuneResult.pid}</Trans>
+                  </p>
+                  <button
+                    type='button'
+                    className='btn btn-primary btn-sm'
+                    onClick={() => apiService.send({ tp: 'req:autotune:apply' })}
+                  >
+                    <Trans>Apply suggested gains</Trans>
+                  </button>
+                </div>
+              )}
             <button
               type='button'
               className='btn btn-outline btn-sm mt-2'
@@ -222,6 +260,8 @@ export function CalibrationTab({ formData, onChange, setField }) {
           onApplied={coeffs => setField('pumpModelCoeffs', coeffs)}
         />
       </Section>
+
+      <TuneMachine formData={formData} setField={setField} />
     </div>
   );
 }

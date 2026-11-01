@@ -30,8 +30,7 @@
 // dt_sec = sample period (1.0 s matches NayrodPID real loop)
 // total_sec = simulated test length
 // noise_amp = uniform ±noise_amp/sample (MAX31855 LSB ≈ 0.25 °C)
-static void drive_synthetic(Autotune &at, float L, float k_prime, float tau2,
-                            float dt_sec = 1.0f, float total_sec = 180.0f,
+static void drive_synthetic(Autotune &at, float L, float k_prime, float tau2, float dt_sec = 1.0f, float total_sec = 180.0f,
                             float noise_amp = 0.0f, float time_offset = 0.0f) {
     const float t0 = 20.0f; // starting temperature
     // Integer counter + derived `t` avoids float accumulation drift on long
@@ -56,7 +55,8 @@ static void drive_synthetic(Autotune &at, float L, float k_prime, float tau2,
             temp = std::round(temp / 0.25f) * 0.25f;
         }
         at.update(temp, t + time_offset); // offset emulates a caller passing uptime seconds
-        if (at.isFinished()) break;
+        if (at.isFinished())
+            break;
     }
 }
 
@@ -109,8 +109,7 @@ static void test_simc_clamp_guard_zero_slope() {
 
 // Synthetic integrator+lag with known τ₂; identifier recovers within
 // ±20 % (research target).
-static void check_tau2_recovery(float L, float k_prime, float tau2_truth,
-                                float tol_pct, float noise_amp = 0.0f) {
+static void check_tau2_recovery(float L, float k_prime, float tau2_truth, float tol_pct, float noise_amp = 0.0f) {
     Autotune at;
     drive_synthetic(at, L, k_prime, tau2_truth, 1.0f, 300.0f, noise_amp);
     TEST_ASSERT_TRUE(at.isFinished());
@@ -120,10 +119,9 @@ static void check_tau2_recovery(float L, float k_prime, float tau2_truth,
     // std::string + snprintf-into-buffer sidesteps Sonar cpp:S5945 (no
     // C-style char arrays); Unity MESSAGE macros still need C-string.
     std::string msg(96, '\0');
-    const int written = std::snprintf(msg.data(), msg.size(),
-                                      "τ₂ truth=%.2f est=%.2f err=%.1f%%",
-                                      tau2_truth, tau2_est, pct_err);
-    if (written > 0) msg.resize(static_cast<std::string::size_type>(written));
+    const int written = std::snprintf(msg.data(), msg.size(), "τ₂ truth=%.2f est=%.2f err=%.1f%%", tau2_truth, tau2_est, pct_err);
+    if (written > 0)
+        msg.resize(static_cast<std::string::size_type>(written));
     TEST_ASSERT_LESS_OR_EQUAL_MESSAGE(tol_pct, pct_err, msg.c_str());
 }
 
@@ -159,11 +157,36 @@ static void test_identification_independent_of_uptime() {
         const std::string msg = "uptime offset " + std::to_string(static_cast<int>(offset)) + " s";
         TEST_ASSERT_TRUE_MESSAGE(at.isFinished(), msg.c_str());
         TEST_ASSERT_FALSE_MESSAGE(at.isTimedOut(), msg.c_str());
-        TEST_ASSERT_FLOAT_WITHIN_MESSAGE(0.02f * base.getSystemGain(), base.getSystemGain(), at.getSystemGain(),
-                                         msg.c_str());
+        TEST_ASSERT_FLOAT_WITHIN_MESSAGE(0.02f * base.getSystemGain(), base.getSystemGain(), at.getSystemGain(), msg.c_str());
         TEST_ASSERT_FLOAT_WITHIN_MESSAGE(0.5f, base.getSystemDelay(), at.getSystemDelay(), msg.c_str());
         TEST_ASSERT_FLOAT_WITHIN_MESSAGE(0.02f * base.getKp(), base.getKp(), at.getKp(), msg.c_str());
     }
+}
+
+// Predictive cutoff: on a Silvia-like plant (20 s dead time, 0.6 °C/s) the coast estimate leads the reading by about
+// rate x dead time once the reaction is seen, so a run stops ~12 °C before the limit instead of coasting past it.
+static void test_predicted_coast_leads_by_rate_times_dead_time() {
+    Autotune at;
+    at.setTimeOut(600.0f);
+    const float L = 20.0f, kp = 0.6f;
+    float lead = 0.0f, temp = 93.0f;
+    for (int step = 0; step <= 60; ++step) {
+        const float t = static_cast<float>(step);
+        temp = t < L + 4.0f ? 93.0f : 93.0f + kp * (t - L - 4.0f); // reaction after the priming window
+        at.update(temp, t);
+        lead = at.predictedCoast(temp) - temp;
+        if (at.isFinished())
+            break;
+    }
+    TEST_ASSERT_TRUE(at.maxPowerOn);
+    TEST_ASSERT_FLOAT_WITHIN(4.0f, kp * L, lead);
+}
+
+// Before full power is on there is nothing in flight.
+static void test_predicted_coast_is_the_reading_before_full_power() {
+    Autotune at;
+    at.update(93.0f, 0.0f);
+    TEST_ASSERT_EQUAL_FLOAT(93.0f, at.predictedCoast(93.0f));
 }
 
 int main(int argc, char **argv) {
@@ -173,5 +196,7 @@ int main(int argc, char **argv) {
     RUN_TEST(test_tau2_recovery_noiseless);
     RUN_TEST(test_tau2_recovery_with_quantisation);
     RUN_TEST(test_identification_independent_of_uptime);
+    RUN_TEST(test_predicted_coast_leads_by_rate_times_dead_time);
+    RUN_TEST(test_predicted_coast_is_the_reading_before_full_power);
     return UNITY_END();
 }

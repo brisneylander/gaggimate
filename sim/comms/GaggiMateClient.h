@@ -87,7 +87,8 @@ class GaggiMateClient {
     gm::Payload buildBoilerControl(uint8_t index, BoilerControlMode mode, float setpoint);
     gm::Payload buildPumpControl(uint8_t index, PumpControlMode mode, float power, float pressure, float flow);
     gm::Payload buildRelayControl(uint8_t index, bool open);
-    gm::Payload buildHeaterSettings(float kp, float ki, float kd, float kf, bool heaterCoordinationEnabled, uint32_t handoverMs);
+    gm::Payload buildHeaterSettings(float kp, float ki, float kd, float kf, bool heaterCoordinationEnabled, uint32_t handoverMs,
+                                    const HeaterLagCompensation &lag = {});
     gm::Payload buildPumpSettings(float a, float b, float c, float d, float commutationGain, float convergenceGain,
                                   float integralGain, float maxPower);
     gm::Payload buildAutotune(uint32_t testTime, uint32_t samples, uint32_t heaterWattage);
@@ -102,7 +103,8 @@ class GaggiMateClient {
     void sendBoilerControl(uint8_t index, BoilerControlMode mode, float setpoint);
     void sendPumpControl(uint8_t index, PumpControlMode mode, float power, float pressure, float flow);
     void sendRelayControl(uint8_t index, bool open);
-    void sendHeaterSettings(float kp, float ki, float kd, float kf, bool heaterCoordinationEnabled, uint32_t handoverMs);
+    void sendHeaterSettings(float kp, float ki, float kd, float kf, bool heaterCoordinationEnabled, uint32_t handoverMs,
+                            const HeaterLagCompensation &lag = {});
     void sendPumpSettings(float a, float b, float c, float d, float commutationGain, float convergenceGain, float integralGain,
                           float maxPower, float slipA, float slipB, float slipC, float slipD);
     void sendAutotune(uint32_t testTime, uint32_t samples, uint32_t heaterWattage);
@@ -119,6 +121,8 @@ class GaggiMateClient {
     void onSendFailed(std::function<void()>) {} // the mocked link never drops a frame
     void onSystemInfo(SystemInfoCallback cb) { _systemInfoCb = std::move(cb); }
     void onSensorData(SensorCallback cb) { _sensorCb = std::move(cb); }
+    // Brew boiler's learned standing heat loss (W), reported while the heat-balance predictor runs.
+    void onHeaterLoss(std::function<void(float)> cb) { _heaterLossCb = std::move(cb); }
     void onButtonState(ButtonCallback cb) { _buttonCb = std::move(cb); }
     // Sim only: inject a physical button edge as if the controller board reported it.
     void simulateButton(uint8_t index, bool pressed) {
@@ -145,6 +149,7 @@ class GaggiMateClient {
     IncompatibleCallback _incompatibleCb;
     SystemInfoCallback _systemInfoCb;
     SensorCallback _sensorCb;
+    std::function<void(float)> _heaterLossCb;
     ButtonCallback _buttonCb;
     AutotuneResultCallback _autotuneResultCb;
     VolumetricCallback _volumetricCb;

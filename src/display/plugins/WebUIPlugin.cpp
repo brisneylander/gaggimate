@@ -33,6 +33,15 @@ static void mbedtlsPsramFree(void *p) { heap_caps_free(p); } // NOSONAR
 
 WebUIPlugin::WebUIPlugin() : server(80) { g_webUIPlugin = this; }
 
+// Stable: this fork's latest release; Nightly: its head build; Upstream: the official GaggiMate release.
+static String releaseUrlFor(const String &channel) {
+    if (channel == "latest")
+        return RELEASE_URL + "latest";
+    if (channel == "upstream")
+        return UPSTREAM_RELEASE_URL + "latest";
+    return RELEASE_URL + "tag/nightly";
+}
+
 void WebUIPlugin::setup(Controller *_controller, PluginManager *_pluginManager) {
     // Redirect mbedTLS allocations to PSRAM before any TLS (OTA) handshake runs, so the
     // ~32 KB handshake buffers don't exhaust the scarce internal-DRAM pool. See mbedtlsPsramCalloc.
@@ -41,8 +50,7 @@ void WebUIPlugin::setup(Controller *_controller, PluginManager *_pluginManager) 
     this->profileManager = _controller->getProfileManager();
     this->pluginManager = _pluginManager;
     this->ota = new GitHubOTA(
-        BUILD_GIT_VERSION, controller->getSystemInfo().version,
-        RELEASE_URL + (controller->getSettings().getOTAChannel() == "latest" ? "latest" : "tag/nightly"),
+        BUILD_GIT_VERSION, controller->getSystemInfo().version, releaseUrlFor(controller->getSettings().getOTAChannel()),
         [this](uint8_t phase) {
             pluginManager->trigger("ota:update:phase", "phase", phase);
             updateOTAProgress(phase, 0);
@@ -52,6 +60,7 @@ void WebUIPlugin::setup(Controller *_controller, PluginManager *_pluginManager) 
             updateOTAProgress(phase, progress);
         },
         OTA_DISPLAY_FIRMWARE, OTA_DISPLAY_FILESYSTEM, "board-firmware.bin");
+    ota->setAllowDowngrade(controller->getSettings().getOTAChannel() == "upstream");
     pluginManager->on("controller:wifi:connect", [this](Event const &event) {
         apMode = event.getInt("AP");
         start();
@@ -294,8 +303,10 @@ void WebUIPlugin::stop() {
 void WebUIPlugin::handleOTASettings(JsonDocument &request) {
     if (request["update"].as<bool>()) {
         if (!request["channel"].isNull()) {
-            controller->getSettings().setOTAChannel(request["channel"].as<String>() == "latest" ? "latest" : "nightly");
-            ota->setReleaseUrl(RELEASE_URL + (controller->getSettings().getOTAChannel() == "latest" ? "latest" : "tag/nightly"));
+            const String channel = request["channel"].as<String>();
+            controller->getSettings().setOTAChannel(channel == "latest" || channel == "upstream" ? channel : "nightly");
+            ota->setReleaseUrl(releaseUrlFor(controller->getSettings().getOTAChannel()));
+            ota->setAllowDowngrade(controller->getSettings().getOTAChannel() == "upstream");
             lastUpdateCheck = 0;
         }
     }
@@ -363,8 +374,44 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
                 settings->setHeaterCoordinationEnabled(parseBoolArg(request->arg("heaterCoordinationEnabled")));
             if (request->hasArg("heaterHandoverMs"))
                 settings->setHeaterHandoverMs(request->arg("heaterHandoverMs").toInt());
+            if (request->hasArg("derivativeFilterS"))
+                settings->setDerivativeFilterS(request->arg("derivativeFilterS").toFloat());
+            if (request->hasArg("integralZone"))
+                settings->setIntegralZone(request->arg("integralZone").toFloat());
+            if (request->hasArg("sensorDeadTimeS"))
+                settings->setSensorDeadTimeS(request->arg("sensorDeadTimeS").toFloat());
+            if (request->hasArg("modelHeaterW"))
+                settings->setModelHeaterW(request->arg("modelHeaterW").toFloat());
+            if (request->hasArg("modelHeatRate"))
+                settings->setModelHeatRate(request->arg("modelHeatRate").toFloat());
+            if (request->hasArg("modelLossW")) // 0 = forget the learned value (controller reseeds on its next boot)
+                settings->setModelLossW(request->arg("modelLossW").toFloat());
+            if (request->hasArg("valveDumpMl"))
+                settings->setValveDumpMl(request->arg("valveDumpMl").toFloat());
+            if (request->hasArg("flushTargetFactor"))
+                settings->setFlushTargetFactor(request->arg("flushTargetFactor").toFloat());
+            if (request->hasArg("flushTargetHoldS"))
+                settings->setFlushTargetHoldS(request->arg("flushTargetHoldS").toFloat());
+            if (request->hasArg("tankRiseC"))
+                settings->setTankRiseC(request->arg("tankRiseC").toFloat());
+            if (request->hasArg("tankWarmMin"))
+                settings->setTankWarmMin(request->arg("tankWarmMin").toFloat());
+            if (request->hasArg("noRiseBrewS"))
+                settings->setNoRiseBrewS(request->arg("noRiseBrewS").toFloat());
+            if (request->hasArg("noRiseSteamS"))
+                settings->setNoRiseSteamS(request->arg("noRiseSteamS").toFloat());
+            if (request->hasArg("tankFillC"))
+                settings->setTankFillC(request->arg("tankFillC").toFloat());
+            if (request->hasArg("inletTempC"))
+                settings->setInletTempC(request->arg("inletTempC").toFloat());
+            if (request->hasArg("waterDeadTimeS"))
+                settings->setWaterDeadTimeS(request->arg("waterDeadTimeS").toFloat());
+            if (request->hasArg("flushButtonToTarget"))
+                settings->setFlushButtonToTarget(parseBoolArg(request->arg("flushButtonToTarget")));
             if (request->hasArg("pid"))
                 settings->setPid(request->arg("pid"));
+            if (request->hasArg("machineProfileName") && request->hasArg("machineProfileHash"))
+                settings->setMachineProfile(request->arg("machineProfileName"), request->arg("machineProfileHash"));
             if (request->hasArg("pumpModelCoeffs"))
                 settings->setPumpModelCoeffs(request->arg("pumpModelCoeffs"));
             if (request->hasArg("pumpSlipCoeffs"))
@@ -560,8 +607,29 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
     doc["haTopic"] = settings.getHomeAssistantTopic();
     doc["heaterCoordinationEnabled"] = settings.isHeaterCoordinationEnabled();
     doc["heaterHandoverMs"] = settings.getHeaterHandoverMs();
+    doc["derivativeFilterS"] = settings.getDerivativeFilterS();
+    doc["integralZone"] = settings.getIntegralZone();
+    doc["sensorDeadTimeS"] = settings.getSensorDeadTimeS();
+    doc["modelHeaterW"] = settings.getModelHeaterW();
+    doc["modelHeatRate"] = settings.getModelHeatRate();
+    doc["modelLossW"] = settings.getModelLossW();
+    doc["inletTempC"] = settings.getInletTempC();
+    doc["tankFillC"] = settings.getTankFillC();
+    doc["valveDumpMl"] = settings.getValveDumpMl();
+    doc["flushTargetFactor"] = settings.getFlushTargetFactor();
+    doc["flushTargetHoldS"] = settings.getFlushTargetHoldS();
+    doc["tankRiseC"] = settings.getTankRiseC();
+    doc["tankWarmMin"] = settings.getTankWarmMin();
+    doc["noRiseBrewS"] = settings.getNoRiseBrewS();
+    doc["noRiseSteamS"] = settings.getNoRiseSteamS();
+    doc["tankEstimateC"] = controller->getTankEstimateC();         // read-only: 0 while the estimate is off
+    doc["tankFlushImpliedC"] = controller->getFlushImpliedTankC(); // read-only: last plain flush, 0 = none
+    doc["waterDeadTimeS"] = settings.getWaterDeadTimeS();
+    doc["flushButtonToTarget"] = settings.isFlushButtonToTarget();
     doc["pid"] = settings.getPid();
     doc["pumpModelCoeffs"] = settings.getPumpModelCoeffs();
+    doc["machineProfileName"] = settings.getMachineProfileName();
+    doc["machineProfileHash"] = settings.getMachineProfileHash();
     doc["pumpSlipCoeffs"] = settings.getPumpSlipCoeffs();
     doc["wifiSsid"] = settings.getWifiSsid();
     doc["wifiPassword"] = apMode ? "---unchanged---" : settings.getWifiPassword();

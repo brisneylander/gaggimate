@@ -1,4 +1,5 @@
 #include "GaggiMateController.h"
+#include "LagCompensationLimits.h"
 #include "utilities.h"
 #include <Arduino.h>
 #include <ExtensionIOXL9555.hpp>
@@ -56,12 +57,16 @@ void GaggiMateController::setup() {
     }
     heater = new Heater(
         this->brewTemperature, _config.heaterPin, [this]() { thermalRunawayShutdown(); },
-        [this](float Kp, float Ki, float Kd, float Kf) { _comms.sendAutotuneResult(Kp, Ki, Kd, Kf); },
+        [this](float Kp, float Ki, float Kd, float Kf, float rate, float dead, float watts) {
+            _comms.sendAutotuneResult(Kp, Ki, Kd, Kf, rate, dead, watts);
+        },
         [this]() { _comms.sendError(ERROR_CODE_AUTOTUNE_TIMEOUT); });
     if (_config.capabilites.dualBoiler) {
         heater2 = new Heater(
             this->steamTemperature, _config.altPin, [this]() { thermalRunawayShutdown(); },
-            [this](float Kp, float Ki, float Kd, float Kf) { _comms.sendAutotuneResult(Kp, Ki, Kd, Kf); },
+            [this](float Kp, float Ki, float Kd, float Kf, float rate, float dead, float watts) {
+                _comms.sendAutotuneResult(Kp, Ki, Kd, Kf, rate, dead, watts);
+            },
             [this]() { _comms.sendError(ERROR_CODE_AUTOTUNE_TIMEOUT); });
         heaterCoordinator = new HeaterCoordinator(heater, heater2);
         refill = new SimpleRelay(_config.refillPin, _config.valveOn);
@@ -184,7 +189,7 @@ void GaggiMateController::setup() {
         float *pumpFlowPtr = dimmedPump->getPumpFlowPtr();
         int *valveStatusPtr = dimmedPump->getValveStatusPtr();
 
-        heater->setThermalFeedforward(pumpFlowPtr, 23.0f, valveStatusPtr);
+        heater->setThermalFeedforward(pumpFlowPtr, lag_limits::DEFAULT_INLET_TEMP_C, valveStatusPtr);
         heater->setFeedforwardScale(0.0f);
     }
     // Initialize last ping time
@@ -281,8 +286,21 @@ void GaggiMateController::setup() {
         }
         heater->setFeedforwardScale(settings.kf);
         heater->setTunings(settings.kp, settings.ki, settings.kd);
+        // Clamp here as well as on the display: the controller drives the heater and shouldn't trust the link.
+        using namespace lag_limits;
+        const float derivativeFilterS = clampOrOff(settings.derivative_filter_s, DERIVATIVE_FILTER_S);
+        const float integralZone = clampOrOff(settings.integral_zone, INTEGRAL_ZONE_C);
+        heater->setLagCompensation(
+            derivativeFilterS, integralZone, clampOrOff(settings.sensor_dead_time_s, SENSOR_DEAD_TIME_S),
+            clampOrOff(settings.model_heater_w, HEATER_W), clampOrOff(settings.model_heat_rate, HEAT_RATE_C_PER_S),
+            clampOrOff(settings.model_loss_w, STANDING_LOSS_W), clampOrOff(settings.inlet_temp_c, INLET_TEMP_C),
+            clampOrOff(settings.water_dead_time_s, WATER_DEAD_TIME_S), clampOrOff(settings.valve_dump_ml, VALVE_DUMP_ML),
+            clampOrOff(settings.safety_no_rise_brew_s, NO_RISE_BREW_S),
+            clampOrOff(settings.safety_no_rise_steam_s, NO_RISE_STEAM_S));
         if (heater2 != nullptr) {
             heater2->setTunings(settings.kp, settings.ki, settings.kd);
+            // The heat-balance model describes the brew boiler only; the steam boiler keeps the plain loop.
+            heater2->setLagCompensation(derivativeFilterS, integralZone, 0.0f, 0.0f, 0.0f);
         }
     });
     _comms.onPumpSettings([this](gm::PumpSettings settings) {
@@ -470,8 +488,40 @@ void GaggiMateController::thermalRunawayShutdown() {
     } else {
         this->alt->set(false);
     }
-    errorState = ERROR_CODE_RUNAWAY;
-    _comms.sendError(ERROR_CODE_RUNAWAY);
+    // The heater safety layer's own stops get their own codes, so the display can say why.
+    int code = ERROR_CODE_RUNAWAY;
+    for (Heater *h : {heater, heater2}) {
+        if (h == nullptr)
+            continue;
+        switch (h->getSafetyReason()) {
+        case HeaterSafety::Reason::NoRise:
+            code = ERROR_CODE_HEATER_NO_RISE;
+            break;
+        case HeaterSafety::Reason::Jumps:
+            code = ERROR_CODE_SENSOR_JUMPS;
+            break;
+        case HeaterSafety::Reason::FullPowerTooLong:
+            code = ERROR_CODE_FULL_POWER_TOO_LONG;
+            break;
+        case HeaterSafety::Reason::OverTemp:
+            code = ERROR_CODE_OVER_TEMP;
+            break;
+        case HeaterSafety::Reason::SensorFault:
+            code = ERROR_CODE_SENSOR_FAULT;
+            break;
+        case HeaterSafety::Reason::None:
+            break;
+        }
+    }
+    // The sensors' own backstop got there first: name the cause the same way.
+    if (code == ERROR_CODE_RUNAWAY && brewTemperature != nullptr) {
+        if (brewTemperature->isErrorState())
+            code = ERROR_CODE_SENSOR_FAULT;
+        else if (brewTemperature->read() > MAX_SAFE_TEMP)
+            code = ERROR_CODE_OVER_TEMP;
+    }
+    errorState = code;
+    _comms.sendError(code);
 }
 
 void GaggiMateController::sendSensorData() {
@@ -504,6 +554,7 @@ void GaggiMateController::sendSensorData() {
     p.content.sensor.boilers[0].temperature = this->brewTemperature->read();
     p.content.sensor.boilers[0].pressure = pressure;
     p.content.sensor.boilers[0].power = heaterPower;
+    p.content.sensor.boilers[0].standing_loss_w = heater ? heater->getLearnedLossWatts() : 0.0f;
     if (_config.capabilites.dualBoiler) {
         p.content.sensor.boilers[1].index = 1;
         p.content.sensor.boilers[1].temperature = this->steamTemperature->read();

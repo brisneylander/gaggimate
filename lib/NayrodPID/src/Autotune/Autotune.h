@@ -47,6 +47,11 @@ class Autotune {
     // Configured timeout. Use in failure-path logs (system_pure_delay reads 0
     // on timeout — only set on success).
     float getTimeOut() const { return maxTimeOut_s; }
+    // Where the reading will coast to if full power stops now: the heat already on its way keeps arriving for about
+    // one dead time, at the current rate of rise. Before the reaction (no dead time measured yet) it assumes
+    // DEFAULT_COAST_S. A run on a Silvia cut at the 125 °C limit coasted to 131 °C.
+    static constexpr float DEFAULT_COAST_S = 20.0f;
+    float predictedCoast(float temperature) const;
 
   private:
     // Step 1: fill initial temperature/time window, freeze noise-floor slope.
@@ -76,6 +81,8 @@ class Autotune {
     // at ~1 Hz: 0.1 °C/s sits ~2× above quantisation floor, well below real
     // boiler reaction. Override via setEpsilon() for other sensors.
     float epsilon = 0.1f;
+    // Latest rolling slope (°C/s), for predictedCoast().
+    float lastSlope = 0.0f;
     // 5 consecutive confirmations (was 3 pre-SIMC) rejects single-LSB
     // quantisation spikes that trip reaction detection on noise.
     unsigned int requiredConfirmations = 5;

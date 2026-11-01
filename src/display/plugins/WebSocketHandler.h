@@ -48,6 +48,7 @@ class WebSocketHandler {
     void handleAutotuneStart(uint32_t clientId, JsonDocument &request);
     void handleProfileRequest(uint32_t clientId, JsonDocument &request);
     void handleFlushStart(uint32_t clientId, JsonDocument &request);
+    void handleFlushToTarget(uint32_t clientId, JsonDocument &request);
     void handleFlushStop(uint32_t clientId, JsonDocument &request);
     void publishState(unsigned long now);
     void publishTelemetry();

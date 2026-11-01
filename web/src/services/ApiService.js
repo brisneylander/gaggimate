@@ -220,6 +220,7 @@ export default class ApiService {
     map('gact', 'grindActive', v => v || false);
     map('cw', 'currentWeight', v => v || 0);
     map('bc', 'bluetoothConnected', v => v || false);
+    map('bw', 'bluetoothWeight', v => v || 0); // raw Bluetooth scale weight (g), also outside a shot
     map('scaleSource', 'activeScaleSource', v => v || 'inactive');
     map('sbat', 'scaleBattery', v => v ?? null);
     map('process', 'process', v => v || null);

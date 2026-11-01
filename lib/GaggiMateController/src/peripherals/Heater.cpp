@@ -1,4 +1,5 @@
 #include "Heater.h"
+#include "HeatUpBoost.h"
 #include "HeaterCoordinator.h"
 #include <Arduino.h>
 #include <algorithm>
@@ -9,7 +10,8 @@ Heater::Heater(TemperatureSensor *sensor, uint8_t heaterPin, const heater_error_
     : sensor(sensor), heaterPin(heaterPin), taskHandle(nullptr), error_callback(error_callback), pid_callback(pid_callback),
       autotune_fail_callback(autotune_fail_callback) {
 
-    simplePid = new SimplePID(&output, &temperature, &setpoint);
+    simplePid = new SimplePID(&output, &controlTemperature, &setpoint);
+    simplePid->setDerivativeInput(&temperature); // D damps the measured temperature, P/I act on the prediction
     autotuner = new Autotune();
 }
 
@@ -48,6 +50,10 @@ void Heater::loop() {
         simplePid->setMode(SimplePID::Control::manual);
         requestOutput(false);
         temperature = sensor->read();
+        controlTemperature = temperature;
+        std::lock_guard<std::mutex> lock(lagMutex);
+        predictor.reset(); // heat in flight is no longer tracked while off; start clean on re-enable
+        predictorPrimed = false;
         return;
     }
     simplePid->setMode(SimplePID::Control::automatic);
@@ -92,6 +98,71 @@ void Heater::setFeedforwardScale(float combinedKff) {
     ESP_LOGI(LOG_TAG, "Combined feedforward gain (Kff) set to: %.3f output units per watt", combinedKff);
 }
 
+void Heater::setLagCompensation(float derivativeFilterS, float integralZoneC, float sensorDeadTimeS, float modelHeaterW,
+                                float modelHeatRate, float modelLossW, float inletTempC, float waterDeadTimeS, float valveDumpMl,
+                                float noRiseBrewS, float noRiseSteamS) {
+    std::lock_guard<std::mutex> lock(lagMutex);
+    simplePid->setDerivativeFilterTime(derivativeFilterS);
+    simplePid->setIntegralZone(integralZoneC);
+    integralZoneActive = integralZoneC > 0.0f;
+    integralHoldTailMs = sensorDeadTimeS > 0.0f ? static_cast<uint32_t>(sensorDeadTimeS * 1000.0f) : 0;
+    if (!integralZoneActive)
+        simplePid->setIntegralHold(false);
+    // The water a flush or shot draws in replaces boiler water; at 40 °C instead of the assumed 23 °C it takes ~30 %
+    // less heat per ml, so a fixed guess makes the predictor (and the thermal feedforward) over-heat after a flush.
+    incomingWaterTemp = inletTempC > 0.0f ? inletTempC : 23.0f;
+    predictor.configure(modelHeaterW, modelHeatRate, sensorDeadTimeS, incomingWaterTemp, waterDeadTimeS);
+    predictor.seedLoss(modelLossW);
+    predictor.setValveDump(valveDumpMl);
+    safety.setNoRiseLimits(noRiseBrewS, noRiseSteamS);
+    ESP_LOGI(LOG_TAG,
+             "Lag compensation: D filter %.1fs, I zone %.2f°C, dead time %.1fs, predictor %s (%.0fW, %.3f°C/s, water %.1fs), "
+             "inlet %.1f°C",
+             derivativeFilterS, integralZoneC, sensorDeadTimeS, predictor.isEnabled() ? "on" : "off", modelHeaterW, modelHeatRate,
+             predictor.getWaterDeadTime(), incomingWaterTemp);
+}
+
+float Heater::getLearnedLossWatts() {
+    std::lock_guard<std::mutex> lock(lagMutex);
+    return predictor.isEnabled() ? predictor.getLossWatts() : 0.0f;
+}
+
+void Heater::updateLagCompensation() {
+    const uint32_t now = millis();
+    const float flow = pumpFlowRate != nullptr ? *pumpFlowRate : 0.0f;
+    const bool flowing = flow > 0.01f;
+
+    std::lock_guard<std::mutex> lock(lagMutex);
+    if (flowing) {
+        lastFlowMs = now;
+        flowSeen = true;
+    }
+    if (flow > HeatUpBoost::FLUSH_FLOW) {
+        lastFlushMs = now;
+        flushSeen = true;
+    }
+    if (integralZoneActive) {
+        // Pause the integral while fresh water flows and until its effect has reached the sensor: the error in
+        // that window is the (stale) flush, not a steady-state offset the integral should learn.
+        simplePid->setIntegralHold(flowing || (flowSeen && now - lastFlowMs < integralHoldTailMs));
+    }
+
+    if (!predictor.isEnabled()) {
+        controlTemperature = temperature;
+        return;
+    }
+    if (!predictorPrimed) {
+        predictorPrimed = true;
+        lastPredictorMs = now;
+    } else if (now - lastPredictorMs >= static_cast<uint32_t>(TUNER_OUTPUT_SPAN)) {
+        // One step per PWM window; `output` is the duty that was applied over it.
+        const float dt = static_cast<float>(now - lastPredictorMs) / 1000.0f;
+        lastPredictorMs = now;
+        predictor.update(dt, output / TUNER_OUTPUT_SPAN, flowing ? flow : 0.0f, temperature, setpoint);
+    }
+    controlTemperature = temperature + predictor.getCorrection();
+}
+
 void Heater::autotune(int testTimeSec, int windowSize, int heaterWattage) {
     setupAutotune(testTimeSec, windowSize, heaterWattage);
     autotuning = true;
@@ -100,6 +171,7 @@ void Heater::autotune(int testTimeSec, int windowSize, int heaterWattage) {
 void Heater::loopPid() {
     softPwm(TUNER_OUTPUT_SPAN);
     temperature = sensor->read();
+    updateLagCompensation();
 
     // Calculate and set disturbance feedforward BEFORE PID update
     // Only apply thermal feedforward when Kf>0, valve is open, and water is flowing
@@ -127,8 +199,15 @@ void Heater::loopPid() {
 
     // Now run PID with proper feedforward integrated
     bool pidUpdated = simplePid->update();
+    if (pidUpdated) {
+        // Far below the setpoint with no water about: full power (HeatUpBoost.h).
+        std::lock_guard<std::mutex> lock(lagMutex);
+        if (HeatUpBoost::active(predictor.isEnabled(), setpoint, controlTemperature, flushSeen, millis() - lastFlushMs))
+            output = TUNER_OUTPUT_SPAN;
+    }
 
     if (pidUpdated) {
+        checkSafety(pumpFlowRate != nullptr && *pumpFlowRate > 0.01f);
         plot(output, 1.0f, 1);
     }
 }
@@ -159,8 +238,21 @@ void Heater::loopAutotune() {
         if (autotuner->maxPowerOn) {
             output = TUNER_OUTPUT_SPAN;
         }
+        checkSafety(false);
         ESP_LOGI(LOG_TAG, "Autotuner Cycle: Temperature=%.2f", temperature);
         autotuner->update(temperature, millis() / 1000.0f);
+        // Stop before the coast carries the boiler past the limit, rather than at the limit: end the run like a timeout
+        // (gains kept, no error state) instead of a runaway stop.
+        if (autotuner->maxPowerOn && autotuner->predictedCoast(temperature) >= MAX_AUTOTUNE_TEMP) {
+            output = 0.0f;
+            autotuning = false;
+            softPwm(TUNER_OUTPUT_SPAN);
+            ESP_LOGW(LOG_TAG, "Autotune stopped at %.1f°C: would coast to %.1f°C, past %.1f°C; gains kept", temperature,
+                     autotuner->predictedCoast(temperature), MAX_AUTOTUNE_TEMP);
+            if (autotune_fail_callback)
+                autotune_fail_callback();
+            return;
+        }
         while (autotuning && micros() - microseconds < loopInterval) {
             softPwm(TUNER_OUTPUT_SPAN);
             vTaskDelay(1 / portTICK_PERIOD_MS);
@@ -207,10 +299,10 @@ void Heater::loopAutotune() {
     // cpp:S1117).
     const float kffFromWattage = autotuneHeaterWattage > 0 ? TUNER_OUTPUT_SPAN / static_cast<float>(autotuneHeaterWattage) : 0.0f;
 
-    pid_callback(autotuner->getKp() * 1000.0f, autotuner->getKi() * 1000.0f, autotuner->getKd() * 1000.0f, kffFromWattage);
-
-    setTunings(autotuner->getKp() * 1000.0f, autotuner->getKi() * 1000.0f, autotuner->getKd() * 1000.0f);
-    setFeedforwardScale(kffFromWattage);
+    // The display saves the identified model and offers the gains; it sends them back only if the user applies them, so
+    // hand-tuned gains survive a run that was only meant to measure the boiler.
+    pid_callback(autotuner->getKp() * 1000.0f, autotuner->getKi() * 1000.0f, autotuner->getKd() * 1000.0f, kffFromWattage,
+                 autotuner->getSystemGain(), autotuner->getSystemDelay(), static_cast<float>(autotuneHeaterWattage));
 
     ESP_LOGI(LOG_TAG, "Autotuning finished: Kp=%.4f, Ki=%.4f, Kd=%.4f, Kff=%.4f", autotuner->getKp() * 1000.0f,
              autotuner->getKi() * 1000.0f, autotuner->getKd() * 1000.0f, kffFromWattage);
@@ -241,7 +333,21 @@ void Heater::requestOutput(bool on) {
         writeOutput(on);
 }
 
-void Heater::writeOutput(bool on) { digitalWrite(heaterPin, on ? HIGH : LOW); }
+// The only place the heater pin is driven: the safety layer has the last word.
+void Heater::writeOutput(bool on) { digitalWrite(heaterPin, on && safety.permits() ? HIGH : LOW); }
+
+void Heater::checkSafety(bool flowing) {
+    if (safety.observe(millis(), temperature, output / TUNER_OUTPUT_SPAN, flowing, setpoint, sensor->isErrorState()))
+        return;
+    output = 0.0f;
+    writeOutput(false);
+    if (!safetyReported) {
+        safetyReported = true;
+        ESP_LOGE(LOG_TAG, "Heater safety stop: %s", HeaterSafety::describe(safety.reason()));
+        if (error_callback)
+            error_callback();
+    }
+}
 
 void Heater::plot(float optimumOutput, float outputScale, uint8_t everyNth) {
     if (plotCount >= everyNth) {

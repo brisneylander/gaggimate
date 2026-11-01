@@ -1,10 +1,14 @@
 #ifndef CONTROLLER_H
 #define CONTROLLER_H
 
+#include "FlushTankCheck.h"
+#include "FlushToTarget.h"
 #include "GaggiMateClient.h"
 #include "PluginManager.h"
 #include "Settings.h"
+#include "StrayFlowGuard.h"
 #include "SystemInfo.h"
+#include "TankTemperature.h"
 #include <WiFi.h>
 #include <atomic>
 #include <display/core/ButtonHandler.h>
@@ -138,6 +142,19 @@ class Controller {
     bool isHardwareScaleCell1Valid() const { return hardwareScaleCell1Valid.load(); }
     bool isHardwareScaleCell2Valid() const { return hardwareScaleCell2Valid.load(); }
     void onFlush();
+    // Flush just enough tank water to bring the boiler back to its target; reason is set if it didn't start.
+    flush_to_target::Plan flushToTarget();
+    // Tank water temperature for the heater and flush to target: the estimate (TankTemperature.h) when a fill
+    // temperature is set, otherwise the fixed setting (0 = 23 °C).
+    float getTankTempC() const { return tank.isEnabled() ? std::round(tank.get()) : settings.getInletTempC(); }
+    float getTankEstimateC() const { return tank.isEnabled() ? tank.get() : 0.0f; }
+    float getFlushImpliedTankC() const { return lastFlushImpliedTank; } // last plain flush's verdict, 0 = none yet
+    void onTankRefilled(); // fresh water in the tank (the UI's "Tank refilled", or the water level climbing to full)
+    // Last autotune: the gains it suggested ("kp,ki,kd,kf", empty = none yet) and what it measured; applied on request.
+    const String &getAutotuneSuggestedPid() const { return autotuneSuggestedPid; }
+    float getLastAutotuneHeatRate() const { return lastAutotuneHeatRate; }
+    float getLastAutotuneDeadTimeS() const { return lastAutotuneDeadTimeS; }
+    void applyAutotuneGains();
     void onFlushRelease(); // ends a hold-to-flush; no-op otherwise
     int getWaterLevel() const {
         float reversedLevel = static_cast<float>(settings.getEmptyTankDistance()) -
@@ -159,6 +176,7 @@ class Controller {
     GaggiMateClient *getClientController() { return &comms; }
 
   private:
+    bool startFlush(float durationS); // 0 = hold-to-flush; false if a process was already running
     // Initialization methods
 #ifndef GAGGIMATE_HEADLESS
     void setupPanel();
@@ -288,6 +306,32 @@ class Controller {
     unsigned long lastConfigResend = 0;
     static const unsigned long CONFIG_RESEND_WINDOW_MS = 8000;
     static const unsigned long CONFIG_RESEND_INTERVAL_MS = 1000;
+    // The predictor's learned standing loss is saved to NVS (flash) so the next start begins from it; keep only
+    // meaningful changes, at most this often. The first save waits this long after boot, past any warm-up.
+    static const unsigned long LOSS_SAVE_INTERVAL_MS = 10UL * 60UL * 1000UL;
+    unsigned long lastLossSaveMs = 0;
+    // Heater held off until this millis() after a flush to target; 0 = no hold.
+    static constexpr float FLUSH_TO_TARGET_HOLD_S = 30.0f; // default heater hold after a flush to target
+    float flushTargetHoldS() const {
+        return settings.getFlushTargetHoldS() > 0.0f ? settings.getFlushTargetHoldS() : FLUSH_TO_TARGET_HOLD_S;
+    }
+    static constexpr unsigned long TANK_UPDATE_MS = 10000;
+    unsigned long flushToTargetHoldUntil = 0;
+    StrayFlowGuard strayFlowGuard; // see StrayFlowGuard.h
+    String autotuneSuggestedPid;
+    float lastAutotuneHeatRate = 0.0f, lastAutotuneDeadTimeS = 0.0f;
+    TankTemperature tank;
+    unsigned long lastTankMs = 0;
+    float tankSentC = -1.0f; // tank temperature last sent to the controller
+    void loopTank();
+    // After a plain flush from near target: 3 min of 1 Hz readings, replayed to catch a refill the estimate missed.
+    std::vector<flush_tank_check::Sample> flushRecord;
+    bool flushRecording = false;
+    bool flushRecordFlushEnded = false;
+    unsigned long flushRecordLastMs = 0;
+    flush_tank_check::RefillDetector refillDetector;
+    float lastFlushImpliedTank = 0.0f;
+    void loopFlushRecord();
     bool processCompleted = false;
     bool steamReady = false;
     bool steamSwitchOn = false;

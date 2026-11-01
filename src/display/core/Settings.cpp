@@ -1,4 +1,5 @@
 #include "Settings.h"
+#include "LagCompensationLimits.h"
 
 #include <algorithm>
 #include <cmath>
@@ -144,6 +145,44 @@ void Settings::setHeaterCoordinationEnabled(bool enabled) { heaterCoordinationEn
 void Settings::setHeaterHandoverMs(int handoverMs) {
     heaterHandoverMs.set(std::clamp(handoverMs, MIN_HEATER_HANDOVER_MS, MAX_HEATER_HANDOVER_MS));
 }
+
+void Settings::setDerivativeFilterS(float seconds) {
+    derivativeFilterS.set(lag_limits::clampOrOff(seconds, lag_limits::DERIVATIVE_FILTER_S));
+}
+
+void Settings::setIntegralZone(float degrees) { integralZone.set(lag_limits::clampOrOff(degrees, lag_limits::INTEGRAL_ZONE_C)); }
+
+void Settings::setSensorDeadTimeS(float seconds) {
+    sensorDeadTimeS.set(lag_limits::clampOrOff(seconds, lag_limits::SENSOR_DEAD_TIME_S));
+}
+
+void Settings::setModelHeaterW(float watts) { modelHeaterW.set(lag_limits::clampOrOff(watts, lag_limits::HEATER_W)); }
+
+void Settings::setModelHeatRate(float degreesPerSecond) {
+    modelHeatRate.set(lag_limits::clampOrOff(degreesPerSecond, lag_limits::HEAT_RATE_C_PER_S));
+}
+
+void Settings::setModelLossW(float watts) { modelLossW.set(lag_limits::clampOrOff(watts, lag_limits::STANDING_LOSS_W)); }
+
+void Settings::setValveDumpMl(float value) { valveDumpMl.set(lag_limits::clampOrOff(value, lag_limits::VALVE_DUMP_ML)); }
+void Settings::setFlushTargetFactor(float value) {
+    flushTargetFactor.set(lag_limits::clampOrOff(value, lag_limits::FLUSH_TARGET_FACTOR));
+}
+void Settings::setFlushTargetHoldS(float value) {
+    flushTargetHoldS.set(lag_limits::clampOrOff(value, lag_limits::FLUSH_TARGET_HOLD_S));
+}
+void Settings::setTankRiseC(float value) { tankRiseC.set(lag_limits::clampOrOff(value, lag_limits::TANK_RISE_C)); }
+void Settings::setTankWarmMin(float value) { tankWarmMin.set(lag_limits::clampOrOff(value, lag_limits::TANK_WARM_MIN)); }
+void Settings::setNoRiseBrewS(float value) { noRiseBrewS.set(lag_limits::clampOrOff(value, lag_limits::NO_RISE_BREW_S)); }
+void Settings::setNoRiseSteamS(float value) { noRiseSteamS.set(lag_limits::clampOrOff(value, lag_limits::NO_RISE_STEAM_S)); }
+void Settings::setTankFillC(float degrees) { tankFillC.set(lag_limits::clampOrOff(degrees, lag_limits::TANK_FILL_C)); }
+void Settings::setInletTempC(float degrees) { inletTempC.set(lag_limits::clampOrOff(degrees, lag_limits::INLET_TEMP_C)); }
+
+void Settings::setWaterDeadTimeS(float seconds) {
+    waterDeadTimeS.set(lag_limits::clampOrOff(seconds, lag_limits::WATER_DEAD_TIME_S));
+}
+
+void Settings::setFlushButtonToTarget(bool enabled) { flushButtonToTarget.set(enabled); }
 
 void Settings::setPumpModelCoeffs(const String &pumpModelCoeffs) { this->pumpModelCoeffs.set(pumpModelCoeffs); }
 
@@ -362,4 +401,9 @@ void Settings::doSave() {
         settings->doSave();
         vTaskDelay(5000 / portTICK_PERIOD_MS);
     }
+}
+
+void Settings::setMachineProfile(const String &name, const String &hash) {
+    machineProfileName.set(name.substring(0, 64)); // NVS strings: keep it short
+    machineProfileHash.set(hash.substring(0, 32));
 }

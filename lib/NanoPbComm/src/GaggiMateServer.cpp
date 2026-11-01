@@ -84,13 +84,17 @@ gm::Payload GaggiMateServer::buildButtonState(uint8_t index, bool pressed) {
     return p;
 }
 
-gm::Payload GaggiMateServer::buildAutotuneResult(float kp, float ki, float kd, float kf) {
+gm::Payload GaggiMateServer::buildAutotuneResult(float kp, float ki, float kd, float kf, float heatRate, float deadTimeS,
+                                                 float heaterW) {
     gm::Payload p = gaggimate_Payload_init_zero;
     p.which_content = gaggimate_Payload_autotune_result_tag;
     p.content.autotune_result.kp = kp;
     p.content.autotune_result.ki = ki;
     p.content.autotune_result.kd = kd;
     p.content.autotune_result.kf = kf;
+    p.content.autotune_result.heat_rate = heatRate;
+    p.content.autotune_result.dead_time_s = deadTimeS;
+    p.content.autotune_result.heater_w = heaterW;
     return p;
 }
 
@@ -135,8 +139,8 @@ void GaggiMateServer::sendSensorData(float temperature, float pressure, float pu
 
 void GaggiMateServer::sendButtonState(uint8_t index, bool pressed) { _endpoint.send(buildButtonState(index, pressed)); }
 
-void GaggiMateServer::sendAutotuneResult(float kp, float ki, float kd, float kf) {
-    _endpoint.send(buildAutotuneResult(kp, ki, kd, kf));
+void GaggiMateServer::sendAutotuneResult(float kp, float ki, float kd, float kf, float heatRate, float deadTimeS, float heaterW) {
+    _endpoint.send(buildAutotuneResult(kp, ki, kd, kf, heatRate, deadTimeS, heaterW));
 }
 
 void GaggiMateServer::sendVolumetricMeasurement(float volume) { _endpoint.sendUnreliable(buildVolumetricMeasurement(volume)); }

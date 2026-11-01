@@ -114,7 +114,7 @@ export function ActionCard({
         </span>
       )}
       {!showStandby && (
-        <div className='flex justify-end'>
+        <div className='flex items-center justify-end gap-1'>
           {showFlush && (
             <FlushButton
               className='btn btn-ghost btn-sm text-base-content/60 hover:text-base-content rounded-full text-sm'

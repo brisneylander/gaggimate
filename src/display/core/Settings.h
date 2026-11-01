@@ -99,8 +99,29 @@ class Settings {
     bool isDelayAdjust() const { return delayAdjust.get(); }
     bool isHeaterCoordinationEnabled() const { return heaterCoordinationEnabled.get(); }
     int getHeaterHandoverMs() const { return heaterHandoverMs.get(); }
+    // Brew-boiler lag compensation (0 = off); see HeaterLagCompensation.
+    float getDerivativeFilterS() const { return derivativeFilterS.get(); }
+    float getIntegralZone() const { return integralZone.get(); }
+    float getSensorDeadTimeS() const { return sensorDeadTimeS.get(); }
+    float getModelHeaterW() const { return modelHeaterW.get(); }
+    float getModelHeatRate() const { return modelHeatRate.get(); }
+    float getModelLossW() const { return modelLossW.get(); } // learned by the controller, saved here
+    float getInletTempC() const { return inletTempC.get(); }
+    float getTankFillC() const { return tankFillC.get(); }
+    float getValveDumpMl() const { return valveDumpMl.get(); }
+    float getFlushTargetFactor() const { return flushTargetFactor.get(); }
+    float getFlushTargetHoldS() const { return flushTargetHoldS.get(); }
+    float getTankRiseC() const { return tankRiseC.get(); }
+    float getTankWarmMin() const { return tankWarmMin.get(); }
+    float getNoRiseBrewS() const { return noRiseBrewS.get(); }
+    float getNoRiseSteamS() const { return noRiseSteamS.get(); }
+    float getWaterDeadTimeS() const { return waterDeadTimeS.get(); }
+    bool isFlushButtonToTarget() const { return flushButtonToTarget.get(); }
     String getPid() const { return pid.get(); }
     String getPumpModelCoeffs() const { return pumpModelCoeffs.get(); }
+    // Last machine profile applied in the web UI, and a fingerprint of its values (so the UI can tell if they changed).
+    String getMachineProfileName() const { return machineProfileName.get(); }
+    String getMachineProfileHash() const { return machineProfileHash.get(); }
     String getPumpSlipCoeffs() const { return pumpSlipCoeffs.get(); }
     String getWifiSsid() const { return wifiSsid.get(); }
     String getWifiPassword() const { return wifiPassword.get(); }
@@ -214,7 +235,25 @@ class Settings {
     void setPid(const String &pid);
     void setHeaterCoordinationEnabled(bool enabled);
     void setHeaterHandoverMs(int handoverMs);
+    void setDerivativeFilterS(float seconds);
+    void setIntegralZone(float degrees);
+    void setSensorDeadTimeS(float seconds);
+    void setModelHeaterW(float watts);
+    void setModelHeatRate(float degreesPerSecond);
+    void setModelLossW(float watts);
+    void setInletTempC(float degrees);
+    void setTankFillC(float degrees);
+    void setValveDumpMl(float value);
+    void setFlushTargetFactor(float value);
+    void setFlushTargetHoldS(float value);
+    void setTankRiseC(float value);
+    void setTankWarmMin(float value);
+    void setNoRiseBrewS(float value);
+    void setNoRiseSteamS(float value);
+    void setWaterDeadTimeS(float seconds);
+    void setFlushButtonToTarget(bool enabled);
     void setPumpModelCoeffs(const String &pumpModelCoeffs);
+    void setMachineProfile(const String &name, const String &hash);
     void setPumpSlipCoeffs(const String &pumpSlipCoeffs);
     void setWifiSsid(const String &wifiSsid);
     void setWifiPassword(const String &wifiPassword);
@@ -363,6 +402,23 @@ class Settings {
 
     Property<bool> heaterCoordinationEnabled{registry, "hco", false};
     Property<int> heaterHandoverMs{registry, "hcg", DEFAULT_HEATER_HANDOVER_MS};
+    Property<float> derivativeFilterS{registry, "lc_df", 0.0f};
+    Property<float> integralZone{registry, "lc_iz", 0.0f};
+    Property<float> sensorDeadTimeS{registry, "lc_dt", 0.0f};
+    Property<float> modelHeaterW{registry, "lc_hw", 0.0f};
+    Property<float> modelHeatRate{registry, "lc_hr", 0.0f};
+    Property<float> modelLossW{registry, "lc_lw", 0.0f};
+    Property<float> inletTempC{registry, "lc_it", 0.0f};
+    Property<float> tankFillC{registry, "tk_fill", 0.0f};        // fresh tank water (°C) for the tank estimate, 0 = off
+    Property<float> valveDumpMl{registry, "lc_vd", 0.0f};        // ml the valve dumps after a flush or shot, 0 = none
+    Property<float> flushTargetFactor{registry, "ft_fac", 0.0f}; // flush to target's share of the surplus, 0 = 1.0
+    Property<float> flushTargetHoldS{registry, "ft_hold", 0.0f}; // heater off after a flush to target (s), 0 = 30
+    Property<float> tankRiseC{registry, "tk_rise", 0.0f};        // tank warming above the fill temperature (°C), 0 = 18
+    Property<float> tankWarmMin{registry, "tk_warm", 0.0f};      // tank warming time constant (min), 0 = 120
+    Property<float> noRiseBrewS{registry, "sf_nrb", 0.0f};       // heater safety window at brew setpoints (s), 0 = 60
+    Property<float> noRiseSteamS{registry, "sf_nrs", 0.0f};      // heater safety window at steam setpoints (s), 0 = 300
+    Property<float> waterDeadTimeS{registry, "lc_wd", 0.0f};
+    Property<bool> flushButtonToTarget{registry, "fl_tt", true};
 
     // Display settings
     Property<int> mainBrightness{registry, "main_b", 16};
@@ -410,6 +466,8 @@ class Settings {
 
     // Pump settings
     Property<String> pumpModelCoeffs{registry, "pmc", DEFAULT_PUMP_MODEL_COEFFS};
+    Property<String> machineProfileName{registry, "mp_name", ""};
+    Property<String> machineProfileHash{registry, "mp_hash", ""};
     Property<String> pumpSlipCoeffs{registry, "psc", DEFAULT_PUMP_SLIP_COEFFS};
     Property<float> commutationGain{registry, "p_cm", DEFAULT_COMMUTATION_GAIN};
     Property<float> convergenceGain{registry, "p_cv", DEFAULT_CONVERGENCE_GAIN};

@@ -110,6 +110,20 @@ message HeaterSettings {
     float kf = 4;                         // combined thermal feedforward gain
     bool heater_coordination_enabled = 5; // dual boiler: power heaters one at a time instead of in parallel, brew first
     uint32 handover_ms = 6;               // dual boiler: dead time between heaters when coordinated (clamped 20..5000)
+    // Lag compensation (brew boiler). 0 = off, so older displays that never send these keep the legacy loop.
+    float derivative_filter_s = 7; // low-pass time constant on the D term (s)
+    float integral_zone = 8;       // integrate only while |error| < this (degC); also pauses I during water flow
+    float sensor_dead_time_s = 9;  // heater-to-sensor dead time (s): length of the post-flow I pause, predictor delay
+    float model_heater_w = 10;     // heat-balance predictor: heater power (W)
+    float model_heat_rate = 11;    // heat-balance predictor: full-power heat-up rate (degC/s)
+    float model_loss_w = 12;       // heat-balance predictor: saved standing loss to start from (W), 0 = default guess
+    float inlet_temp_c = 13;       // tank water temperature (degC) for the predictor and thermal feedforward, 0 = 23
+    float water_dead_time_s = 14;  // heat-balance predictor: delay from water flowing to the sensor (s), 0 = dead time
+    reserved 15;                   // was reheat_full_power (full-power reheat, removed: slower on a Silvia)
+    reserved 16;                   // was thermal_observer (rolled back)
+    float valve_dump_ml = 17;           // water the valve dumps when a flush or shot ends (ml), 0 = none
+    float safety_no_rise_brew_s = 18;   // heater safety: full power, no rise, at brew setpoints (s), 0 = 60
+    float safety_no_rise_steam_s = 19;  // heater safety: the same at steam setpoints (s), 0 = 180
 }
 
 message PumpSettings {
@@ -199,6 +213,7 @@ message BoilerReading {
     float temperature = 2;
     float pressure = 3;
     float power = 4; // heater power 0..100 %
+    float standing_loss_w = 5; // learned standing loss (W) at 93 °C in a 23 °C room (learned per °C), 0 = predictor off
 }
 
 message SensorData {
@@ -222,6 +237,10 @@ message AutotuneResult {
     float ki = 2;
     float kd = 3;
     float kf = 4;
+    // What the step response identified, for the lag-compensation settings; 0 = not measured (older controllers).
+    float heat_rate = 5;   // k': steady rise at full power (degC/s)
+    float dead_time_s = 6; // step to first reaction (s)
+    float heater_w = 7;    // the wattage the run was started with
 }
 
 message VolumetricMeasurement {
@@ -251,6 +270,11 @@ enum ErrorCode {
     ERROR_CODE_RUNAWAY = 4;
     ERROR_CODE_TIMEOUT = 5;
     ERROR_CODE_AUTOTUNE_TIMEOUT = 6;
+    ERROR_CODE_HEATER_NO_RISE = 7;        // heater safety layer: near full power, temperature not rising
+    ERROR_CODE_SENSOR_JUMPS = 8;          // heater safety layer: temperature reading jumping
+    ERROR_CODE_FULL_POWER_TOO_LONG = 9;   // heater safety layer: continuous full power too long
+    ERROR_CODE_OVER_TEMP = 10;            // heater safety layer: reading above the safe limit
+    ERROR_CODE_SENSOR_FAULT = 11;         // heater safety layer: temperature sensor failing
 }
 
 message Error {

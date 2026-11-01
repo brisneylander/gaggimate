@@ -76,7 +76,7 @@ gm::Payload GaggiMateClient::buildRelayControl(uint8_t index, bool open) {
 }
 
 gm::Payload GaggiMateClient::buildHeaterSettings(float kp, float ki, float kd, float kf, bool heaterCoordinationEnabled,
-                                                 uint32_t handoverMs) {
+                                                 uint32_t handoverMs, const HeaterLagCompensation &lag) {
     gm::Payload p = gaggimate_Payload_init_zero;
     p.which_content = gaggimate_Payload_heater_tag;
     p.content.heater.kp = kp;
@@ -85,6 +85,17 @@ gm::Payload GaggiMateClient::buildHeaterSettings(float kp, float ki, float kd, f
     p.content.heater.kf = kf;
     p.content.heater.heater_coordination_enabled = heaterCoordinationEnabled;
     p.content.heater.handover_ms = handoverMs;
+    p.content.heater.derivative_filter_s = lag.derivativeFilterS;
+    p.content.heater.integral_zone = lag.integralZone;
+    p.content.heater.sensor_dead_time_s = lag.sensorDeadTimeS;
+    p.content.heater.model_heater_w = lag.modelHeaterW;
+    p.content.heater.model_heat_rate = lag.modelHeatRate;
+    p.content.heater.model_loss_w = lag.modelLossW;
+    p.content.heater.inlet_temp_c = lag.inletTempC;
+    p.content.heater.water_dead_time_s = lag.waterDeadTimeS;
+    p.content.heater.valve_dump_ml = lag.valveDumpMl;
+    p.content.heater.safety_no_rise_brew_s = lag.noRiseBrewS;
+    p.content.heater.safety_no_rise_steam_s = lag.noRiseSteamS;
     return p;
 }
 
@@ -159,8 +170,8 @@ void GaggiMateClient::sendPumpControl(uint8_t index, PumpControlMode mode, float
 void GaggiMateClient::sendRelayControl(uint8_t index, bool open) { _endpoint.send(buildRelayControl(index, open)); }
 
 void GaggiMateClient::sendHeaterSettings(float kp, float ki, float kd, float kf, bool heaterCoordinationEnabled,
-                                         uint32_t handoverMs) {
-    _endpoint.send(buildHeaterSettings(kp, ki, kd, kf, heaterCoordinationEnabled, handoverMs));
+                                         uint32_t handoverMs, const HeaterLagCompensation &lag) {
+    _endpoint.send(buildHeaterSettings(kp, ki, kd, kf, heaterCoordinationEnabled, handoverMs, lag));
 }
 
 void GaggiMateClient::sendPumpSettings(float a, float b, float c, float d, float commutationGain, float convergenceGain,
@@ -213,6 +224,8 @@ void GaggiMateClient::registerHandlers() {
         }
         _sensorCb(temperature, temp2, pressure, p.content.sensor.puck_flow, p.content.sensor.pump_flow,
                   p.content.sensor.puck_resistance, p.content.sensor.pump_power, heater_power, p.content.sensor.water_pumped);
+        if (_heaterLossCb && p.content.sensor.boilers_count > 0 && p.content.sensor.boilers[0].standing_loss_w > 0.0f)
+            _heaterLossCb(p.content.sensor.boilers[0].standing_loss_w);
     });
     _endpoint.on(gaggimate_Payload_button_tag, [this](const gm::Payload &p) {
         if (_buttonCb)
@@ -221,7 +234,8 @@ void GaggiMateClient::registerHandlers() {
     _endpoint.on(gaggimate_Payload_autotune_result_tag, [this](const gm::Payload &p) {
         if (_autotuneResultCb)
             _autotuneResultCb(p.content.autotune_result.kp, p.content.autotune_result.ki, p.content.autotune_result.kd,
-                              p.content.autotune_result.kf);
+                              p.content.autotune_result.kf, p.content.autotune_result.heat_rate,
+                              p.content.autotune_result.dead_time_s, p.content.autotune_result.heater_w);
     });
     _endpoint.on(gaggimate_Payload_volumetric_tag, [this](const gm::Payload &p) {
         if (_volumetricCb)

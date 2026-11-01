@@ -296,6 +296,14 @@ void Controller::setupBluetooth() {
     });
     pluginManager->on("ota:update:end", [this](Event const &) { applyConnectionPriority(true); });
     pluginManager->on("history:shot:recorded", [this](Event const &) { comms.tare(); });
+    comms.onHeaterLoss([this](float watts) {
+        const float saved = settings.getModelLossW();
+        const unsigned long now = millis();
+        if (std::fabs(watts - saved) >= std::max(2.0f, 0.05f * saved) && now - lastLossSaveMs >= LOSS_SAVE_INTERVAL_MS) {
+            settings.setModelLossW(watts);
+            lastLossSaveMs = now;
+        }
+    });
     comms.onSensorData([this](float temp, float temp2, float pressure, float puckFlow, float pumpFlow, float puckResistance,
                               float pumpPower, float heaterPower, float waterPumped) {
         onTempRead(temp);
@@ -340,10 +348,11 @@ void Controller::setupBluetooth() {
             ESP_LOGE(LOG_TAG, "Received error %d", error);
         }
     });
-    comms.onAutotuneResult([this](float Kp, float Ki, float Kd, float Kf) {
-        ESP_LOGI(LOG_TAG, "Received autotune values: Kp=%.3f, Ki=%.3f, Kd=%.3f, Kf=%.3f (combined)", Kp, Ki, Kd, Kf);
-        // Guard: older controller firmware could emit zero/NaN gains (#672
-        // class). Reject — keep existing PID, surface as "Autotune Failed".
+    comms.onAutotuneResult([this](float Kp, float Ki, float Kd, float Kf, float heatRate, float deadTimeS, float heaterW) {
+        ESP_LOGI(LOG_TAG, "Autotune: Kp=%.3f Ki=%.3f Kd=%.3f Kf=%.3f, k'=%.3f°C/s, dead time %.1fs, %.0fW", Kp, Ki, Kd, Kf,
+                 heatRate, deadTimeS, heaterW);
+        // Guard: older controller firmware could emit zero/NaN gains (#672 class). Reject: keep the existing PID and the
+        // model settings, surface as "Autotune Failed".
         if (!std::isfinite(Kp) || !std::isfinite(Ki) || !std::isfinite(Kd) || !std::isfinite(Kf) || Kp <= 0.0f ||
             (Kp + Ki + Kd) <= 0.0f) {
             ESP_LOGW(LOG_TAG, "Rejecting autotune result: invalid gains, preserving existing PID");
@@ -351,10 +360,23 @@ void Controller::setupBluetooth() {
             pluginManager->trigger("controller:autotune:failed");
             return;
         }
+        // The boiler model it measured goes straight into the lag-compensation settings (each setter clamps to its
+        // range; 0 = not measured by this controller, leave as is). The gains are only offered: applyAutotuneGains().
+        if (std::isfinite(heatRate) && heatRate > 0.0f)
+            settings.setModelHeatRate(heatRate);
+        if (std::isfinite(deadTimeS) && deadTimeS > 0.0f)
+            settings.setSensorDeadTimeS(deadTimeS);
+        if (std::isfinite(heaterW) && heaterW > 0.0f)
+            settings.setModelHeaterW(heaterW);
         char pid[64];
-        // Store in simplified format with combined Kf
         snprintf(pid, sizeof(pid), "%.3f,%.3f,%.3f,%.3f", Kp, Ki, Kd, Kf);
-        settings.setPid(String(pid));
+        autotuneSuggestedPid = String(pid);
+        lastAutotuneHeatRate = heatRate;
+        lastAutotuneDeadTimeS = deadTimeS;
+        // Older controllers (no model values) applied the gains themselves; keep the display's PID in step with them.
+        if (!(heatRate > 0.0f))
+            settings.setPid(autotuneSuggestedPid);
+        setHeaterSettings();
         pluginManager->trigger("controller:autotune:result");
         autotuning = false;
     });
@@ -692,7 +714,78 @@ void Controller::loopLogic() {
     if (mode != MODE_STANDBY && settings.getStandbyTimeout() > 0 && now > lastAction + settings.getStandbyTimeout())
         activateStandby();
 
+    loopFlushRecord();
+    loopTank();
     loopControl();
+}
+
+void Controller::loopFlushRecord() {
+    if (!flushRecording)
+        return;
+    const unsigned long now = millis();
+    if (flushRecordLastMs != 0 && now - flushRecordLastMs < 1000)
+        return;
+    flushRecordLastMs = now != 0 ? now : 1;
+    // Anything after the flush itself (a shot, another flush, steam, hot water) spoils the replay.
+    const bool active = isActive();
+    if (!active)
+        flushRecordFlushEnded = true;
+    if (mode != MODE_BREW || (active && flushRecordFlushEnded)) {
+        flushRecording = false;
+        return;
+    }
+    flushRecord.push_back({getCurrentTemp(), std::min(std::max(currentHeaterPower / 100.0f, 0.0f), 1.0f), currentPumpFlow});
+    if (flushRecord.size() <= static_cast<size_t>(flush_tank_check::RECORD_S))
+        return;
+    flushRecording = false;
+    flush_tank_check::Plant plant;
+    if (settings.getModelHeaterW() > 0.0f && settings.getModelHeatRate() > 0.0f) {
+        plant.heaterW = settings.getModelHeaterW();
+        plant.capacity = settings.getModelHeaterW() / settings.getModelHeatRate();
+    }
+    plant.holdW = settings.getModelLossW() > 0.0f ? settings.getModelLossW() : 0.05f * plant.heaterW;
+    if (settings.getWaterDeadTimeS() > 0.0f)
+        plant.waterDeadS = settings.getWaterDeadTimeS();
+    float rms = 0.0f;
+    const float implied = flush_tank_check::impliedTank(flushRecord, plant, &rms);
+    flushRecord.clear();
+    ESP_LOGI(LOG_TAG, "Flush implies tank %.1f°C (fit %.2f°C rms); estimate %.1f°C", implied, rms, tank.get());
+    if (std::isfinite(implied))
+        lastFlushImpliedTank = implied;
+    if (tank.isEnabled() && refillDetector.onFlush(implied, tank.get())) {
+        ESP_LOGI(LOG_TAG, "Two flushes say the tank is much colder than estimated: counting it as a refill");
+        onTankRefilled();
+    }
+}
+
+void Controller::loopTank() {
+    const unsigned long now = millis();
+    if (lastTankMs != 0 && now - lastTankMs < TANK_UPDATE_MS)
+        return;
+    const float dt = lastTankMs != 0 ? static_cast<float>(now - lastTankMs) / 1000.0f : 0.0f;
+    lastTankMs = now != 0 ? now : 1;
+    tank.configure(settings.getTankFillC(), settings.getTankRiseC(), settings.getTankWarmMin() * 60.0f);
+    tank.update(dt, mode != MODE_STANDBY);
+    if (systemInfo.capabilities.tof && tank.onWaterLevel(getWaterLevel()))
+        ESP_LOGI(LOG_TAG, "Water level back to full: tank estimate reset to %.0f°C", tank.get());
+    // Resend only on a whole-degree change: each resend reconfigures the heater.
+    if (comms.isConnected() && std::fabs(getTankTempC() - tankSentC) >= 1.0f)
+        setHeaterSettings();
+}
+
+void Controller::applyAutotuneGains() {
+    if (autotuneSuggestedPid.length() == 0)
+        return;
+    settings.setPid(autotuneSuggestedPid);
+    setHeaterSettings();
+    ESP_LOGI(LOG_TAG, "Applied autotune gains %s", autotuneSuggestedPid.c_str());
+}
+
+void Controller::onTankRefilled() {
+    tank.refilled();
+    ESP_LOGI(LOG_TAG, "Tank refilled: estimate reset to %.0f°C", tank.get());
+    if (comms.isConnected())
+        setHeaterSettings();
 }
 
 void Controller::loopControl() {
@@ -706,6 +799,12 @@ void Controller::loopControl() {
         if (comms.isConnected() && !systemInfo.protocolMismatch && now - lastPing >= PING_INTERVAL) {
             comms.sendPing();
             lastPing = now;
+        }
+        // Dual boilers refill with the pump while idle, so flow without a process is normal there.
+        if (!systemInfo.capabilities.dualBoiler && strayFlowGuard.check(now, isActive(), currentPumpFlow)) {
+            ESP_LOGW(LOG_TAG, "Pump reports %.1f ml/s with nothing running: re-sending the control state (pump off)",
+                     currentPumpFlow);
+            controlStateSent = false;
         }
 
         updateControl();
@@ -747,7 +846,22 @@ String Controller::getSystemStateMessage() const {
         return systemInfo.protocolVersion > gm_proto::PROTOCOL_VERSION ? "Version mismatch, update display"
                                                                        : "Version mismatch, update controller";
     case SYSTEM_ERROR:
-        return error == ERROR_CODE_RUNAWAY ? "Temperature error, restart..." : "Unknown error";
+        switch (error) {
+        case ERROR_CODE_RUNAWAY:
+            return "Temperature error, restart...";
+        case ERROR_CODE_HEATER_NO_RISE:
+            return "Heater on but not heating: check the temperature sensor, then restart";
+        case ERROR_CODE_SENSOR_JUMPS:
+            return "Temperature reading unstable: check the thermocouple, then restart";
+        case ERROR_CODE_FULL_POWER_TOO_LONG:
+            return "Heater at full power too long, restart...";
+        case ERROR_CODE_OVER_TEMP:
+            return "Boiler over temperature limit, restart...";
+        case ERROR_CODE_SENSOR_FAULT:
+            return "Temperature sensor failing: check the thermocouple, then restart";
+        default:
+            return "Unknown error";
+        }
     case SYSTEM_WAITING_CONTROLLER:
         return "Waiting for controller...";
     case SYSTEM_STARTING:
@@ -911,8 +1025,21 @@ void Controller::setPumpModelCoeffs(void) {
 void Controller::setHeaterSettings() {
     float pid[4];
     parseFloatCsv(settings.getPid(), pid, 4, 0.0f);
+    HeaterLagCompensation lag;
+    lag.derivativeFilterS = settings.getDerivativeFilterS();
+    lag.integralZone = settings.getIntegralZone();
+    lag.sensorDeadTimeS = settings.getSensorDeadTimeS();
+    lag.modelHeaterW = settings.getModelHeaterW();
+    lag.modelHeatRate = settings.getModelHeatRate();
+    lag.modelLossW = settings.getModelLossW();
+    lag.inletTempC = getTankTempC();
+    tankSentC = lag.inletTempC;
+    lag.waterDeadTimeS = settings.getWaterDeadTimeS();
+    lag.valveDumpMl = settings.getValveDumpMl();
+    lag.noRiseBrewS = settings.getNoRiseBrewS();
+    lag.noRiseSteamS = settings.getNoRiseSteamS();
     comms.sendHeaterSettings(pid[0], pid[1], pid[2], pid[3], settings.isHeaterCoordinationEnabled(),
-                             static_cast<uint32_t>(settings.getHeaterHandoverMs()));
+                             static_cast<uint32_t>(settings.getHeaterHandoverMs()), lag);
 }
 
 int Controller::getTargetGrindDuration() const { return settings.getTargetGrindDuration(); }
@@ -1020,6 +1147,13 @@ void Controller::updateControl() {
     float targetTemp = getTargetTemp();
     if (targetTemp > .0f) {
         targetTemp = targetTemp + static_cast<float>(settings.getTemperatureOffset());
+    }
+    // Heater off while a flush to target and its tail run (see flushToTarget()).
+    if (flushToTargetHoldUntil != 0) {
+        if (static_cast<long>(millis() - flushToTargetHoldUntil) < 0)
+            targetTemp = 0.0f;
+        else
+            flushToTargetHoldUntil = 0;
     }
 
     bool altRelayActive = false;
@@ -1139,6 +1273,7 @@ void Controller::updateControl() {
 }
 
 void Controller::activate(bool ignoreWarnings) {
+    flushToTargetHoldUntil = 0; // a shot wants the heater back straight away
     // Never create a process while startup is incomplete or the controller is
     // absent. The UI can be reached by tapping through the startup screen, and
     // previously its Start action ran against a half-initialized BLE session.
@@ -1549,8 +1684,58 @@ bool Controller::isHardwareScaleHealthy() const {
 }
 
 void Controller::onFlush() {
+    // Well over the target (after steaming, say) the flush button takes the surplus off instead of a fixed flush.
+    if (settings.isFlushButtonToTarget() && mode == MODE_BREW &&
+        getCurrentTemp() >= profileManager->getSelectedProfile().temperature + flush_to_target::BUTTON_SURPLUS_C &&
+        flushToTarget().reason == nullptr)
+        return;
+    const bool nearTarget = std::fabs(getCurrentTemp() - profileManager->getSelectedProfile().temperature) < 1.0f;
+    if (startFlush(static_cast<float>(settings.getFlushDuration())) && nearTarget) {
+        flushRecord.clear();
+        flushRecord.reserve(static_cast<size_t>(flush_tank_check::RECORD_S) + 2);
+        flushRecording = true;
+        flushRecordFlushEnded = false;
+        flushRecordLastMs = 0;
+    }
+}
+
+flush_to_target::Plan Controller::flushToTarget() {
+    float coeffs[2] = {NAN, NAN};
+    parseFloatCsv(settings.getPumpModelCoeffs(), coeffs, 2, NAN);
+    // Always the selected profile's temperature: what the next shot will brew at.
+    const float target = profileManager->getSelectedProfile().temperature;
+    flush_to_target::Plan plan = flush_to_target::plan(
+        getCurrentTemp(), target, static_cast<float>(settings.getTemperatureOffset()), settings.getModelHeaterW(),
+        settings.getModelHeatRate(), getTankTempC(), coeffs[0], settings.getModelLossW(), flushTargetHoldS(),
+        settings.getFlushTargetFactor() > 0.0f ? settings.getFlushTargetFactor() : 1.0f, settings.getValveDumpMl());
+    if (plan.reason == nullptr && mode != MODE_BREW)
+        plan.reason = "only in Brew mode";
+    if (plan.reason == nullptr && isActive())
+        plan.reason = "a shot or flush is already running";
+    if (plan.reason != nullptr) {
+        plan.ml = plan.seconds = 0.0f;
+        return plan;
+    }
+    ESP_LOGI(LOG_TAG, "Flush to target %.1f°C: %.1f°C over, %.0f ml in %.1f s", target, getCurrentTemp() - target, plan.ml,
+             plan.seconds);
+    // The flush is sized so the boiler lands on target with only its standing loss after it. Left alone, the predictor
+    // sees the cold water and the PID heats at full power (17.7 kJ, ~10 °C of rebound, on the first bench run), so the
+    // heater stays off for the flush and until its effect has reached the sensor.
+    flushToTargetHoldUntil = millis() + static_cast<unsigned long>((plan.seconds + flushTargetHoldS()) * 1000.0f);
+    if (flushToTargetHoldUntil == 0)
+        flushToTargetHoldUntil = 1;
+    // startFlush() refuses when a process started in the meantime: report that, and don't hold the heater off for a
+    // flush that isn't running (the tune routine once waited on a "successful" flush that never ran).
+    if (!startFlush(plan.seconds)) {
+        flushToTargetHoldUntil = 0;
+        plan.reason = "a shot or flush is already running";
+        plan.ml = plan.seconds = 0.0f;
+    }
+    return plan;
+}
+
+bool Controller::startFlush(float duration) {
     // Allocate outside the lock; reachable from the UI, AsyncTCP and BLE tasks (GM-147).
-    const int duration = settings.getFlushDuration();
     Profile profile = FLUSH_PROFILE;
     profile.temperature = profileManager->getSelectedProfile().temperature;
     profile.phases[0].duration = duration > 0 ? duration : FLUSH_HOLD_MAX_DURATION_S; // 0 = hold, capped
@@ -1561,7 +1746,7 @@ void Controller::onFlush() {
         std::lock_guard<std::recursive_mutex> guard(processMutex);
         if (isActiveLocked()) {
             delete flush;
-            return;
+            return false;
         }
         clearLocked(events);
         startProcessLocked(flush, events);
@@ -1570,6 +1755,7 @@ void Controller::onFlush() {
     }
     updateControl(); // same immediate send as startProcess()
     dispatchEvents(events);
+    return true;
 }
 
 // Every hold-to-flush source (physical button, touch, web) funnels its release through here.

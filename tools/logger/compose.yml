@@ -1,0 +1,24 @@
+# GaggiMate telemetry logger (logger.mjs). On the NAS: compose/appdata/gaggimate-logger/, started with
+# `docker compose up -d`; daily CSV files land in ./logs. Needs the UDR7 policy "OMV -> GaggiMate logger"
+# (192.168.0.5 -> 192.168.20.34, TCP 80): the coffee machine is on the isolated IoT LAN.
+services:
+  gaggimate-logger:
+    image: node:22-alpine
+    container_name: gaggimate-logger
+    restart: unless-stopped
+    user: "1003:100" # claude:users, owner of ./logs
+    working_dir: /app
+    command: ["node", "/app/logger.mjs"]
+    environment:
+      GM_HOST: 192.168.20.34
+      LOG_DIR: /logs
+      TZ: Australia/Brisbane
+    volumes:
+      - ./logger.mjs:/app/logger.mjs:ro
+      - ./logs:/logs
+    mem_limit: 128m
+    logging:
+      driver: json-file
+      options:
+        max-size: 1m
+        max-file: "3"

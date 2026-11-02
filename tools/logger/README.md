@@ -5,8 +5,8 @@ against weeks of normal use. Runs as a container on the NAS.
 
 ## Where it runs
 
-- **OMV** (`192.168.0.5`): `compose/appdata/gaggimate-logger/` (`compose.yml` and `logger.mjs` from this folder),
-  started with `docker compose up -d`. It isn't an OMV-UI stack, so manage it over SSH.
+- **OMV** (`192.168.0.5`): `compose/appdata/gaggimate-logger/` — the compose file in OMV's Compose UI, and
+  `logger.mjs` from this folder beside it.
 - **Files**: `compose/appdata/gaggimate-logger/logs/` — `YYYY-MM-DD.csv` per Brisbane day, and
   `settings-YYYY-MM-DD.json` (the settings each time they change). Files older than 2 days are gzipped.
 - **Network**: the coffee machine is on the isolated IoT LAN (`192.168.20.34`, a fixed reservation). The UDR7 policy
@@ -33,6 +33,14 @@ minute.
 The display serves at most 3 websocket clients and drops the oldest when a fourth connects. The logger holds one; if
 it is dropped three times in 10 minutes it waits 5 minutes before reconnecting, so a phone and a browser can still
 connect.
+
+A connection attempt that hasn't opened within 20 s is retried, and if no status arrives for 5 minutes (the display
+sends about two a second, Standby included) the logger exits and Docker restarts it: on 2026-11-02 a reconnect attempt
+hung, neither opening nor failing, and nothing was logged for 11 hours. Settings snapshots ignore values that drift on
+their own (the tank estimate, the learned loss, the shot counters) when deciding whether anything changed.
+
+The stack is managed in the OMV web UI (Services → Compose → Files, `gaggimate-logger`, saved 2026-11-02); `logger.mjs`
+sits beside OMV's files in the same folder.
 
 ## Updating
 

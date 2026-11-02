@@ -33,6 +33,12 @@ const RECONNECT_MS = 30000;
 const BACKOFF_MS = 5 * 60000;
 const KEEP_PLAIN_DAYS = 2;
 const SETTINGS_EVERY_MS = 10 * 60000;
+const OPEN_TIMEOUT_MS = 20000;
+// The display sends status about twice a second, Standby included: this long without any means the connection is stuck
+// (on 2026-11-02 a reconnect attempt hung, neither opening nor failing, and logged nothing for 11 h). Exit, and Docker's
+// restart policy starts afresh.
+const STALL_EXIT_MS = 5 * 60000;
+let lastStatusMs = Date.now();
 
 const COLUMNS = [
   "time",
@@ -122,18 +128,33 @@ function onStatus(m) {
 
 // Settings: saved when they change, so a day's log can be read against the PID and boiler profile in force.
 let lastSettings = "";
+// These drift on their own (the tank estimate every few minutes, the learned loss, the shot counters): saved with each
+// snapshot, but not a reason for one.
+const VOLATILE = [
+  "tankEstimateC",
+  "modelLossW",
+  "shotsSinceBackflush",
+  "shotsSinceDescaling",
+  "lastBackflushTime",
+  "lastDescalingTime",
+];
 async function snapshotSettings() {
   try {
     const res = await fetch(`http://${HOST}/api/settings`, {
       signal: AbortSignal.timeout(10000),
     });
     if (!res.ok) return;
-    const text = JSON.stringify(await res.json());
+    const settings = await res.json();
+    const text = JSON.stringify(
+      Object.fromEntries(
+        Object.entries(settings).filter(([k]) => !VOLATILE.includes(k)),
+      ),
+    );
     if (text === lastSettings) return;
     lastSettings = text;
     appendFileSync(
       join(DIR, `settings-${localDate(new Date())}.json`),
-      `${JSON.stringify({ time: localTime(new Date()), settings: JSON.parse(text) })}\n`,
+      `${JSON.stringify({ time: localTime(new Date()), settings })}\n`,
     );
     log("settings changed, snapshot saved");
   } catch {
@@ -165,8 +186,20 @@ let drops = [];
 function connect() {
   const ws = new WebSocket(`ws://${HOST}/ws`);
   let opened = false;
+  let retried = false;
+  // A connection attempt that neither opens nor fails: give up on it and try again.
+  const openTimer = setTimeout(() => {
+    if (opened || retried) return;
+    retried = true;
+    log(`no connection after ${OPEN_TIMEOUT_MS / 1000} s; retrying`);
+    try {
+      ws.close();
+    } catch {}
+    setTimeout(connect, RECONNECT_MS);
+  }, OPEN_TIMEOUT_MS);
   ws.onopen = () => {
     opened = true;
+    clearTimeout(openTimer);
     log(`connected to ${HOST}`);
     write({ ...state, event: "connect" });
     snapshotSettings();
@@ -178,12 +211,17 @@ function connect() {
     } catch {
       return;
     }
-    if (m.tp === "evt:status") onStatus(m);
-    else if (typeof m.tp === "string" && m.tp.startsWith("evt:"))
+    if (m.tp === "evt:status") {
+      lastStatusMs = Date.now();
+      onStatus(m);
+    } else if (typeof m.tp === "string" && m.tp.startsWith("evt:"))
       write({ ...state, event: m.tp });
   };
   ws.onerror = () => {};
   ws.onclose = () => {
+    clearTimeout(openTimer);
+    if (retried) return; // the open timeout already scheduled the retry
+    retried = true;
     const now = Date.now();
     if (opened) {
       write({ ...state, event: "disconnect" });
@@ -201,4 +239,12 @@ log(`GaggiMate logger: ${HOST} -> ${DIR} (${TZ})`);
 await compressOld();
 setInterval(compressOld, 6 * 3600000);
 setInterval(snapshotSettings, SETTINGS_EVERY_MS);
+setInterval(() => {
+  if (Date.now() - lastStatusMs > STALL_EXIT_MS) {
+    log(
+      `no status for ${Math.round((Date.now() - lastStatusMs) / 60000)} min; exiting so Docker restarts the logger`,
+    );
+    process.exit(1);
+  }
+}, 30000);
 connect();

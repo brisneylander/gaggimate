@@ -55,6 +55,8 @@ class SimplePID {
     void setIntegralZone(float band) { integralZone = band > 0.0f ? band : 0.0f; };
     // Freeze the integral while a known disturbance is acting (e.g. water flowing).
     void setIntegralHold(bool hold) { integralHold = hold; };
+    // After a pause in update() calls: the next derivative starts from the next reading, the integral stays.
+    void resyncDerivative() { derivativeResync = true; };
     // Measurement the D term differentiates; nullptr = the controlled input. Lets P/I run on a predicted
     // temperature while D damps what the sensor actually shows (D on a prediction that includes the
     // controller's own output becomes positive feedback through the model at high Kd).
@@ -92,11 +94,12 @@ class SimplePID {
     float feedback_integralState = 0.0f; // Integral state
     float prevError = 0.0f;              // Previous error for derivative calculation
     float prevOutput = 0.0f;             // Previous output for derivative calculation
-    float prevInput = 0.0f;              // Previous measurement; the derivative acts on it, not on the error
-    float derivFiltered = 0.0f;          // Low-pass filtered measurement rate (units/s)
-    float derivFilterTau = 0.0f;         // Derivative filter time constant (s), 0 = off
-    float integralZone = 0.0f;           // |error| band where the integral runs, 0 = everywhere
-    bool integralHold = false;           // Integral frozen while true
+    bool derivativeResync = false;
+    float prevInput = 0.0f;      // Previous measurement; the derivative acts on it, not on the error
+    float derivFiltered = 0.0f;  // Low-pass filtered measurement rate (units/s)
+    float derivFilterTau = 0.0f; // Derivative filter time constant (s), 0 = off
+    float integralZone = 0.0f;   // |error| band where the integral runs, 0 = everywhere
+    bool integralHold = false;   // Integral frozen while true
 
     const float *derivativeInput = nullptr; // D-term measurement, nullptr = sensorOutput
     Control mode = Control::manual;

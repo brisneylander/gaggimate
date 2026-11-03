@@ -47,12 +47,13 @@ gm::Payload GaggiMateClient::buildPing() {
     return p;
 }
 
-gm::Payload GaggiMateClient::buildBoilerControl(uint8_t index, BoilerControlMode mode, float setpoint) {
+gm::Payload GaggiMateClient::buildBoilerControl(uint8_t index, BoilerControlMode mode, float setpoint, bool hold) {
     gm::Payload p = gaggimate_Payload_init_zero;
     p.which_content = gaggimate_Payload_boiler_tag;
     p.content.boiler.index = index;
     p.content.boiler.mode = static_cast<gm::BoilerMode>(mode);
     p.content.boiler.setpoint = setpoint;
+    p.content.boiler.hold = hold;
     return p;
 }
 

@@ -136,6 +136,21 @@ void test_antiwindup_does_not_unwind_a_held_integral() {
     TEST_ASSERT_FLOAT_WITHIN(1e-4f, before, r.pid.getIntegralState());
 }
 
+// After a pause in the updates (a flush to target's heater hold) the reading has moved: the derivative must not see that as
+// a rate, and the integral keeps the holding power. Without the resync, 12 °C in one step is a full-scale kick.
+void test_resync_derivative_keeps_integral() {
+    Rig r(60.0f, 0.658f, 1500.0f);
+    r.input = 92.0f;
+    for (int i = 0; i < 100; ++i)
+        r.step();
+    const float iOut = r.output - 60.0f;
+    TEST_ASSERT_TRUE(iOut > 30.0f);
+    r.input = 80.0f; // the hold skipped the steps while it fell
+    r.pid.resyncDerivative();
+    r.step();
+    TEST_ASSERT_FLOAT_WITHIN(10.0f, 60.0f * 13.0f + iOut, r.output); // P and the integral, no derivative
+}
+
 int main(int argc, char **argv) {
     UNITY_BEGIN();
     RUN_TEST(test_no_derivative_kick_on_first_sample);
@@ -146,5 +161,6 @@ int main(int argc, char **argv) {
     RUN_TEST(test_integral_zone_zero_keeps_legacy_integration);
     RUN_TEST(test_integral_hold_freezes_and_keeps_value);
     RUN_TEST(test_antiwindup_does_not_unwind_a_held_integral);
+    RUN_TEST(test_resync_derivative_keeps_integral);
     return UNITY_END();
 }

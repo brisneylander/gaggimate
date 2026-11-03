@@ -78,6 +78,7 @@ message BoilerControl {
     uint32 index = 1;
     BoilerMode mode = 2;
     float setpoint = 3; // degC or bar per `mode`, 0 = off
+    bool hold = 4;      // heater off for now, the setpoint and control state kept (flush to target)
 }
 
 enum PumpMode {

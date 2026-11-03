@@ -32,6 +32,12 @@ bool SimplePID::update() {
         isInitialized = true;
     }
 
+    if (derivativeResync) {
+        derivativeResync = false;
+        prevInput = derivativeInput != nullptr ? *derivativeInput : *this->sensorOutput;
+        derivFiltered = 0.0f;
+    }
+
     // Compute the filtered setpoint values
     float FFOut = 0.0f;
     float DistFFOut = 0.0f;

@@ -34,6 +34,8 @@ class Heater {
     void loop();
 
     void setSetpoint(float setpoint);
+    // Heater off for now with the setpoint and the PID's integral kept (flush to target). stop() clears it.
+    void setHold(bool on) { held = on; }
     float getSetpoint() { return setpoint; };
     float getDutyCycle() const { return output / TUNER_OUTPUT_SPAN * 100.0f; }
     void setTunings(float Kp, float Ki, float Kd);
@@ -95,6 +97,9 @@ class Heater {
     float controlTemperature = 0.0f; // PID input: measured + predictor correction
     float output = 0.0f;
     float setpoint = 0.0f;
+    std::atomic<bool> held{false};
+    bool wasHeld = false;
+    void loopHold();
     int plotCount = 0;
 
     unsigned long windowStartTime = 0;

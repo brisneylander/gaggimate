@@ -60,7 +60,7 @@ class GaggiMateClient {
 
     // Build a payload without sending (compose your own batch, then send()).
     gm::Payload buildPing();
-    gm::Payload buildBoilerControl(uint8_t index, BoilerControlMode mode, float setpoint);
+    gm::Payload buildBoilerControl(uint8_t index, BoilerControlMode mode, float setpoint, bool hold = false);
     gm::Payload buildPumpControl(uint8_t index, PumpControlMode mode, float power, float pressure, float flow);
     gm::Payload buildRelayControl(uint8_t index, bool open);
     gm::Payload buildHeaterSettings(float kp, float ki, float kd, float kf, bool heaterCoordinationEnabled, uint32_t handoverMs,

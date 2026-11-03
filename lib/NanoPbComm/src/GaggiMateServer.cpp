@@ -169,7 +169,7 @@ void GaggiMateServer::registerHandlers() {
     _endpoint.on(gaggimate_Payload_boiler_tag, [this](const gm::Payload &p) {
         if (_boilerCb)
             _boilerCb(static_cast<uint8_t>(p.content.boiler.index), static_cast<BoilerControlMode>(p.content.boiler.mode),
-                      p.content.boiler.setpoint);
+                      p.content.boiler.setpoint, p.content.boiler.hold);
     });
     _endpoint.on(gaggimate_Payload_pump_tag, [this](const gm::Payload &p) {
         if (_pumpCb)

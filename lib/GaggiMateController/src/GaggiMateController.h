@@ -79,6 +79,8 @@ class GaggiMateController {
 
     String _version;
     unsigned long lastPingTime = 0;
+    unsigned long lastErrorSend = 0;
+    static constexpr unsigned long ERROR_RESEND_MS = 5000;
     unsigned long lastLedHealthCheck = 0;
     unsigned long lastTankLevelSend = 0;
     size_t errorState = ERROR_CODE_NONE;

@@ -62,7 +62,40 @@ void Heater::loop() {
     }
     simplePid->setMode(SimplePID::Control::automatic);
 
+    if (held) {
+        loopHold();
+        return;
+    }
+    if (wasHeld) {
+        wasHeld = false;
+        simplePid->resyncDerivative(); // the reading moved during the hold: that's no rate to brake on
+    }
     loopPid();
+}
+
+// Heater off with everything else kept. As with a setpoint of 0 the predictor starts clean afterwards, but the integral
+// keeps the holding power (without it a flush to target sat 0.5 °C under for ~3 min while it built back up), and the
+// flush still counts as water for the boost and the integral hold.
+void Heater::loopHold() {
+    wasHeld = true;
+    requestOutput(false);
+    output = 0.0f;
+    temperature = sensor->read();
+    controlTemperature = temperature;
+    const uint32_t now = millis();
+    const float flow = pumpFlowRate != nullptr ? *pumpFlowRate : 0.0f;
+    std::lock_guard<std::mutex> lock(lagMutex);
+    if (flow > 0.01f) {
+        lastFlowMs = now;
+        flowSeen = true;
+    }
+    if (flow > HeatUpBoost::FLUSH_FLOW) {
+        lastFlushMs = now;
+        flushSeen = true;
+    }
+    predictor.reset();
+    predictorPrimed = false;
+    updateGroupHead(now);
 }
 
 void Heater::setSetpoint(float setpoint) {
@@ -86,6 +119,7 @@ void Heater::setTunings(float Kp, float Ki, float Kd) {
 
 void Heater::stop() {
     autotuning = false;
+    held = false;
     setSetpoint(0.0f);
     requestOutput(false); // cut the relay now instead of on the heater task's next tick
 }

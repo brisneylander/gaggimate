@@ -198,7 +198,7 @@ void GaggiMateController::setup() {
     // Output control is split into per-component, device-numbered messages. Each
     // arrives independently (or batched together in one frame for an atomic
     // update). Control messages feed the connection watchdog via handlePing().
-    _comms.onBoilerControl([this](uint8_t index, BoilerControlMode mode, float setpoint) {
+    _comms.onBoilerControl([this](uint8_t index, BoilerControlMode mode, float setpoint, bool hold) {
         if (!_config.capabilites.dualBoiler && index > 0) {
             return;
         }
@@ -211,6 +211,7 @@ void GaggiMateController::setup() {
             return;
         }
         if (mode == BoilerControlMode::Temperature) {
+            target->setHold(hold);
             target->setSetpoint(setpoint);
         } else {
             // Pressure-regulated boiler not supported by this hardware yet.
@@ -382,6 +383,12 @@ void GaggiMateController::loop() {
     }
     if (errorState != ERROR_CODE_NONE) {
         ESP_LOGW("GaggiMateController", "Error state: %d", errorState);
+        // A fault stays latched until a restart, and one notify isn't enough: it can be lost, and a display that restarts
+        // on its own would otherwise show "ready" with the heater locked off. The display ignores repeats.
+        if (errorState != ERROR_CODE_TIMEOUT && _comms.isConnected() && now - lastErrorSend >= ERROR_RESEND_MS) {
+            lastErrorSend = now;
+            _comms.sendError(errorState);
+        }
     }
     delay(250);
     if (Serial.available()) {

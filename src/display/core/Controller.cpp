@@ -714,9 +714,11 @@ void Controller::loopLogic() {
 
     unsigned long now = millis();
 
-    if (grindActiveUntil != 0 && now > grindActiveUntil)
+    // Differences, signed: millis() wraps after 49.7 days, and lastAction can be a moment newer than now (other tasks).
+    if (grindActiveUntil != 0 && static_cast<long>(now - grindActiveUntil) > 0)
         deactivateGrind();
-    if (mode != MODE_STANDBY && settings.getStandbyTimeout() > 0 && now > lastAction + settings.getStandbyTimeout())
+    if (mode != MODE_STANDBY && settings.getStandbyTimeout() > 0 &&
+        static_cast<long>(now - lastAction) > static_cast<long>(settings.getStandbyTimeout()))
         activateStandby();
 
     loopFlushRecord();
@@ -1157,9 +1159,10 @@ void Controller::updateControl() {
         targetTemp = targetTemp + static_cast<float>(settings.getTemperatureOffset());
     }
     // Heater off while a flush to target and its tail run (see flushToTarget()).
+    bool heaterHold = false;
     if (flushToTargetHoldUntil != 0) {
         if (static_cast<long>(millis() - flushToTargetHoldUntil) < 0)
-            targetTemp = 0.0f;
+            heaterHold = true;
         else
             flushToTargetHoldUntil = 0;
     }
@@ -1177,6 +1180,7 @@ void Controller::updateControl() {
     BoilerCommand boiler;
     boiler.index = 0;
     boiler.setpoint = targetTemp;
+    boiler.hold = heaterHold;
     PumpCommand pump;
     pump.index = 0;
     RelayCommand relay; // index 0 = brew valve
@@ -1219,7 +1223,7 @@ void Controller::updateControl() {
     size_t count = 0;
     const bool full = !controlStateSent.exchange(true); // claim the flag first so a concurrent reset is never lost
     if (full || boiler != lastBoiler)
-        batch[count++] = comms.buildBoilerControl(boiler.index, boiler.mode, boiler.setpoint);
+        batch[count++] = comms.buildBoilerControl(boiler.index, boiler.mode, boiler.setpoint, boiler.hold);
 
     if (systemInfo.capabilities.dualBoiler) {
         float targetSteamTemp = getTargetSteamTemp();
@@ -1472,6 +1476,7 @@ void Controller::setMode(int newMode) {
     if (mode == MODE_BREW && previousMode != MODE_BREW)
         flushPending = true; // entering brew mode, including wake-up from standby
     steamReady = false;
+    flushToTargetHoldUntil = 0; // the hold is for landing on the brew target: Steam wants the heater now
 
     updateLastAction();
     setTargetTemp(getTargetTemp());

@@ -83,6 +83,8 @@ Shot 62 ran about 20 % less flow than shot 60 (a tighter puck), which accounts f
 holding power. In the simulator a higher Kp, a higher Ki or a full-power top-up once the water stops each saved under
 10 s of that and added overshoot (heat still on its way when the reading catches up), so they were left out.
 
+![Boiler reading through a Silvia Daily shot and after it: without the feedforward it falls to 89.7 °C and sits there; with it, it bottoms at 90.3 °C and is rising to 92.1 °C when the shot ends](assets/shot-feedforward.svg)
+
 **Synthetic shots (2026-11-03 evening).** To take the puck out of it, a bench profile drew the same water every time
 (a 5 s fill at full flow, then 1.8 ml/s for 28 s: 80 ml in 34 s) through the empty portafilter, from a reading settled
 at 93 °C, alternating Kf (`scripts/bench/synthetic_shot.mjs`, three draws each):
@@ -97,7 +99,7 @@ Each setting's three draws agree within 0.6 °C. The lowest reading comes 20-30 
 lag). 0.7 takes another 0.7 °C off the dip for +0.2 °C more overshoot; the Silvia profile keeps 0.45 until 0.7 has
 been tried on real shots. (The third Kf 0 draw lost its connection before its recovery was logged.)
 
-![Boiler reading through a Silvia Daily shot and after it: without the feedforward it falls to 89.7 °C and sits there; with it, it bottoms at 90.3 °C and is rising to 92.1 °C when the shot ends](assets/shot-feedforward.svg)
+![Nine synthetic shots from 93 °C: Kf 0 falls to 87.6-88.2 °C, Kf 0.45 to 89.5 °C, Kf 0.7 to 90.3-90.5 °C; all three settings recover to 93 °C, Kf 0.7 slightly past it](assets/synthetic-shots.svg)
 
 ### Against stock settings: holding and after steam
 
@@ -131,6 +133,8 @@ same water, so the difference is the heater afterwards:
 | Upstream's Silvia PID, compensation off, two presses   | 113.0-116.6 °C | 60 ml    | 90.9, 92.25 °C    | 93.3, 93.3 °C      | 200 s; not within 7 min |
 | GaggiMate's default PID, compensation off, two presses | 111.3-112.0 °C | 57-60 ml | 91.7, 92.0 °C     | 94.3, 94.2 °C      | 291 s; not within 7 min |
 
+![After steam, every setup flushing from 105 °C, two runs each: the fork lands at 92.5 °C both times; upstream's Silvia PID dips to 90.9 and 92.25 °C; GaggiMate's defaults overshoot to 94.2-94.3 °C](assets/after-steam-105-repeats.svg)
+
 And flush to target from other temperatures (evening, one run each):
 
 | Flushed from | Water    | Lowest  | Peak after | Settled ±0.3 °C |
@@ -141,6 +145,8 @@ And flush to target from other temperatures (evening, one run each):
 | 115 °C       | 109 ml   | 92.5 °C | 93.0 °C    | 236 s           |
 
 From 100 to 115 °C it sizes the flush from 32 to 109 ml and lands at 92.5-92.7 °C every time, without overshoot.
+
+![Flush to target from 100, 105, 110 and 115 °C: every run levels out at 92.5-92.7 °C and settles at 93 °C without overshoot](assets/flush-to-target-range.svg)
 
 The fork no longer peaks lower after steaming (105.7-106.7 °C on 2026-10-30): since then the heat-up boost runs the
 heater flat out while steaming, so it climbs as fast as the stock setups and carries as much heat past the switch back

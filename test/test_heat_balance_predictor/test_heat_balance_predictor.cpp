@@ -63,6 +63,38 @@ void test_correction_decays_after_heater_off() {
     TEST_ASSERT_FLOAT_WITHIN(1e-3f, 0.0f, p.getCorrection());
 }
 
+// A gap in the updates (the predictor switched off in the settings for a while, then on again) is not heat: the bench
+// on 2026-11-03 switched the lag compensation off for 13 min; the first step back counted 780 s of standing loss plus
+// a stale group head uptake as a >15 °C shortfall, and the heat-up boost ran flat out at the setpoint for 20 s.
+void test_long_gap_is_not_counted_as_heat() {
+    HeatBalancePredictor p;
+    p.configure(1100.0f, 0.6f, 20.0f);
+    p.seedLoss(36.0f);
+    p.setExtraLossWatts(160.0f);
+    p.update(780.0f, 0.03f, 0.0f, 98.0f, 98.0f);
+    // one step of at most MAX_STEP_S: (33 - ~38 - 160) W x 5 s / 1833 J/°C, under half a degree
+    TEST_ASSERT_TRUE(p.getCorrection() > -0.5f);
+}
+
+// Switched off and on again, the group head estimate starts over from the boiler instead of resuming a stale value
+// (frozen 40 °C under the boiler, it would read as ~170 W of uptake for minutes), and while off it reports none.
+void test_group_head_restarts_when_switched_back_on() {
+    GroupHeadEstimate g;
+    g.configure(1343.0f, 4.3f, 0.6f);
+    g.update(1.0f, 28.0f); // a cold start
+    for (int i = 0; i < 120; ++i)
+        g.update(1.0f, 98.0f);
+    TEST_ASSERT_TRUE(g.getUptakeWatts() > 100.0f); // still well behind the boiler
+    g.configure(0.0f, 0.0f, 0.0f);
+    TEST_ASSERT_EQUAL_FLOAT(0.0f, g.getUptakeWatts());
+    g.configure(1343.0f, 4.3f, 0.6f);
+    g.update(1.0f, 98.0f);
+    TEST_ASSERT_FLOAT_WITHIN(0.1f, 98.0f, g.getTemperature());
+    TEST_ASSERT_TRUE(g.getUptakeWatts() < 50.0f); // only the standing loss share
+    g.configure(1343.0f, 4.3f, 0.6f);             // a re-send of the same settings changes nothing
+    TEST_ASSERT_FLOAT_WITHIN(0.1f, 98.0f, g.getTemperature());
+}
+
 // A flush is seen at once: 10 ml/s of 23 °C water into a 98 °C boiler removes ~3.1 kW.
 void test_flush_gives_immediate_negative_correction() {
     HeatBalancePredictor p;
@@ -855,6 +887,8 @@ int main(int argc, char **argv) {
     RUN_TEST(test_daily_shot_feedforward);
     RUN_TEST(test_heat_up_boost);
     RUN_TEST(test_group_head_estimate);
+    RUN_TEST(test_long_gap_is_not_counted_as_heat);
+    RUN_TEST(test_group_head_restarts_when_switched_back_on);
     RUN_TEST(test_kp_sweep);
     return UNITY_END();
 }

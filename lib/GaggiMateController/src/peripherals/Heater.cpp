@@ -178,6 +178,7 @@ void Heater::updateLagCompensation() {
 
     if (!predictor.isEnabled()) {
         controlTemperature = temperature;
+        predictorPrimed = false; // switched back on later: time its first step from then, not from before
         return;
     }
     if (!predictorPrimed) {

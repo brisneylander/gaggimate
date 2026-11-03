@@ -18,9 +18,15 @@ class GroupHeadEstimate {
     static constexpr float ROOM_C = 22.0f;
 
     // Any parameter <= 0 disables it (uptake stays 0).
+    // Switched on again after being off: the estimate stopped following the boiler meanwhile, so it starts afresh from
+    // the next reading (a stale cold group head would read as minutes of uptake and over-heat the boiler).
     void configure(float heatCapacity, float coupling, float lossPerK) {
         const bool valid = std::isfinite(heatCapacity) && std::isfinite(coupling) && std::isfinite(lossPerK) &&
                            heatCapacity > 0.0f && coupling > 0.0f && lossPerK >= 0.0f;
+        if (!valid || !isEnabled())
+            uptake = 0.0f; // off means no uptake, not the last value
+        if (valid && !isEnabled())
+            started = false;
         cg = valid ? heatCapacity : 0.0f;
         kg = valid ? coupling : 0.0f;
         loss = valid ? lossPerK : 0.0f;

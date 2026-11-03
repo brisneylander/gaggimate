@@ -48,6 +48,7 @@ float HeatBalancePredictor::update(float dt, float duty, float flow, float measu
         lastFlow = 0.0f;
         return correction;
     }
+    dt = std::min(dt, MAX_STEP_S);
     duty = std::min(std::max(duty, 0.0f), 1.0f);
     flow = std::isfinite(flow) && flow > 0.0f ? flow : 0.0f;
 

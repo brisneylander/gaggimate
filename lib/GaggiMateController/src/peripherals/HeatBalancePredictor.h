@@ -19,8 +19,12 @@
 // half-way time: a delay as short as the first reaction drops the flush while the sensor is still falling.
 class HeatBalancePredictor {
   public:
-    static constexpr float WATER_SPECIFIC_HEAT = 4.18f;   // J/(g·°C), 1 ml = 1 g
-    static constexpr float MAX_CORRECTION = 15.0f;        // °C, bound on how far the prediction may lead the sensor
+    static constexpr float WATER_SPECIFIC_HEAT = 4.18f; // J/(g·°C), 1 ml = 1 g
+    static constexpr float MAX_CORRECTION = 15.0f;      // °C, bound on how far the prediction may lead the sensor
+    // s, longest step counted: the heater steps once a second, so a longer gap is time the predictor wasn't running
+    // (switched off in the settings), not heat. Counted whole, 13 min of standing loss once read as a 15 °C shortfall
+    // and the heat-up boost ran flat out at the setpoint (bench, 2026-11-03).
+    static constexpr float MAX_STEP_S = 5.0f;
     static constexpr float LOSS_LEARN_BAND = 1.0f;        // °C, losses are only learned this close to setpoint
     static constexpr float LOSS_LEARN_TAU = 300.0f;       // s, time constant of the standing-loss estimate
     static constexpr float DEFAULT_LOSS_FRACTION = 0.05f; // first-run loss guess: ~5 % of the element at brew temp

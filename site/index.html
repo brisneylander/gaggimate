@@ -461,20 +461,22 @@
           the 1100 W element can heat it. But on the fork's settings the heater
           also answered late, at 17–21 % while the boiler sat 3 °C under.
           Turning on upstream's thermal feedforward alongside the fork's
-          predictor, at about half the water's heat, fixed most of that.
+          predictor, at about half the water's heat, fixed most of that. To take
+          the puck out of it, a bench profile drew the same 80 ml in 34 s nine
+          times, three with each setting:
         </p>
         <div class="stats">
           <div class="stat">
-            <div class="k">Lowest during the shot</div>
-            <div class="v">−2.7 °C <small>from −3.3</small></div>
+            <div class="k">Dip in the same draw</div>
+            <div class="v">−3.6 °C <small>from −5.2</small></div>
           </div>
           <div class="stat">
-            <div class="k">Reading when the shot ends</div>
-            <div class="v">92.1 °C <small>from 89.7</small></div>
+            <div class="k">Back within ±0.3 °C</div>
+            <div class="v">~110 s <small>from ~140</small></div>
           </div>
           <div class="stat">
-            <div class="k">Back at 93 °C, no overshoot</div>
-            <div class="v">~90 s <small>from ~110</small></div>
+            <div class="k">Overshoot after</div>
+            <div class="v">+0.3 °C <small>from +0.2</small></div>
           </div>
         </div>
         <div class="chart">
@@ -494,14 +496,16 @@
             aria-label="Boiler reading through a Silvia Daily shot: without the feedforward it falls to 89.7 °C and sits there until the shot ends; with it, it bottoms at 90.3 °C and is back up to 92.1 °C when the shot ends."
           ></svg>
           <p class="caption">
-            Two Silvia Daily 18-36 shots from 93.0 °C on 2026-11-03, same grind,
-            tank about 30 °C, both stopped at about 36 g on a Bluetooth scale
-            (35.7 s and 43.9 s). The second was the tighter puck and drew about
-            20 % less flow, which accounts for part of the difference; a third
-            shot showed the same pattern. Straight segments after the second
-            shot are gaps in the log. Higher PID gains or a top-up once the
-            water stops recovered the last degree under 10 s sooner in
-            simulation and added overshoot, so they were left out.
+            The figures above: Kf 0.45 against 0 (off), three synthetic draws
+            each, within 0.6 °C of each other; Kf 0.7 dipped 2.9 °C and overshot
+            0.5 °C. The chart: two real Silvia Daily 18-36 shots from 93.0 °C on
+            2026-11-03, same grind, tank about 30 °C, both stopped at about 36 g
+            on a Bluetooth scale (35.7 s and 43.9 s). The second was the tighter
+            puck and drew about 20 % less flow, which accounts for part of the
+            difference; a third shot showed the same pattern. Straight segments
+            after the second shot are gaps in the log. Higher PID gains or a
+            top-up once the water stops recovered the last degree under 10 s
+            sooner in simulation and added overshoot, so they were left out.
           </p>
         </div>
       </section>
@@ -512,14 +516,14 @@
           Steam, back to Brew, and once the boiler has fallen to 105 °C, what an
           owner does: on stock settings press the flush button, then again once
           it ends (one press isn't enough); on the fork, press it once and it
-          flushes to target. Every setup flushed from the same 105 °C, and all
-          three ended up pumping about the same water, 57–60 ml. The difference
-          is what the heater does with it.
+          flushes to target. Every setup flushed from the same 105 °C, twice,
+          and all three pumped about the same water, 56–60 ml. The difference is
+          what the heater does with it.
         </p>
         <div class="stats">
           <div class="stat">
             <div class="k">Lowest after the flush</div>
-            <div class="v">92.5 °C <small>from 90.9–91.7</small></div>
+            <div class="v">92.5 °C <small>from 90.9–92.25</small></div>
           </div>
           <div class="stat">
             <div class="k">Overshoot after the flush</div>
@@ -527,7 +531,7 @@
           </div>
           <div class="stat">
             <div class="k">Settled within ±0.3 °C</div>
-            <div class="v">176 s <small>from 200–291</small></div>
+            <div class="v">~190 s <small>from 200 to 420+</small></div>
           </div>
         </div>
         <div class="chart">
@@ -552,13 +556,16 @@
             aria-label="After steaming, every setup flushed from 105 °C: the fork bottoms at 92.5 °C and lands at 93 °C without overshoot; upstream's Silvia PID values dip to 90.9 °C, GaggiMate's defaults to 91.7 °C and then overshoot to 94.3 °C."
           ></svg>
           <p class="caption">
-            Bench logs from 2026-11-03, one run per setup, tank about 27–30 °C,
-            Olab pump (a 5 s press is about 29 ml). Flush starts at 0 s; the
+            Two runs per setup on 2026-11-03 (one shown each), tank about 27–30
+            °C, Olab pump (a 5 s press is about 29 ml). Flush starts at 0 s; the
             stock setups' second press came 25 s later. Peaks after steaming
             were 111–117 °C for all three: the fork's heat-up boost runs flat
             out while steaming, so it no longer peaks lower as it did on
-            2026-10-30. Earlier runs showed that flushing too much instead
-            undershoots, to 90.8 °C, and takes about 5 minutes to settle.
+            2026-10-30. Flushing from 100, 110 and 115 °C instead, flush to
+            target sized the flush at 32, 84 and 109 ml and landed at 92.5–92.7
+            °C each time, without overshoot. Earlier runs showed that flushing
+            too much instead undershoots, to 90.8 °C, and takes about 5 minutes
+            to settle.
           </p>
         </div>
       </section>
@@ -596,7 +603,7 @@
               works out how much tank water brings it to brew temperature and
               flushes exactly that.
             </p>
-            <span class="result">Same water, smaller dip, no overshoot</span>
+            <span class="result">Lands at 92.5 °C from 100–115 °C</span>
           </div>
           <div class="card">
             <h3>Tank estimate</h3>
@@ -614,7 +621,9 @@
               the sensor comes loose, the reading jumps, or the boiler passes
               170 °C.
             </p>
-            <span class="result">No false stops: 52 bench logs, 3 milk steams</span>
+            <span class="result"
+              >No false stops: 52 bench logs, 3 milk steams</span
+            >
           </div>
           <div class="card">
             <h3>Machine profiles</h3>

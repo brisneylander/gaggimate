@@ -4,7 +4,7 @@
 // FLUSH_AT_C=105: press flush once the reading has peaked and fallen to this temperature (every setup flushes from
 // the same reading; without it each flushes at its own peak). HOLD_S=0 skips the 5 min hold test. STEAM_TO=105 switches
 // back to Brew at 105 °C instead of 100 (a higher peak, for flushing from 115 °C).
-import { writeFileSync, appendFileSync } from "node:fs";
+import { writeFileSync, appendFileSync, existsSync } from "node:fs";
 
 // Optional run names after the out dir pick runs (e.g. A3-silvia-doc-flush-twice); otherwise all except A3.
 const [, , outDir, ...only] = process.argv;
@@ -17,6 +17,13 @@ const log = (msg) => {
   console.log(line);
   appendFileSync(`${outDir}/steam-bench.log`, line + "\n");
 };
+// A WAIT file beside the out dir holds the bench until it's deleted (time to change the setup between benches).
+const gate = `${outDir}/../WAIT`;
+if (existsSync(gate)) {
+  log(`waiting for ${gate} to be removed`);
+  while (existsSync(gate)) await sleep(2000);
+  log("gate removed, starting");
+}
 const OVERSHOOT_TO = process.env.STEAM_TO ? Number(process.env.STEAM_TO) : 100; // back to Brew at this reading
 const ABORT_ABOVE = 130; // stock settings coast to ~115 °C after the switch back to Brew
 const LOG_AFTER_S = 420;

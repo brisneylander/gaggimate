@@ -83,6 +83,20 @@ Shot 62 ran about 20 % less flow than shot 60 (a tighter puck), which accounts f
 holding power. In the simulator a higher Kp, a higher Ki or a full-power top-up once the water stops each saved under
 10 s of that and added overshoot (heat still on its way when the reading catches up), so they were left out.
 
+**Synthetic shots (2026-11-03 evening).** To take the puck out of it, a bench profile drew the same water every time
+(a 5 s fill at full flow, then 1.8 ml/s for 28 s: 80 ml in 34 s) through the empty portafilter, from a reading settled
+at 93 °C, alternating Kf (`scripts/bench/synthetic_shot.mjs`, three draws each):
+
+| Kf   | Lowest reading        | Mean drop   | Back within ±0.3 °C after the draw | Highest after |
+| ---- | --------------------- | ----------- | ---------------------------------- | ------------- |
+| 0    | 88.2 / 87.6 / 87.8 °C | −5.2 °C     | 132-146 s                          | 93.0-93.2 °C  |
+| 0.45 | 89.5 / 89.5 / 89.5 °C | **−3.6 °C** | 103-119 s                          | 93.3 °C       |
+| 0.7  | 90.3 / 90.5 / 90.3 °C | **−2.9 °C** | 83-101 s                           | 93.5 °C       |
+
+Each setting's three draws agree within 0.6 °C. The lowest reading comes 20-30 s after the draw ends (the sensor's
+lag). 0.7 takes another 0.7 °C off the dip for +0.2 °C more overshoot; the Silvia profile keeps 0.45 until 0.7 has
+been tried on real shots. (The third Kf 0 draw lost its connection before its recovery was logged.)
+
 ![Boiler reading through a Silvia Daily shot and after it: without the feedforward it falls to 89.7 °C and sits there; with it, it bottoms at 90.3 °C and is rising to 92.1 °C when the shot ends](assets/shot-feedforward.svg)
 
 ### Against stock settings: holding and after steam
@@ -107,19 +121,32 @@ The sensor is on the boiler wall and the water swings less, so these are a fair 
 the spread of the shots themselves.
 
 **Matched after steam (2026-11-03).** The same routine with one change: every setup waited until the reading had
-fallen to 105 °C before the flush (one run each, tank 27-30 °C, Olab pump, so a 5 s press is ~29 ml). On this pump the
-stock routine's two presses and the fork's flush to target pumped about the same water, so the difference is the
-heater afterwards:
+fallen to 105 °C before the flush (two runs each, afternoon and evening, tank 27-30 °C, no portafilter, Olab pump, so a
+5 s press is ~29 ml). On this pump the stock routine's two presses and the fork's flush to target pumped about the
+same water, so the difference is the heater afterwards:
 
-| Setup, flushing from 105 °C                            | Steam peak | Water | Lowest      | Peak after     | Within ±0.3 °C from | Settled ±0.3 °C |
-| ------------------------------------------------------ | ---------- | ----- | ----------- | -------------- | ------------------- | --------------- |
-| **Fork, one press (flush to target)**                  | 111.3 °C   | 59 ml | **92.5 °C** | **93.0 °C**    | 171 s               | **176 s**       |
-| Upstream's Silvia PID, compensation off, two presses   | 116.6 °C   | 60 ml | 90.9 °C     | 93.3 °C (+0.3) | 112 s               | 200 s           |
-| GaggiMate's default PID, compensation off, two presses | 112.0 °C   | 57 ml | 91.7 °C     | 94.3 °C (+1.3) | 167 s               | 291 s           |
+| Setup, flushing from 105 °C (2 runs)                   | Steam peak     | Water    | Lowest            | Peak after         | Settled ±0.3 °C         |
+| ------------------------------------------------------ | -------------- | -------- | ----------------- | ------------------ | ----------------------- |
+| **Fork, one press (flush to target)**                  | 111.2-111.3 °C | 56-59 ml | **92.5, 92.5 °C** | **93.0, 93.05 °C** | **176, 205 s**          |
+| Upstream's Silvia PID, compensation off, two presses   | 113.0-116.6 °C | 60 ml    | 90.9, 92.25 °C    | 93.3, 93.3 °C      | 200 s; not within 7 min |
+| GaggiMate's default PID, compensation off, two presses | 111.3-112.0 °C | 57-60 ml | 91.7, 92.0 °C     | 94.3, 94.2 °C      | 291 s; not within 7 min |
+
+And flush to target from other temperatures (evening, one run each):
+
+| Flushed from | Water    | Lowest  | Peak after | Settled ±0.3 °C |
+| ------------ | -------- | ------- | ---------- | --------------- |
+| 100 °C       | 32 ml    | 92.5 °C | 93.1 °C    | 240 s           |
+| 105 °C       | 56-59 ml | 92.5 °C | 93.0 °C    | 176-205 s       |
+| 110 °C       | 84 ml    | 92.7 °C | 93.0 °C    | 228 s           |
+| 115 °C       | 109 ml   | 92.5 °C | 93.0 °C    | 236 s           |
+
+From 100 to 115 °C it sizes the flush from 32 to 109 ml and lands at 92.5-92.7 °C every time, without overshoot.
 
 The fork no longer peaks lower after steaming (105.7-106.7 °C on 2026-10-30): since then the heat-up boost runs the
 heater flat out while steaming, so it climbs as fast as the stock setups and carries as much heat past the switch back
-to Brew.
+to Brew. The evening runs also showed La Simona 3's fix: switching from the stock settings back to the fork's settled
+at 93.0-93.2 °C within a minute, where in the afternoon (La Simona 2) the heater ran flat out for 20 s and the boiler
+reached 101.9 °C.
 
 ### The tank warms up
 

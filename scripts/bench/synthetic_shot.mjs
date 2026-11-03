@@ -137,8 +137,15 @@ async function bail(reason) {
   process.exit(1);
 }
 process.on("SIGINT", () => bail("interrupted"));
+// A connection can go quiet without closing (the display drops its oldest client when another connects): reconnect
+// after 15 s without telemetry, give up after 2 min.
 setInterval(() => {
-  if (Date.now() - lastTelemetry > 60000) bail("no telemetry for 60 s");
+  const quiet = Date.now() - lastTelemetry;
+  if (quiet > 120000) bail("no telemetry for 2 min");
+  else if (quiet > 15000 && ws.readyState === 1) {
+    log(`no telemetry for ${Math.round(quiet / 1000)} s, reconnecting`);
+    ws.close();
+  }
 }, 2000);
 
 connect();

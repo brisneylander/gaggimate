@@ -39,6 +39,13 @@ on 2026-10-28 left open. See [FORK.md](FORK.md) for building and releasing.
 
 ## Bench results so far
 
+**Evening bench, La Simona 3** (2026-11-03). Synthetic shots (`scripts/bench/synthetic_shot.mjs`: 80 ml in 34 s
+through the empty portafilter, three per setting): mean drop −5.2 °C at Kf 0, −3.6 at 0.45, −2.9 at 0.7; back within
+±0.3 °C in 132-146, 103-119 and 83-101 s; overshoot +0.2, +0.3, +0.5 °C. 0.7 now on the machine for real shots. Flush to
+target from 100/105/110/115 °C (32-109 ml): lowest 92.5-92.7 °C, no overshoot, settled 205-240 s. Stock repeats at
+105 °C dipped less than in the afternoon (92.0-92.25 °C) but didn't settle within the 7 min logged. Switching stock ->
+fork settings no longer bursts (the 142ab309 fix). Next: a third run of each 105 °C setup; Kf 0.7 on real shots.
+
 **Matched after-steam bench** (2026-11-03, `FLUSH_AT_C=105 HOLD_S=0 scripts/bench/steam_benchmark.mjs`, one run each):
 every setup flushed from 105 °C. Fork flush to target 59 ml: lowest 92.5 °C, no overshoot, settled 176 s; upstream's
 Silvia PID, two presses (60 ml): 90.9 °C, +0.3, 200 s; GaggiMate's default PID, two presses (57 ml): 91.7 °C, +1.3,

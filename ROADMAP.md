@@ -27,8 +27,10 @@ on 2026-10-28 left open. See [FORK.md](FORK.md) for building and releasing.
    code and display message. It stops the heater for: near full power with no water flowing and the reading not up
    2 °C in 60 s (300 s at steam setpoints, for steaming milk; 180 s until the heat-up boost, 2026-10-30) - the loose-thermocouple case the sensor's own checks
    can't see; three >5 °C/s jumps within 30 s; continuous full power over 10 min. Replayed over all 52 bench logs of
-   2026-10-28/29 it never trips; the longest "full power, no rise" stretch was under 30 s. Steaming milk isn't in the
-   logs yet: watch for a false stop the first time. Kept as they were: the hardware fuse, the sensor's over-170 °C and
+   2026-10-28/29 it never trips; the longest "full power, no rise" stretch was under 30 s. Steaming milk: three
+   sessions logged (2026-11-02 08:23 and 15:11, 2026-11-03 07:50; 120 °C target, 1.5-2 min, pump assist 0.4 ml/s,
+   reading 122 -> 106 °C) without a stop; the longest full-power stretch without a 2 °C rise was 19-25 s against the
+   300 s steam limit. Kept as they were: the hardware fuse, the sensor's over-170 °C and
    read-failure checks, the link watchdog. _simon021:_ the over-170 °C and sensor-fault limits moved into the module too (codes
    10, 11); the sensors keep their own shutdown on their own task as an independent backstop, with the same limit.
 6. **Simulation and logging from day one.** Keep the plant model in the repo (`test/test_heat_balance_predictor`

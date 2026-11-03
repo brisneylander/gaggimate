@@ -187,5 +187,5 @@ shot and model errors of ±25 %. Bench runs remain the final word on timing.
 
 ## Still open
 
-See [ROADMAP.md](../ROADMAP.md): tank estimate calibration, the first milk steaming under the safety layer, the
+See [ROADMAP.md](../ROADMAP.md): tank estimate calibration, the
 Silvia's steam switch wiring, and combining with upstream's setup wizard and its machine presets when that is merged.

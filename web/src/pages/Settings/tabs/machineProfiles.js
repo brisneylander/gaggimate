@@ -51,7 +51,10 @@ export const BUILT_IN_PROFILES = [
       noRiseSteamS: 300,
       temperatureOffset: 5,
       pid: '60,0.658,1500',
-      kf: 0,
+      // Thermal feedforward at about half the water's heat: a Daily 18-36 shot sagged 2.7 °C instead of 3.3 and ended
+      // 0.9 °C under instead of 3.3, back at 93 °C ~90 s after the pump stopped, no overshoot (2026-11-03).
+      kf: 0.45,
+      // Stock Ulka pump. A 35 W Olab "silent" pump measured 5.654, 3.302 (2026-11-03): recalibrate after a swap.
       pumpModelCoeffs: '8.644,4.676',
     },
   },

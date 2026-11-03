@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 400" font-family="system-ui,-apple-system,Segoe UI,Roboto,sans-serif">
+<rect width="900" height="400" rx="12" fill="#ffffff"/>
+<rect x="56" y="84.2" width="824" height="37.9" fill="#0f766e" fill-opacity="0.12"/>
+<line x1="56" x2="880" y1="356.0" y2="356.0" stroke="#e4ddd4"/>
+<text x="48" y="360.0" text-anchor="end" font-size="12" fill="#857a71">89 °C</text>
+<line x1="56" x2="880" y1="292.8" y2="292.8" stroke="#e4ddd4"/>
+<text x="48" y="296.8" text-anchor="end" font-size="12" fill="#857a71">90 °C</text>
+<line x1="56" x2="880" y1="229.6" y2="229.6" stroke="#e4ddd4"/>
+<text x="48" y="233.6" text-anchor="end" font-size="12" fill="#857a71">91 °C</text>
+<line x1="56" x2="880" y1="166.4" y2="166.4" stroke="#e4ddd4"/>
+<text x="48" y="170.4" text-anchor="end" font-size="12" fill="#857a71">92 °C</text>
+<line x1="56" x2="880" y1="103.2" y2="103.2" stroke="#e4ddd4"/>
+<text x="48" y="107.2" text-anchor="end" font-size="12" fill="#857a71">93 °C</text>
+<line x1="56" x2="880" y1="40.0" y2="40.0" stroke="#e4ddd4"/>
+<text x="48" y="44.0" text-anchor="end" font-size="12" fill="#857a71">94 °C</text>
+<text x="56.0" y="376" text-anchor="middle" font-size="12" fill="#857a71">0 s</text>
+<text x="220.8" y="376" text-anchor="middle" font-size="12" fill="#857a71">30 s</text>
+<text x="385.6" y="376" text-anchor="middle" font-size="12" fill="#857a71">60 s</text>
+<text x="550.4" y="376" text-anchor="middle" font-size="12" fill="#857a71">90 s</text>
+<text x="715.2" y="376" text-anchor="middle" font-size="12" fill="#857a71">120 s</text>
+<text x="880.0" y="376" text-anchor="middle" font-size="12" fill="#857a71">150 s</text>
+<line x1="252.1" x2="252.1" y1="40" y2="356" stroke="#c2410c" stroke-opacity="0.5" stroke-dasharray="3 4"/>
+<text x="258.1" y="52" font-size="12" fill="#c2410c">shot 60 ends</text>
+<line x1="297.2" x2="297.2" y1="40" y2="356" stroke="#0f766e" stroke-opacity="0.5" stroke-dasharray="3 4"/>
+<text x="303.2" y="66" font-size="12" fill="#0f766e">shot 62 ends</text>
+<path d="M56.0 103.2 L67.0 103.2 L78.0 103.2 L89.0 113.3 L105.4 139.2 L116.4 174.6 L127.4 211.3 L138.4 244.1 L149.4 268.8 L165.9 293.4 L176.9 306.1 L187.8 313.0 L198.8 313.0 L209.8 311.1 L220.8 308.6 L231.8 308.6 L242.8 308.6 L259.3 308.6 L270.2 302.3 L281.2 296.6 L292.2 293.4 L303.2 292.8 L314.2 292.8 L325.2 294.1 L336.2 297.2 L347.1 296.6 L358.1 296.0 L369.1 294.1 L380.1 292.8 L396.6 292.8 L407.6 290.3 L418.6 280.8 L429.5 277.6 L446.0 265.0 L457.0 263.1 L468.0 261.2 L479.0 253.0 L490.0 243.5 L501.0 234.7 L511.9 230.2 L522.9 215.7 L533.9 205.0 L544.9 200.5 L561.4 198.6 L572.4 185.4 L583.4 182.8 L594.3 174.6 L605.3 168.3 L616.3 163.9 L627.3 162.6 L638.3 152.5 L649.3 150.6 L660.3 140.5 L671.3 136.7 L682.2 134.8 L698.7 132.3 L709.7 123.4 L720.7 120.9 L731.7 119.0 L742.7 119.0 L753.7 119.0 L764.6 110.2 L775.6 107.6 L786.6 107.0 L803.1 107.0 L814.1 103.8 L825.1 103.2 L836.1 103.2 L847.0 103.2 L858.0 103.2 L869.0 101.3" fill="none" stroke="#c2410c" stroke-width="2.5" stroke-linejoin="round"/>
+<path d="M56.0 103.2 L67.0 96.9 L78.0 96.9 L89.0 103.2 L99.9 122.2 L110.9 147.4 L121.9 179.0 L132.9 210.6 L149.4 235.9 L160.4 254.9 L171.4 267.5 L182.3 273.8 L193.3 273.8 L204.3 267.5 L215.3 261.2 L226.3 248.6 L237.3 242.2 L248.3 223.3 L259.3 204.3 L270.2 198.0 L281.2 185.4 L292.2 172.7" fill="none" stroke="#0f766e" stroke-width="2.5" stroke-linejoin="round"/>
+<path d="M363.6 119.0 L374.6 119.0 L385.6 119.0 L396.6 119.0 L407.6 119.0" fill="none" stroke="#0f766e" stroke-width="2.5" stroke-linejoin="round"/>
+<path d="M292.2 172.7 L363.6 119.0" fill="none" stroke="#0f766e" stroke-width="2.5" stroke-linejoin="round" stroke-dasharray="4 5" stroke-opacity="0.6"/>
+<path d="M577.9 150.6 L588.9 150.6 L605.3 150.6 L616.3 150.0" fill="none" stroke="#0f766e" stroke-width="2.5" stroke-linejoin="round"/>
+<path d="M407.6 119.0 L577.9 150.6" fill="none" stroke="#0f766e" stroke-width="2.5" stroke-linejoin="round" stroke-dasharray="4 5" stroke-opacity="0.6"/>
+<path d="M786.6 109.5 L797.6 104.5 L808.6 103.2 L819.6 103.2" fill="none" stroke="#0f766e" stroke-width="2.5" stroke-linejoin="round"/>
+<path d="M616.3 150.0 L786.6 109.5" fill="none" stroke="#0f766e" stroke-width="2.5" stroke-linejoin="round" stroke-dasharray="4 5" stroke-opacity="0.6"/>
+<text x="198.8" y="331.0" text-anchor="middle" font-size="13" font-weight="600" fill="#c2410c">89.7 °C</text>
+<text x="187.8" y="263.8" text-anchor="middle" font-size="13" font-weight="600" fill="#0f766e">90.3 °C</text>
+<rect x="62" y="16" width="18" height="3" rx="1.5" fill="#c2410c"/><text x="86" y="21" font-size="13" fill="#3a332d">Feedforward off (shot 60)</text>
+<rect x="282" y="16" width="18" height="3" rx="1.5" fill="#0f766e"/><text x="306" y="21" font-size="13" fill="#3a332d">Feedforward 0.45 (shot 62; dashed: logger gaps)</text>
+<rect x="652" y="12" width="18" height="10" fill="#0f766e" fill-opacity="0.12"/><text x="676" y="21" font-size="13" fill="#3a332d">93 °C ±0.3</text>
+</svg>

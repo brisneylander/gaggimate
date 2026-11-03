@@ -594,6 +594,35 @@ void test_shot_feedforward() {
     }
 }
 
+// Silvia Daily 18-36 on the Olab pump (2026-11-03 14:45, the finer of two shots): 5 s fill at ~5.8 ml/s, a 3 bar soak, then
+// 9 bar falling to 7 at 1.4-1.9 ml/s; 36.3 g in 33 s, tank estimate 30.5 °C. The sensor fell 3.3 °C (93 -> 89.7) and
+// took ~110 s to climb back with the heater at 5-18 %: once the predictor's window has passed, only P (Kp 60, 6 % per
+// °C) answers the shortfall, and the integral is held outside its 1.5 °C zone. The thermal feedforward (kf) adds the
+// water's heat while it flows.
+static const std::vector<float> DAILY_SHOT = {2.69f, 5.74f, 5.89f, 5.83f, 5.66f, 3.37f, 1.31f, 0.64f, 0.43f, 0.43f, 0.96f,
+                                              1.48f, 1.45f, 1.48f, 1.35f, 1.36f, 1.41f, 1.49f, 1.58f, 1.63f, 1.67f, 1.74f,
+                                              1.80f, 1.80f, 1.79f, 1.82f, 1.83f, 1.83f, 1.85f, 1.86f, 1.84f, 1.86f, 1.84f};
+
+void test_daily_shot_feedforward() {
+    for (float k : {0.0f, 0.3f, 0.45f, 0.7f, 0.909f}) {
+        Tuning tu = compensated();
+        tu.flowProfile = DAILY_SHOT;
+        tu.setpointC = 93.0f;
+        tu.plantInletC = 30.5f;
+        tu.predictorInletC = 30.5f;
+        tu.kff = k;
+        const Result r = simulate(tu);
+        printf("daily shot, kf %.3f: sensor low %.2f (%+.2f), water low %.2f (%+.2f), back at %4.0f s, peak after %+.2f, "
+               "settle err %.2f\n",
+               k, r.dipMin, r.dipMin - 93.0f, r.waterLow, r.waterLow - 93.0f, r.backAt, r.peak - 93.0f, r.settleErr);
+        Tuning fl = compensated();
+        fl.kff = k;
+        const Result f = simulate(fl);
+        printf("  5 s flush at 98, kf %.3f: low %.2f, peak %+.2f, back at %4.0f s, settle err %.2f\n", k, f.dipMin,
+               f.peak - 98.0f, f.backAt, f.settleErr);
+    }
+}
+
 // Heat-up from below the setpoint: a warm restart (the morning case, boiler ~22 °C under with the group head colder still)
 // and a switch to steam. The fork's loop as on the machine (bench 2026-10-30 morning): the predictor counts the full
 // power's heat in flight (~12 °C) and Kd 1500 brakes on the rise, so the heater fell to ~10-20 % while still 10-30 °C
@@ -761,6 +790,45 @@ static void test_group_head_estimate() {
     TEST_ASSERT_FLOAT_WITHIN(0.26f, hb.peak, ha.peak);
 }
 
+// Kp sweep on the machine's settings (2026-11-03: kf 0.45, group head estimate on). After a shot the feedforward stops
+// with the water, and at Kp 60 the last 1-2 °C crawls back at 5-10 % heater (shot 3: 92.2 °C 50 s after the stop).
+// The predictor already takes the sensor's lag out of the error, so the loop may carry more gain than the autotune's.
+void test_kp_sweep() {
+    struct G {
+        float kp, ki;
+    };
+    for (G g : {G{60, 0.658f}, G{100, 0.658f}, G{60, 1.5f}, G{60, 3.0f}, G{60, 5.0f}, G{80, 2.0f}}) {
+        const float kp = g.kp;
+        Tuning tu = compensated();
+        tu.kp = kp;
+        tu.ki = g.ki;
+        tu.kff = 0.45f;
+        tu.lossSeedW = 33.0f;
+        tu.groupC = 1343.0f;
+        tu.groupK = 4.3f;
+        heatUpPlant = FLUSH_PLANT;
+        const Result f = simulate(tu);
+        Tuning sh = tu;
+        sh.flowProfile = DAILY_SHOT;
+        sh.setpointC = 93.0f;
+        sh.plantInletC = 30.5f;
+        sh.predictorInletC = 30.5f;
+        const Result s = simulate(sh);
+        heatUpPlant = WARMUP_PLANT;
+        const HeatUp cold = simulateHeatUp(tu, 28.2f, 0.0f, 98.0f);
+        const float coldSag = lastHeatUpSag;
+        const HeatUp warm = simulateHeatUp(tu, 63.0f, 0.0f, 98.0f);
+        heatUpPlant = FLUSH_PLANT;
+        const HeatUp steam = simulateHeatUp(tu, 98.0f, 0.0f, 125.0f);
+        printf(
+            "kp %5.1f ki %.2f | idle p2p %.2f swing %5.1f | flush low %.2f peak %+.2f back %4.0f s | shot low %.2f back %4.0f s "
+            "peak %+.2f | cold over %+.2f sag %+.2f settled %4.0f | warm over %+.2f settled %4.0f | steam over %+.2f "
+            "settled %4.0f\n",
+            kp, g.ki, f.idleP2P, f.idleSwing, f.dipMin, f.peak - 98.0f, f.backAt, s.dipMin, s.backAt, s.peak - 93.0f, cold.over,
+            coldSag, cold.settled, warm.over, warm.settled, steam.over, steam.settled);
+    }
+}
+
 int main(int argc, char **argv) {
     UNITY_BEGIN();
     RUN_TEST(test_disabled_when_any_parameter_missing);
@@ -784,7 +852,9 @@ int main(int argc, char **argv) {
     RUN_TEST(test_separate_water_delay);
     RUN_TEST(test_bench_configurations);
     RUN_TEST(test_shot_feedforward);
+    RUN_TEST(test_daily_shot_feedforward);
     RUN_TEST(test_heat_up_boost);
     RUN_TEST(test_group_head_estimate);
+    RUN_TEST(test_kp_sweep);
     return UNITY_END();
 }

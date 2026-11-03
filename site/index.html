@@ -454,6 +454,59 @@
       </section>
 
       <section>
+        <h2>Through a shot</h2>
+        <p class="sub">
+          A shot pulls cold tank water through the boiler, so the reading falls.
+          Some of that is the boiler's limit: the fill draws water faster than
+          the 1100 W element can heat it. But on the fork's settings the heater
+          also answered late, at 17–21 % while the boiler sat 3 °C under.
+          Turning on upstream's thermal feedforward alongside the fork's
+          predictor, at about half the water's heat, fixed most of that.
+        </p>
+        <div class="stats">
+          <div class="stat">
+            <div class="k">Lowest during the shot</div>
+            <div class="v">−2.7 °C <small>from −3.3</small></div>
+          </div>
+          <div class="stat">
+            <div class="k">Reading when the shot ends</div>
+            <div class="v">92.1 °C <small>from 89.7</small></div>
+          </div>
+          <div class="stat">
+            <div class="k">Back at 93 °C, no overshoot</div>
+            <div class="v">~90 s <small>from ~110</small></div>
+          </div>
+        </div>
+        <div class="chart">
+          <div class="legend">
+            <span><i style="background: var(--stock)"></i>Feedforward off</span
+            ><span
+              ><i style="background: var(--accent)"></i>Feedforward 0.45</span
+            ><span
+              ><i style="background: var(--band); height: 10px"></i>93 °C
+              ±0.3</span
+            >
+          </div>
+          <svg
+            id="shot-chart"
+            viewBox="0 0 900 380"
+            role="img"
+            aria-label="Boiler reading through a Silvia Daily shot: without the feedforward it falls to 89.7 °C and sits there until the shot ends; with it, it bottoms at 90.3 °C and is back up to 92.1 °C when the shot ends."
+          ></svg>
+          <p class="caption">
+            Two Silvia Daily 18-36 shots from 93.0 °C on 2026-11-03, same grind,
+            tank about 30 °C, both stopped at about 36 g on a Bluetooth scale
+            (35.7 s and 43.9 s). The second was the tighter puck and drew about
+            20 % less flow, which accounts for part of the difference; a third
+            shot showed the same pattern. Straight segments after the second
+            shot are gaps in the log. Higher PID gains or a top-up once the
+            water stops recovered the last degree under 10 s sooner in
+            simulation and added overshoot, so they were left out.
+          </p>
+        </div>
+      </section>
+
+      <section>
         <h2>After steaming</h2>
         <p class="sub">
           Steam to 100 °C, back to Brew, then what an owner does. On stock
@@ -521,6 +574,16 @@
               an overshoot shows. Heat and water get separate delays.
             </p>
             <span class="result">+2.9 → +0.63 °C overshoot</span>
+          </div>
+          <div class="card">
+            <h3>Shot feedforward</h3>
+            <p>
+              While a shot or flush runs near brew temperature, the heater adds
+              power for the water coming in instead of waiting for the reading
+              to fall. Off more than 1 °C over target, so flush to target is
+              unaffected.
+            </p>
+            <span class="result">Ends a shot 0.9 °C under, not 3.3</span>
           </div>
           <div class="card">
             <h3>Flush to target</h3>
@@ -2008,6 +2071,85 @@
           ],
         },
       };
+      // Silvia Daily 18-36 shots from 93.0 °C, 2026-11-03 (shot start at 0 s): Kf 0 (shot 60), Kf 0.45 (shot 62).
+      const SHOT = {
+        off: [
+          [0, 93],
+          [2, 93],
+          [4, 93],
+          [6, 92.84],
+          [9, 92.43],
+          [11, 91.87],
+          [13, 91.29],
+          [15, 90.77],
+          [17, 90.38],
+          [20, 89.99],
+          [22, 89.79],
+          [24, 89.68],
+          [26, 89.68],
+          [28, 89.71],
+          [30, 89.75],
+          [34, 89.75],
+          [37, 89.75],
+          [39, 89.85],
+          [41, 89.94],
+          [45, 90],
+          [49, 89.98],
+          [53, 89.94],
+          [59, 90],
+          [64, 90.04],
+          [68, 90.24],
+          [73, 90.47],
+          [77, 90.63],
+          [81, 90.92],
+          [85, 91.22],
+          [89, 91.46],
+          [94, 91.7],
+          [98, 91.87],
+          [102, 92.04],
+          [106, 92.22],
+          [110, 92.41],
+          [114, 92.5],
+          [119, 92.68],
+          [123, 92.75],
+          [127, 92.75],
+          [131, 92.93],
+          [136, 92.94],
+          [140, 93],
+          [148, 93.03],
+        ],
+        ff: [
+          [0, 93],
+          [2, 93.1],
+          [4, 93.1],
+          [6, 93],
+          [8, 92.7],
+          [10, 92.3],
+          [12, 91.8],
+          [14, 91.3],
+          [17, 90.9],
+          [19, 90.6],
+          [21, 90.4],
+          [23, 90.3],
+          [25, 90.3],
+          [27, 90.4],
+          [29, 90.5],
+          [31, 90.7],
+          [33, 90.8],
+          [35, 91.1],
+          [37, 91.4],
+          [39, 91.5],
+          [41, 91.7],
+          [43, 91.9],
+          [56, 92.75],
+          [64, 92.75],
+          [95, 92.25],
+          [102, 92.26],
+          [133, 92.9],
+          [137, 93],
+          [148, 93],
+        ],
+      };
       // Draws a temperature trace chart at the SVG's own width, so labels stay readable on a phone.
       function drawChart(
         svg,
@@ -2159,6 +2301,23 @@
           marker: null,
           labels: [],
         });
+        drawChart(document.getElementById("shot-chart"), {
+          series: [
+            [SHOT.off, "--stock"],
+            [SHOT.ff, "--accent"],
+          ],
+          y0: 89,
+          y1: 94,
+          step: 1,
+          x0: 0,
+          x1: 150,
+          xstep: 30,
+          marker: "shot",
+          labels: [
+            [26, 89.68, "--stock", "89.7 °C", 20],
+            [40, 90.3, "--accent", "90.3 °C", 4],
+          ],
+        });
         drawChart(document.getElementById("steam-chart"), {
           series: [
             [BENCH.steam.gm, "--gm"],
@@ -2177,7 +2336,7 @@
         });
       };
       const redraw = () => {
-        for (const id of ["chart", "hold-chart", "steam-chart"])
+        for (const id of ["chart", "hold-chart", "shot-chart", "steam-chart"])
           document.getElementById(id).replaceChildren();
         charts();
       };

@@ -1,6 +1,8 @@
 // After-steam benchmark (issue #1): steam to 100 °C, back to Brew, wait for the reading to peak, then press the flush
 // button (or nothing), and log until settled. Compares stock-style settings with the fork's.
 // usage: node steam_benchmark.mjs <out dir> [run names...]
+// FLUSH_AT_C=105: press flush once the reading has peaked and fallen to this temperature (every setup flushes from
+// the same reading; without it each flushes at its own peak). HOLD_S=0 skips the 5 min hold test.
 import { writeFileSync, appendFileSync } from "node:fs";
 
 // Optional run names after the out dir pick runs (e.g. A3-silvia-doc-flush-twice); otherwise all except A3.
@@ -17,7 +19,11 @@ const log = (msg) => {
 const OVERSHOOT_TO = 100;
 const ABORT_ABOVE = 130; // stock settings coast to ~115 °C after the switch back to Brew
 const LOG_AFTER_S = 420;
-const HOLD_S = 300;
+const HOLD_S =
+  process.env.HOLD_S !== undefined ? Number(process.env.HOLD_S) : 300;
+const FLUSH_AT_C = process.env.FLUSH_AT_C
+  ? Number(process.env.FLUSH_AT_C)
+  : null;
 
 // Stock-style: everything the fork adds set to 0 (off), flush button does the plain 5 s flush.
 const STOCK = {
@@ -28,6 +34,8 @@ const STOCK = {
   modelHeaterW: 0,
   modelHeatRate: 0,
   valveDumpMl: 0,
+  groupHeatCapacity: 0,
+  groupCoupling: 0,
   flushButtonToTarget: false,
   flushDuration: 5,
 };
@@ -229,11 +237,13 @@ for (const run of SELECTED) {
     `${run.name}: settled at ${ct}, run settings POST ${await post(run.cfg)}`,
   );
   // Hold test: 5 min of plain idle holding at the brew temperature, logged, so each setup's steadiness is on record.
-  file = `${outDir}/steam-${run.name}-hold.csv`;
-  writeFileSync(file, "t,ct,tt,hp,fl,pr,m,event\n");
-  t0 = Date.now();
-  log(`${run.name}: holding test, 5 min from ${ct}`);
-  await sleep(HOLD_S * 1000);
+  if (HOLD_S > 0) {
+    file = `${outDir}/steam-${run.name}-hold.csv`;
+    writeFileSync(file, "t,ct,tt,hp,fl,pr,m,event\n");
+    t0 = Date.now();
+    log(`${run.name}: holding test, ${HOLD_S} s from ${ct}`);
+    await sleep(HOLD_S * 1000);
+  } else await sleep(30000); // let the run's settings reach the controller
   file = null;
   file = `${outDir}/steam-${run.name}.csv`;
   writeFileSync(file, "t,ct,tt,hp,fl,pr,m,event\n");
@@ -257,11 +267,24 @@ for (const run of SELECTED) {
       sincePeak = 0;
     } else sincePeak++;
   }
+  if (FLUSH_AT_C !== null && ct > FLUSH_AT_C) {
+    log(
+      `${run.name}: peaked at ${peak.toFixed(2)} °C, waiting to fall to ${FLUSH_AT_C} °C`,
+    );
+    const fallBy = Date.now() + 15 * 60000;
+    while (ct > FLUSH_AT_C) {
+      if (Date.now() > fallBy)
+        await bail(`not down to ${FLUSH_AT_C} °C in 15 min`);
+      await sleep(500);
+    }
+  }
   if (mode !== 1) await bail(`not in Brew at the peak (mode ${mode})`);
   if (run.flush) {
     event = "flush";
     send({ tp: "req:flush:start", rid: 1 });
-    log(`${run.name}: peaked at ${peak.toFixed(2)} °C, pressed flush`);
+    log(
+      `${run.name}: peaked at ${peak.toFixed(2)} °C, pressed flush at ${ct} °C`,
+    );
     for (let n = 2; n <= (run.flushes || 1); n++) {
       // Wait for the flush to end (flow back to 0 for 3 s), then 15 s, then press again.
       await sleep(3000);

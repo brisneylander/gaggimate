@@ -37,6 +37,18 @@ on 2026-10-28 left open. See [FORK.md](FORK.md) for building and releasing.
 
 ## Bench results so far
 
+**Pump swap and the shot feedforward** (2026-11-03, Bookoo Bluetooth scale paired, logger and shot history). The
+Ulka was swapped for a 35 W Olab "silent" pump; the Ulka's pump model read ~50 % high on it. Seven weighed open-group
+flushes (5/10/15 s) gave 5.7 ml/s, straight through zero; GaggiMate's pump calibration confirmed 1 bar and corrected
+9 bar: 5.654, 3.302 (Ulka 8.644, 4.676). With the scale, Silvia Daily 18-36 now stops on weight (36.3 g for 36). On
+the shots the reading fell 93.0 -> 89.7 °C and sat there, with the heater at 17-21 % in the 9 bar phase: the thermal
+feedforward (Kf) was 0. At Kf 0.45 the heater ran 78-87 % through the fill; lowest 90.3 instead of 89.7 °C, 92.1 instead
+of 89.7 °C when the shot ended, back at 93 °C ~90 s after the pump stopped (from ~110 s), no overshoot (shots 60 and 62,
+same grind, the second ~20 % less flow). The simulator (`test_daily_shot_feedforward`) put Kf 0.45 as the best
+recovery for +0.25 °C overshoot; `test_kp_sweep` found a higher Kp or Ki saves under 10 s of the remaining ~0.75 °C
+tail and adds overshoot. The Silvia profile's Kf is now 0.45. The simulator overstates this shot's drop (6 vs 3.3 °C):
+its plant was fitted to Ulka-era flushes, so refit it to logged shots before trusting absolute numbers.
+
 **Startup sag and the group head estimate** (2026-11-02, logger on OMV, `tools/logger`). Both warm-ups that morning
 reached the target fast (boost) but then sagged: from 23 °C, +1.0 °C over then **−3.5 °C**, back at 93 °C after ~10 min;
 from 58 °C, +3.2 °C then −2.0 °C, ~7 min. The heater ran only 7–20 % through the sag: the cold group head kept soaking up
@@ -130,7 +142,7 @@ the sensor to 0.45 °C rms (old plant 1.09 °C) and puts the dip's low within ~6
   the integral is held while water flows (right for a flush, wrong for a shot), leaving only P. The fitted plant
   replays it (6.5 °C) and shows the drop is mostly the 5 s fill outrunning the 1100 W element: in-shot heat lifts the
   water only ~0.6 °C, idling 3 °C hotter ~2.5 °C. Left as a boiler limit (2026-10-29); set the profile a little hotter
-  if wanted.
+  if wanted. _Revisited 2026-11-03:_ the thermal feedforward (Kf 0.45) does help a steady 9 bar draw; see above.
 - **Phantom flow after a stopped brew** (2026-10-29 13:01): a brew stopped within a second, in the profile's 5 ml/s
   Fill phase, left the reported pump flow at 5.0 ml/s for over a minute with no water moving (pressure 0.3-0.6 bar,
   boiler sealed). The predictor counted cold water that wasn't there and heated the boiler 93 -> 98 °C. Reproduce
@@ -160,7 +172,7 @@ web, docs, release, upstream, hardware, idea). The notes below are the history b
   each, ~4 °C low before the bias correction). Two flushes in a row 8 °C under the estimate count as a refill. The
   constants are first guesses: refine with thermometer readings after ~1 h and ~3 h on.
 - **Pump flow calibration needs a Bluetooth scale.** Without one the screen can't save; let it accept a typed-in
-  weight. A single weight was enough here (pump model read 18–21 % high; scaled to 8.644, 4.676, then confirmed
+  weight. (With a Bookoo paired, 2026-11-03, it ran fine and confirmed the weighed flushes to 0.7 % at 1 bar.) A single weight was enough here (pump model read 18–21 % high; scaled to 8.644, 4.676, then confirmed
   within 3 % on a second run).
 - **Standing loss per degree.** The learned loss works (45 W saved) but should be W/°C × (T − 23 °C) so brew and steam
   share one value.

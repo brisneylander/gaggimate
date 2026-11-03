@@ -37,6 +37,14 @@ on 2026-10-28 left open. See [FORK.md](FORK.md) for building and releasing.
 
 ## Bench results so far
 
+**Matched after-steam bench** (2026-11-03, `FLUSH_AT_C=105 HOLD_S=0 scripts/bench/steam_benchmark.mjs`, one run each):
+every setup flushed from 105 °C. Fork flush to target 59 ml: lowest 92.5 °C, no overshoot, settled 176 s; upstream's
+Silvia PID, two presses (60 ml): 90.9 °C, +0.3, 200 s; GaggiMate's default PID, two presses (57 ml): 91.7 °C, +1.3,
+291 s. The steam peaks were 111-117 °C for all three: the heat-up boost now runs flat out while steaming, so the fork's
+lower peak (106 °C on 2026-10-30) is gone. Worth a look: whether the boost should stop sooner near a steam setpoint.
+The bench also found the predictor-restart bug (full power for 20 s when the compensation is switched back on), fixed
+in 142ab309. Repeat each setup once more before quoting tight numbers.
+
 **Pump swap and the shot feedforward** (2026-11-03, Bookoo Bluetooth scale paired, logger and shot history). The
 Ulka was swapped for a 35 W Olab "silent" pump; the Ulka's pump model read ~50 % high on it. Seven weighed open-group
 flushes (5/10/15 s) gave 5.7 ml/s, straight through zero; GaggiMate's pump calibration confirmed 1 bar and corrected

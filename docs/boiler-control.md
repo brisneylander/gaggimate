@@ -100,11 +100,26 @@ which flushes to target). Stock setups ran with every compensation setting at 0.
 | Upstream's Silvia PID, one press of the 5 s flush                                                   | 0.74 °C                                    | 112.8 °C           | 96.9 °C after 4 min |                  | not settled                     |
 
 Each setup flushed at its own peak, and the stock setups peaked 5-6 °C higher, so the flush column compares the whole
-routine rather than the flush alone. A matched re-run, every setup flushing from the same 105 °C, is below.
+routine rather than the flush alone. A matched re-run, every setup flushing from the same 105 °C, follows the table.
 
 Holding steadiness is what makes shots repeatable: a shot starts at whatever the boiler reads when brew is pressed.
 The sensor is on the boiler wall and the water swings less, so these are a fair comparison between setups rather than
 the spread of the shots themselves.
+
+**Matched after steam (2026-11-03).** The same routine with one change: every setup waited until the reading had
+fallen to 105 °C before the flush (one run each, tank 27-30 °C, Olab pump, so a 5 s press is ~29 ml). On this pump the
+stock routine's two presses and the fork's flush to target pumped about the same water, so the difference is the
+heater afterwards:
+
+| Setup, flushing from 105 °C                            | Steam peak | Water | Lowest      | Peak after     | Within ±0.3 °C from | Settled ±0.3 °C |
+| ------------------------------------------------------ | ---------- | ----- | ----------- | -------------- | ------------------- | --------------- |
+| **Fork, one press (flush to target)**                  | 111.3 °C   | 59 ml | **92.5 °C** | **93.0 °C**    | 171 s               | **176 s**       |
+| Upstream's Silvia PID, compensation off, two presses   | 116.6 °C   | 60 ml | 90.9 °C     | 93.3 °C (+0.3) | 112 s               | 200 s           |
+| GaggiMate's default PID, compensation off, two presses | 112.0 °C   | 57 ml | 91.7 °C     | 94.3 °C (+1.3) | 167 s               | 291 s           |
+
+The fork no longer peaks lower after steaming (105.7-106.7 °C on 2026-10-30): since then the heat-up boost runs the
+heater flat out while steaming, so it climbs as fast as the stock setups and carries as much heat past the switch back
+to Brew.
 
 ### The tank warms up
 

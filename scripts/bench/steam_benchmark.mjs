@@ -2,7 +2,8 @@
 // button (or nothing), and log until settled. Compares stock-style settings with the fork's.
 // usage: node steam_benchmark.mjs <out dir> [run names...]
 // FLUSH_AT_C=105: press flush once the reading has peaked and fallen to this temperature (every setup flushes from
-// the same reading; without it each flushes at its own peak). HOLD_S=0 skips the 5 min hold test.
+// the same reading; without it each flushes at its own peak). HOLD_S=0 skips the 5 min hold test. STEAM_TO=105 switches
+// back to Brew at 105 °C instead of 100 (a higher peak, for flushing from 115 °C).
 import { writeFileSync, appendFileSync } from "node:fs";
 
 // Optional run names after the out dir pick runs (e.g. A3-silvia-doc-flush-twice); otherwise all except A3.
@@ -16,7 +17,7 @@ const log = (msg) => {
   console.log(line);
   appendFileSync(`${outDir}/steam-bench.log`, line + "\n");
 };
-const OVERSHOOT_TO = 100;
+const OVERSHOOT_TO = process.env.STEAM_TO ? Number(process.env.STEAM_TO) : 100; // back to Brew at this reading
 const ABORT_ABOVE = 130; // stock settings coast to ~115 °C after the switch back to Brew
 const LOG_AFTER_S = 420;
 const HOLD_S =
@@ -253,7 +254,8 @@ for (const run of SELECTED) {
   await confirmMode(2);
   const heatBy = Date.now() + 8 * 60000;
   while (ct === null || ct < OVERSHOOT_TO) {
-    if (Date.now() > heatBy) await bail("did not reach 100 °C in 8 min");
+    if (Date.now() > heatBy)
+      await bail(`did not reach ${OVERSHOOT_TO} °C in 8 min`);
     await sleep(500);
   }
   event = "brew";

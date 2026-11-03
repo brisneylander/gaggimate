@@ -146,6 +146,41 @@ void test_sensor_fault() {
     TEST_ASSERT_EQUAL(static_cast<int>(Reason::SensorFault), static_cast<int>(s.reason()));
 }
 
+// Standby from high duty, then a wake-up 16 min later (2026-11-04 09:12-09:28): the boost ran 5 s at 72.7 °C, Standby
+// stopped the steps, and the first step after waking saw "no rise" for 16 min from a cooler boiler and tripped.
+void test_standby_gap_restarts_no_rise() {
+    HeaterSafety s;
+    uint32_t t = 1000;
+    for (int i = 0; i < 4; ++i, t += 1000)
+        TEST_ASSERT_TRUE(s.observe(t, 72.7f, 1.0f, false, 98.0f));
+    t += 16 * 60000;
+    TEST_ASSERT_TRUE(s.observe(t, 65.7f, 1.0f, false, 98.0f));
+    TEST_ASSERT_EQUAL(static_cast<int>(Reason::None), static_cast<int>(s.reason()));
+    // The check itself still works after the gap: a real no-rise trips 60 s on.
+    for (int i = 0; i < 59; ++i) {
+        t += 1000;
+        TEST_ASSERT_TRUE(s.observe(t, 65.7f, 1.0f, false, 98.0f));
+    }
+    TEST_ASSERT_FALSE(s.observe(t + 1000, 65.7f, 1.0f, false, 98.0f));
+    TEST_ASSERT_EQUAL(static_cast<int>(Reason::NoRise), static_cast<int>(s.reason()));
+}
+
+// The same for the full-power timer: 9 min flat out, Standby, then flat out again is two warm-ups, not 10 min.
+void test_standby_gap_restarts_full_power() {
+    HeaterSafety s;
+    uint32_t t = 0;
+    float temp = 25.0f;
+    for (; t < 540000; t += 1000) {
+        temp += 0.1f;
+        TEST_ASSERT_TRUE(s.observe(t, temp, 1.0f, false, 145.0f));
+    }
+    t += 30 * 60000;
+    for (uint32_t end = t + 120000; t < end; t += 1000) {
+        temp += 0.1f;
+        TEST_ASSERT_TRUE(s.observe(t, temp, 1.0f, false, 145.0f));
+    }
+}
+
 int main(int argc, char **argv) {
     UNITY_BEGIN();
     RUN_TEST(test_detached_sensor_at_brew_trips);
@@ -160,5 +195,7 @@ int main(int argc, char **argv) {
     RUN_TEST(test_reading_gap_is_not_a_jump);
     RUN_TEST(test_over_temperature);
     RUN_TEST(test_sensor_fault);
+    RUN_TEST(test_standby_gap_restarts_no_rise);
+    RUN_TEST(test_standby_gap_restarts_full_power);
     return UNITY_END();
 }

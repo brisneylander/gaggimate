@@ -37,6 +37,9 @@ class HeaterSafety {
     static constexpr uint32_t JUMP_WINDOW_MS = 30000;
     static constexpr float FULL_DUTY = 0.95f;
     static constexpr uint32_t FULL_POWER_MAX_MS = 600000;
+    // Steps come once a second while the heater runs. A longer gap means it wasn't running (Standby): the timers start
+    // over. Kept running, a Standby from high duty tripped "no rise" on the first step of the next wake-up (2026-11-04).
+    static constexpr uint32_t RESUME_GAP_MS = 5000;
 
     // Called once per control step with the reading, the duty about to be applied (0..1), whether water is flowing
     // and the setpoint. Returns false once tripped.
@@ -50,6 +53,10 @@ class HeaterSafety {
             return tripped == Reason::None;
         }
         faultSteps = 0;
+        if (haveLast && nowMs - lastMs > RESUME_GAP_MS) {
+            noRiseActive = false;
+            fullActive = false;
+        }
         if (temperature > MAX_SAFE_C)
             trip(Reason::OverTemp);
         checkJumps(nowMs, temperature);

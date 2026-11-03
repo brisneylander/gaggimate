@@ -49,6 +49,7 @@ void Heater::loop() {
     if (sensor->isErrorState() || setpoint <= 0.0f) {
         simplePid->setMode(SimplePID::Control::manual);
         requestOutput(false);
+        output = 0.0f; // the PID no longer writes it: left alone, the next wake-up and the display see the old duty
         temperature = sensor->read();
         controlTemperature = temperature;
         std::lock_guard<std::mutex> lock(lagMutex);

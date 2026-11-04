@@ -14,18 +14,25 @@ against weeks of normal use. Runs as a container on the NAS.
 
 ## What's in a log
 
-| Column                     |                                                                                          |
-| -------------------------- | ---------------------------------------------------------------------------------------- |
-| `time`, `unix_ms`          | Brisbane local time, and Unix milliseconds                                               |
-| `ct`, `tt`                 | boiler temperature and target, as the display shows them (sensor − temperature offset)   |
-| `hp`                       | heater output %                                                                          |
-| `pr`, `pt`                 | pressure and target (bar)                                                                |
-| `fl`, `tf`                 | pump flow and target (ml/s)                                                              |
-| `cw`                       | weight (g), with a scale                                                                 |
-| `pw`                       | pump power %                                                                             |
-| `mode`                     | 0 Standby, 1 Brew, 2 Steam, 3 Water                                                      |
-| `active`, `state`, `phase` | a shot or flush running, its state and phase (e.g. `brew`, `Flush`, `Peak 9 bar`)        |
-| `event`                    | `mode`, `connect`, `disconnect`, or an `evt:*` message such as `evt:shot-finished-stats` |
+| Column                     |                                                                                              |
+| -------------------------- | -------------------------------------------------------------------------------------------- |
+| `time`, `unix_ms`          | Brisbane local time, and Unix milliseconds                                                   |
+| `ct`, `tt`                 | boiler temperature and target, as the display shows them (sensor − temperature offset)       |
+| `hp`                       | heater output %                                                                              |
+| `pr`, `pt`                 | pressure and target (bar)                                                                    |
+| `fl`, `tf`                 | pump flow and target (ml/s)                                                                  |
+| `cw`                       | weight (g), with a scale                                                                     |
+| `pw`                       | pump power %                                                                                 |
+| `mode`                     | 0 Standby, 1 Brew, 2 Steam, 3 Water                                                          |
+| `active`, `state`, `phase` | a shot or flush running, its state and phase (e.g. `brew`, `Flush`, `Peak 9 bar`)            |
+| `event`                    | `mode`, `connect`, `disconnect`, or an `evt:*` message such as `evt:shot-finished-stats`     |
+| `vo`                       | brew valve as the controller reports it (1 open); blank before La Simona 5                   |
+| `rtx`, `lat`               | commands the display has had to resend since boot, and the round trip to the controller (ms) |
+
+`logs/valve-timing.csv` adds one row per shot or flush start in Brew: the pressure it started from, then the seconds until
+the valve reported open (`valve_s`), the pressure fell by 1.5 bar (`release_s`) and flow appeared (`flow_s`), and how many
+commands the link resent meanwhile (`rtx_added`). A late `valve_s` means the command was slow to arrive; `valve_s` on time
+with a late `release_s` means the valve itself. Times are as frames arrive, so ±0.5 s.
 
 While the machine is on, every status frame is written (a few per second, ~1 MB an hour). In Standby, one row a
 minute.

@@ -7,6 +7,7 @@
 //   - The settings (/api/settings) whenever they change, to settings-<date>.json, so each day's log has the PID and
 //     boiler profile it ran with.
 //   - One file per Brisbane date; files older than KEEP_PLAIN_DAYS are gzipped.
+//   - valve-timing.csv: one row per shot or flush start, how long the valve, the pressure and the flow took to respond.
 //
 // The display serves at most 3 websocket clients and drops the oldest when a 4th connects. If this logger keeps being
 // dropped (a phone and a browser already connected), it backs off for BACKOFF_MS instead of fighting them.
@@ -57,7 +58,24 @@ const COLUMNS = [
   "state",
   "phase",
   "event",
+  "vo",
+  "rtx",
+  "lat",
 ];
+const VALVE_FILE = "valve-timing.csv";
+const VALVE_COLUMNS = [
+  "time",
+  "phase",
+  "ct",
+  "pr_start",
+  "valve_s",
+  "release_s",
+  "flow_s",
+  "rtx_added",
+  "lat_ms",
+];
+const VALVE_WATCH_S = 15;
+const PRESSURE_RELEASED = 1.5; // bar fallen, or the start pressure too low to count
 mkdirSync(DIR, { recursive: true });
 
 const dateFmt = new Intl.DateTimeFormat("en-CA", {
@@ -93,6 +111,64 @@ function write(fields) {
   appendFileSync(file, row.join(",") + "\n");
 }
 
+// Shot or flush starts. On 2026-11-05 a shot started with 7.2 bar trapped behind the valve and the pressure held for 5.4 s
+// where it normally goes in 0.5 s. valve_s late means the command was slow reaching the controller (rtx_added says if the
+// link had to resend); valve_s on time with release_s late means the valve itself. Times are as frames arrive: ±0.5 s.
+let valveStart = null;
+let wasActive = false;
+let lastPressure = 0;
+function closeValveRow(m) {
+  const v = valveStart;
+  valveStart = null;
+  const file = join(DIR, VALVE_FILE);
+  if (!existsSync(file)) writeFileSync(file, VALVE_COLUMNS.join(",") + "\n");
+  const fmt = (s) => (s === undefined ? "" : s.toFixed(2));
+  appendFileSync(
+    file,
+    [
+      v.time,
+      String(v.phase).replace(/[,\n]/g, ";"),
+      v.ct,
+      v.pr,
+      fmt(v.valveS),
+      fmt(v.releaseS),
+      fmt(v.flowS),
+      m.rtx === undefined ? "" : m.rtx - v.rtx,
+      m.lat ?? "",
+    ].join(",") + "\n",
+  );
+}
+function watchValve(m) {
+  const now = Date.now();
+  const active = !!state.active;
+  if (active && !wasActive && state.mode === 1)
+    valveStart = {
+      at: now,
+      time: localTime(new Date(now)),
+      phase: state.phase,
+      ct: m.ct,
+      pr: lastPressure,
+      rtx: m.rtx,
+    };
+  wasActive = active;
+  lastPressure = m.pr;
+  if (!valveStart) return;
+  const v = valveStart;
+  const s = (now - v.at) / 1000;
+  if (m.vo && v.valveS === undefined) v.valveS = s;
+  if (m.fl > 0.5 && v.flowS === undefined) v.flowS = s;
+  if (m.pr < v.pr - PRESSURE_RELEASED && v.releaseS === undefined)
+    v.releaseS = s;
+  const released = v.pr < PRESSURE_RELEASED || v.releaseS !== undefined;
+  const valveSeen = m.vo === undefined || v.valveS !== undefined;
+  if (
+    (released && valveSeen && v.flowS !== undefined) ||
+    s > VALVE_WATCH_S ||
+    !active
+  )
+    closeValveRow(m);
+}
+
 // Status frames are partial (fast telemetry every tick, slow state only on change): keep the latest of each.
 const state = { mode: "", active: "", state: "", phase: "" };
 let lastStandbyRow = 0;
@@ -108,6 +184,7 @@ function onStatus(m) {
     state.phase = p.l || "";
   }
   if (m.ct === undefined) return;
+  watchValve(m);
   const idle = state.mode === 0 && !state.active;
   const now = Date.now();
   if (idle && now - lastStandbyRow < STANDBY_EVERY_MS) return;
@@ -122,6 +199,9 @@ function onStatus(m) {
     tf: m.tf,
     cw: m.cw,
     pw: m.pw,
+    vo: m.vo,
+    rtx: m.rtx,
+    lat: m.lat,
     ...state,
   });
 }

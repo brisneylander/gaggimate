@@ -462,6 +462,7 @@ void WebSocketHandler::publishTelemetry() {
     statusDoc["tt"] = controller->getTargetTemp();
     statusDoc["pr"] = round_to(controller->getCurrentPressure(), 3);
     statusDoc["fl"] = round_to(controller->getCurrentPumpFlow(), 3);
+    statusDoc["vo"] = controller->isValveOpen() ? 1 : 0; // the brew valve as the controller reports it
     statusDoc["pt"] = controller->getTargetPressure();
     statusDoc["wl"] = controller->getWaterLevel();
     statusDoc["tof"] = controller->getTofDistance();

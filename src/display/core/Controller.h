@@ -83,6 +83,7 @@ class Controller {
     virtual float getCurrentPuckResistance() const { return currentPuckResistance; }
     virtual float getCurrentCoffeeVolume() const { return currentCoffeeVolume; }
     virtual float getCurrentWaterPumped() const { return currentWaterPumped; }
+    virtual bool isValveOpen() const { return currentValveOpen; }
 
     bool isTaskHealthy() const { return is_task_healthy(eTaskGetState(logicTaskHandle)); }
 
@@ -255,6 +256,7 @@ class Controller {
     float currentPuckResistance = 0.0f;
     float currentCoffeeVolume = 0.0f;
     float currentWaterPumped = 0.0f;
+    bool currentValveOpen = false;
     float targetFlow = 0.0f;
     int tofDistance = 0;
 

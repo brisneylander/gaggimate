@@ -305,7 +305,7 @@ void Controller::setupBluetooth() {
         }
     });
     comms.onSensorData([this](float temp, float temp2, float pressure, float puckFlow, float pumpFlow, float puckResistance,
-                              float pumpPower, float heaterPower, float waterPumped) {
+                              float pumpPower, float heaterPower, float waterPumped, bool valveOpen) {
         onTempRead(temp);
         onPressureRead(pressure);
         this->currentSteamTemp = temp2;
@@ -315,6 +315,7 @@ void Controller::setupBluetooth() {
         this->currentHeaterPower = heaterPower;
         this->currentPuckResistance = puckResistance;
         this->currentWaterPumped = waterPumped;
+        this->currentValveOpen = valveOpen;
         pluginManager->trigger("pump:puck-flow:change", "value", puckFlow);
         pluginManager->trigger("pump:flow:change", "value", pumpFlow);
         pluginManager->trigger("pump:puck-resistance:change", "value", puckResistance);

@@ -573,6 +573,7 @@ void GaggiMateController::sendSensorData() {
     p.content.sensor.puck_resistance = puckResistance;
     p.content.sensor.pump_power = pumpPower;
     p.content.sensor.water_pumped = waterPumped;
+    p.content.sensor.valve_open = this->valve->getState();
     batch[n++] = p;
     _comms.sendUnreliableBatch(batch, n);
 }

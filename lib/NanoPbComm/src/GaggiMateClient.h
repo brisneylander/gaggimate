@@ -19,7 +19,7 @@ class GaggiMateClient {
                            bool ledControl, bool tof, bool dualBoiler, std::vector<uint32_t> addons)>;
     using SensorCallback =
         std::function<void(float temperature, float temperature2, float pressure, float puckFlow, float pumpFlow,
-                           float puckResistance, float pumpPower, float heaterPower, float waterPumped)>;
+                           float puckResistance, float pumpPower, float heaterPower, float waterPumped, bool valveOpen)>;
     using ButtonCallback = std::function<void(uint8_t index, bool pressed)>;
     using AutotuneResultCallback =
         std::function<void(float kp, float ki, float kd, float kf, float heatRate, float deadTimeS, float heaterW)>;

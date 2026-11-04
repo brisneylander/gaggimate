@@ -226,7 +226,8 @@ void GaggiMateClient::registerHandlers() {
             temp2 = p.content.sensor.boilers[1].temperature;
         }
         _sensorCb(temperature, temp2, pressure, p.content.sensor.puck_flow, p.content.sensor.pump_flow,
-                  p.content.sensor.puck_resistance, p.content.sensor.pump_power, heater_power, p.content.sensor.water_pumped);
+                  p.content.sensor.puck_resistance, p.content.sensor.pump_power, heater_power, p.content.sensor.water_pumped,
+                  p.content.sensor.valve_open);
         if (_heaterLossCb && p.content.sensor.boilers_count > 0 && p.content.sensor.boilers[0].standing_loss_w > 0.0f)
             _heaterLossCb(p.content.sensor.boilers[0].standing_loss_w);
     });

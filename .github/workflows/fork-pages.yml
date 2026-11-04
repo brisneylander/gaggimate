@@ -28,6 +28,15 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Stamp the last updated footer
+        env:
+          TZ: Australia/Brisbane
+        run: |
+          UPDATED="$(git log -1 --date=format-local:'%-d %B %Y, %H:%M' --format=%cd -- site) Brisbane time"
+          grep -q LAST_UPDATED site/index.html
+          sed -i "s/LAST_UPDATED/${UPDATED}/" site/index.html
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

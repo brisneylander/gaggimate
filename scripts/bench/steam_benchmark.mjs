@@ -200,7 +200,10 @@ process.on("SIGINT", () => bail("interrupted"));
 setInterval(() => {
   if (ct !== null && ct > ABORT_ABOVE)
     bail(`temperature ${ct} > ${ABORT_ABOVE}`);
-  if (Date.now() - lastTelemetry > 60000) bail("no telemetry for 60 s");
+  // A connection can go quiet without closing (the display drops its oldest client when another connects).
+  const quiet = Date.now() - lastTelemetry;
+  if (quiet > 120000) bail("no telemetry for 2 min");
+  else if (quiet > 15000 && ws.readyState === 1) ws.close();
 }, 2000);
 
 connect();

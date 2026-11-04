@@ -135,18 +135,24 @@ same water, so the difference is the heater afterwards:
 
 ![After steam, every setup flushing from 105 °C, two runs each: the fork lands at 92.5 °C both times; upstream's Silvia PID dips to 90.9 and 92.25 °C; GaggiMate's defaults overshoot to 94.2-94.3 °C](assets/after-steam-105-repeats.svg)
 
-And flush to target from other temperatures (evening, one run each):
+And flush to target from other temperatures, on La Simona 3 (2026-11-03 evening) and La Simona 4 (2026-11-04), one run
+each except the two at 105 °C. La Simona 4 keeps the PID's integral through the heater hold, where a setpoint of 0 used to
+wipe it:
 
-| Flushed from | Water    | Lowest  | Peak after | Settled ±0.3 °C |
-| ------------ | -------- | ------- | ---------- | --------------- |
-| 100 °C       | 32 ml    | 92.5 °C | 93.1 °C    | 240 s           |
-| 105 °C       | 56-59 ml | 92.5 °C | 93.0 °C    | 176-205 s       |
-| 110 °C       | 84 ml    | 92.7 °C | 93.0 °C    | 228 s           |
-| 115 °C       | 109 ml   | 92.5 °C | 93.0 °C    | 236 s           |
+| Flushed from           | Water (LS3, LS4) | Lowest (LS3, LS4)  | Peak after (LS3, LS4) | Settled ±0.3 °C (LS3, LS4) |
+| ---------------------- | ---------------- | ------------------ | --------------------- | -------------------------- |
+| 100 °C                 | 32, 32 ml        | 92.5, **92.75 °C** | 93.1, 93.0 °C         | 240, **118 s**             |
+| 105 °C                 | 56-59, 54 ml     | 92.5, **92.95 °C** | 93.0, 93.25 °C        | 176-205, **76 s**          |
+| 110 °C                 | 84, 84 ml        | 92.7, **92.75 °C** | 93.0, 93.0 °C         | 228, **114 s**             |
+| 115 °C (LS4: 114.3 °C) | 109, 103 ml      | 92.5, **92.75 °C** | 93.0, 93.0 °C         | 236, **125 s**             |
 
-From 100 to 115 °C it sizes the flush from 32 to 109 ml and lands at 92.5-92.7 °C every time, without overshoot.
+From 100 to 115 °C it sizes the flush from 32 to 109 ml. On La Simona 4 the reading now stays within 0.25 °C of 93 °C once
+it has come down, so the settled time is mostly the boiler falling to 93 °C; the slow climb back from 0.5 °C under is gone.
+The logged heater power doesn't differ clearly between the two releases, so the kept integral is the likely cause rather
+than a measured one. Kf was 0.7 on these runs and 0.45 on La Simona 3, but it needs water flowing and the heater is held
+off during the flush.
 
-![Flush to target from 100, 105, 110 and 115 °C: every run levels out at 92.5-92.7 °C and settles at 93 °C without overshoot](assets/flush-to-target-range.svg)
+![Flush to target from 100, 105, 110 and 114 °C on La Simona 4: every run levels out at 92.75-92.95 °C and is settled at 93 °C within about two minutes](assets/flush-to-target-range.svg)
 
 The fork no longer peaks lower after steaming (105.7-106.7 °C on 2026-10-30): since then the heat-up boost runs the
 heater flat out while steaming, so it climbs as fast as the stock setups and carries as much heat past the switch back

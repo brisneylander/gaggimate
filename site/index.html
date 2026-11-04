@@ -516,29 +516,29 @@
           Steam, back to Brew, and once the boiler has fallen to 105 °C, what an
           owner does: on stock settings press the flush button, then again once
           it ends (one press isn't enough); on the fork, press it once and it
-          flushes to target. Every setup flushed from the same 105 °C, twice,
-          and all three pumped about the same water, 56–60 ml. The difference is
-          what the heater does with it.
+          flushes to target. Every setup flushed from the same 105 °C, and all
+          three pumped about the same water, 54–60 ml. The difference is what
+          the heater does with it.
         </p>
         <div class="stats">
           <div class="stat">
             <div class="k">Lowest after the flush</div>
-            <div class="v">92.5 °C <small>from 90.9–92.25</small></div>
+            <div class="v">92.95 °C <small>from 90.9–92.25</small></div>
           </div>
           <div class="stat">
             <div class="k">Overshoot after the flush</div>
-            <div class="v">0 °C <small>from +0.3 to +1.3</small></div>
+            <div class="v">+0.25 °C <small>from +0.3 to +1.3</small></div>
           </div>
           <div class="stat">
             <div class="k">Settled within ±0.3 °C</div>
-            <div class="v">~190 s <small>from 200 to 420+</small></div>
+            <div class="v">76 s <small>from 200 to 420+</small></div>
           </div>
         </div>
         <div class="chart">
           <div class="legend">
             <span
               ><i style="background: var(--accent)"></i>This fork: one press,
-              flush to target (59 ml)</span
+              flush to target (54 ml)</span
             >
             <span
               ><i style="background: var(--stock)"></i>Upstream's Silvia PID
@@ -553,19 +553,19 @@
             id="steam-chart"
             viewBox="0 0 900 380"
             role="img"
-            aria-label="After steaming, every setup flushed from 105 °C: the fork bottoms at 92.5 °C and lands at 93 °C without overshoot; upstream's Silvia PID values dip to 90.9 °C, GaggiMate's defaults to 91.7 °C and then overshoot to 94.3 °C."
+            aria-label="After steaming, every setup flushed from 105 °C: the fork bottoms at 92.95 °C and settles at 93 °C in 76 s; upstream's Silvia PID values dip to 90.9 °C, GaggiMate's defaults to 91.7 °C and then overshoot to 94.3 °C."
           ></svg>
           <p class="caption">
-            Two runs per setup on 2026-11-03 (one shown each), tank about 27–30
-            °C, Olab pump (a 5 s press is about 29 ml). Flush starts at 0 s; the
-            stock setups' second press came 25 s later. Peaks after steaming
-            were 111–117 °C for all three: the fork's heat-up boost runs flat
-            out while steaming, so it no longer peaks lower as it did on
-            2026-10-30. Flushing from 100, 110 and 115 °C instead, flush to
-            target sized the flush at 32, 84 and 109 ml and landed at 92.5–92.7
-            °C each time, without overshoot. Earlier runs showed that flushing
-            too much instead undershoots, to 90.8 °C, and takes about 5 minutes
-            to settle.
+            The stock setups: two runs each on 2026-11-03 (one shown each). The
+            fork: one run on La Simona 4, 2026-11-04. Tank about 27–30 °C, Olab
+            pump (a 5 s press is about 29 ml). Flush starts at 0 s; the stock
+            setups' second press came 25 s later. Peaks after steaming were
+            111–117 °C for all three: the fork's heat-up boost runs flat out
+            while steaming, so it no longer peaks lower as it did on 2026-10-30.
+            Flushing from 100, 110 and 114 °C instead, flush to target sized the
+            flush at 32, 84 and 103 ml, stayed at 92.75 °C or above and settled
+            in 114–125 s. Earlier runs showed that flushing too much instead
+            undershoots, to 90.8 °C, and takes about 5 minutes to settle.
           </p>
         </div>
       </section>
@@ -603,7 +603,7 @@
               works out how much tank water brings it to brew temperature and
               flushes exactly that.
             </p>
-            <span class="result">Lands at 92.5 °C from 100–115 °C</span>
+            <span class="result">Settled in about 2 min from 100–115 °C</span>
           </div>
           <div class="card">
             <h3>Tank estimate</h3>
@@ -1014,148 +1014,152 @@
         ],
       };
       const BENCH = {
-        // Matched after-steam runs, 2026-11-03: every setup flushed once the reading had fallen to 105 °C (t = 0).
+        // Matched after-steam runs: every setup flushed once the reading had fallen to 105 °C (t = 0). Fork 2026-11-04, stock 2026-11-03.
         steam: {
           fork: [
-            [-30, 105.95],
-            [-27, 105.84],
-            [-23, 105.72],
-            [-20, 105.53],
-            [-17, 105.45],
-            [-14, 105.38],
-            [-10, 105.26],
-            [-7, 105.19],
-            [-4, 105.03],
-            [-1, 104.98],
-            [3, 104.95],
-            [6, 104.77],
-            [9, 104.6],
-            [12, 104.29],
-            [16, 103.69],
-            [19, 102.99],
-            [22, 102.03],
-            [25, 100.94],
-            [28, 100.04],
-            [32, 98.94],
-            [35, 98.07],
-            [38, 97.38],
-            [41, 96.71],
-            [44, 96.1],
-            [47, 95.66],
-            [51, 95.29],
-            [54, 94.95],
-            [57, 94.67],
-            [60, 94.42],
-            [63, 94.26],
-            [66, 94.03],
-            [69, 93.8],
-            [72, 93.7],
-            [75, 93.45],
-            [79, 93.36],
-            [82, 93.2],
-            [85, 93.07],
-            [88, 93.0],
-            [92, 92.83],
-            [95, 92.76],
-            [98, 92.75],
-            [102, 92.75],
-            [105, 92.75],
-            [108, 92.66],
-            [111, 92.55],
-            [115, 92.56],
-            [118, 92.51],
-            [122, 92.5],
-            [125, 92.5],
-            [129, 92.5],
-            [132, 92.5],
-            [135, 92.5],
-            [138, 92.5],
-            [141, 92.5],
-            [144, 92.5],
-            [147, 92.5],
-            [151, 92.5],
-            [154, 92.5],
-            [157, 92.54],
-            [161, 92.53],
-            [164, 92.55],
-            [168, 92.52],
-            [171, 92.68],
-            [174, 92.7],
-            [177, 92.72],
-            [180, 92.74],
-            [183, 92.75],
-            [186, 92.75],
-            [189, 92.75],
-            [192, 92.75],
-            [196, 92.75],
-            [199, 92.75],
-            [202, 92.81],
-            [205, 92.77],
-            [208, 92.75],
-            [211, 92.75],
-            [214, 92.8],
-            [218, 92.75],
-            [221, 92.75],
-            [224, 92.81],
-            [227, 92.78],
-            [230, 92.76],
-            [234, 92.77],
-            [237, 92.84],
-            [240, 92.83],
-            [244, 92.89],
-            [247, 92.95],
-            [250, 92.97],
-            [254, 92.98],
-            [257, 93.0],
-            [260, 93.0],
-            [264, 92.96],
-            [267, 92.99],
-            [270, 92.99],
-            [273, 93.0],
-            [276, 93.0],
-            [280, 93.0],
-            [283, 93.0],
-            [286, 93.0],
-            [290, 93.0],
-            [293, 93.0],
-            [296, 93.0],
-            [299, 93.0],
-            [302, 93.0],
+            [-30, 106.0],
+            [-27, 105.95],
+            [-24, 105.83],
+            [-21, 105.75],
+            [-15, 105.48],
+            [-12, 105.36],
+            [-9, 105.26],
+            [-6, 105.12],
+            [-3, 105.01],
+            [1, 104.95],
+            [4, 104.78],
+            [7, 104.54],
+            [10, 103.74],
+            [13, 102.72],
+            [16, 101.21],
+            [19, 99.77],
+            [22, 98.37],
+            [26, 97.38],
+            [29, 96.65],
+            [32, 96.11],
+            [35, 95.57],
+            [38, 95.24],
+            [41, 94.98],
+            [44, 94.78],
+            [48, 94.6],
+            [51, 94.5],
+            [54, 94.29],
+            [57, 94.13],
+            [60, 94.01],
+            [63, 93.83],
+            [66, 93.7],
+            [69, 93.65],
+            [72, 93.51],
+            [75, 93.44],
+            [78, 93.26],
+            [82, 93.25],
+            [85, 93.22],
+            [88, 93.12],
+            [91, 93.03],
+            [94, 93.0],
+            [97, 93.0],
+            [100, 93.0],
+            [103, 93.0],
+            [106, 93.0],
+            [109, 93.0],
+            [112, 93.0],
+            [115, 93.05],
+            [118, 93.04],
+            [121, 93.05],
+            [125, 93.11],
+            [128, 93.19],
+            [131, 93.13],
+            [134, 93.24],
+            [137, 93.24],
+            [140, 93.25],
+            [144, 93.22],
+            [147, 93.25],
+            [150, 93.18],
+            [153, 93.23],
+            [156, 93.25],
+            [159, 93.23],
+            [162, 93.25],
+            [165, 93.14],
+            [168, 93.2],
+            [172, 93.11],
+            [175, 93.21],
+            [178, 93.21],
+            [181, 93.2],
+            [184, 93.15],
+            [187, 93.07],
+            [190, 93.16],
+            [193, 93.13],
+            [196, 93.06],
+            [199, 93.07],
+            [202, 93.08],
+            [205, 93.07],
+            [208, 93.13],
+            [211, 93.05],
+            [215, 93.14],
+            [218, 93.15],
+            [221, 93.17],
+            [224, 93.1],
+            [227, 93.13],
+            [230, 93.05],
+            [234, 93.06],
+            [237, 93.1],
+            [240, 93.06],
+            [243, 93.1],
+            [246, 93.1],
+            [249, 93.14],
+            [252, 93.07],
+            [255, 93.08],
+            [258, 93.02],
+            [262, 93.11],
+            [265, 93.09],
+            [268, 93.11],
+            [271, 93.04],
+            [274, 93.05],
+            [277, 93.09],
+            [280, 93.01],
+            [283, 93.05],
+            [286, 93.06],
+            [290, 93.05],
+            [293, 93.1],
+            [296, 93.1],
+            [299, 93.11],
+            [302, 93.02],
             [305, 93.0],
-            [308, 93.0],
-            [311, 93.0],
-            [314, 93.0],
-            [318, 92.97],
-            [321, 92.91],
-            [324, 92.99],
-            [328, 92.95],
+            [309, 93.02],
+            [312, 93.06],
+            [315, 93.09],
+            [318, 93.02],
+            [321, 93.02],
+            [324, 93.03],
+            [328, 93.02],
             [331, 93.0],
-            [334, 92.99],
-            [337, 93.0],
-            [341, 93.0],
-            [344, 93.0],
-            [347, 92.94],
-            [350, 92.95],
+            [334, 93.02],
+            [339, 93.04],
+            [342, 93.0],
+            [345, 93.01],
+            [348, 93.0],
+            [351, 93.07],
             [354, 93.0],
             [357, 93.0],
-            [361, 93.0],
-            [364, 92.98],
-            [367, 93.0],
-            [370, 92.99],
-            [374, 92.98],
-            [377, 92.97],
-            [381, 92.95],
-            [385, 92.97],
-            [388, 92.99],
-            [392, 92.96],
-            [395, 92.98],
-            [398, 92.98],
-            [401, 92.89],
-            [404, 92.94],
-            [408, 92.98],
+            [360, 93.0],
+            [363, 93.0],
+            [366, 93.01],
+            [370, 93.05],
+            [373, 93.0],
+            [376, 93.0],
+            [380, 93.0],
+            [383, 93.0],
+            [386, 93.0],
+            [390, 93.0],
+            [393, 93.0],
+            [396, 93.0],
+            [399, 93.0],
+            [402, 93.0],
+            [405, 93.0],
+            [408, 93.0],
             [411, 93.0],
-            [414, 92.98],
-            [418, 92.97],
+            [415, 93.03],
+            [418, 93.0],
           ],
           silvia: [
             [-30, 106.54],

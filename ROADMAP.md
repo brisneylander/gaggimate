@@ -39,6 +39,11 @@ on 2026-10-28 left open. See [FORK.md](FORK.md) for building and releasing.
 
 ## Bench results so far
 
+**Flush to target, La Simona 4** (2026-11-04, one run each, same routine as the evening bench below): from
+100/105/110/114 °C (32-103 ml) lowest 92.75-92.95 °C, peak after 93.0-93.25 °C, settled 76-125 s, against 176-240 s on La
+Simona 3. Next: repeats before quoting tight numbers. `scripts/bench/warmup_bench.mjs` now finishes the cooling itself by
+day (two 170 ml flushes at 48 °C): those runs start near 37 °C with a warm group head, so keep them apart from cold starts.
+
 **Evening bench, La Simona 3** (2026-11-03). Synthetic shots (`scripts/bench/synthetic_shot.mjs`: 80 ml in 34 s
 through the empty portafilter, three per setting): mean drop −5.2 °C at Kf 0, −3.6 at 0.45, −2.9 at 0.7; back within
 ±0.3 °C in 132-146, 103-119 and 83-101 s; overshoot +0.2, +0.3, +0.5 °C. 0.7 now on the machine for real shots. Flush to

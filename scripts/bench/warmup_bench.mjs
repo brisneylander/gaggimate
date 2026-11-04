@@ -14,7 +14,7 @@
 //
 // usage: node warmup_bench.mjs <out dir>   env: GM_HOST, HOURS (24), RUN_MIN (25), QUIET (05:30-09:00),
 //        ASSIST_AT (48 °C), ASSIST_HOURS (09:00-20:00), ASSIST_MAX (3, 0 = never flush), ASSIST_REST_S (60),
-//        ASSIST_IDLE_MIN (30), ASSIST_SOAK_MIN (10)
+//        ASSIST_IDLE_MIN (30), ASSIST_SOAK_MIN (10), VARIANT (one name from VARIANTS, default all in turn)
 import {
   appendFileSync,
   existsSync,
@@ -67,7 +67,7 @@ const VARIANTS = [
   { name: "group-1343-4.3", groupHeatCapacity: 1343, groupCoupling: 4.3 },
   { name: "group-1343-3.0", groupHeatCapacity: 1343, groupCoupling: 3.0 },
   { name: "group-off", groupHeatCapacity: 0, groupCoupling: 0 },
-];
+].filter((v) => !process.env.VARIANT || v.name === process.env.VARIANT);
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const hhmm = (d = new Date()) =>

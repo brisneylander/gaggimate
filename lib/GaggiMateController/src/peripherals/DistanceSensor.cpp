@@ -29,6 +29,16 @@ void DistanceSensor::setup() {
     xTaskCreate(loopTask, "DistanceSensor::loop", configMINIMAL_STACK_SIZE * 4, this, 1, &taskHandle);
 }
 
+bool DistanceSensor::probe() {
+    SoftWireBus::Guard guard(bus);
+    if (!guard) {
+        return false;
+    }
+    tof->setAddress(TOF_ADDRESS); // as in initSensor(): a sensor that kept power NACKs this and is already there
+    uint8_t model = tof->readReg(VL53L0X::IDENTIFICATION_MODEL_ID);
+    return tof->last_status == 0 && model == TOF_MODEL_ID;
+}
+
 bool DistanceSensor::initSensor() {
     // A sensor that kept power is still on TOF_ADDRESS; the write to the default address then just NACKs.
     this->tof->setAddress(TOF_ADDRESS);

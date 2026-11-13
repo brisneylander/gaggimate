@@ -112,6 +112,11 @@ void GaggiMateController::setup() {
             _config.capabilites.tof = true;
             _comms.onLedControl([this](uint8_t channel, uint8_t brightness) { ledController->setChannel(channel, brightness); });
         }
+        // A VL53L0X on its own (a generic breakout instead of the LED board) is a water level sensor too.
+        if (!_config.capabilites.tof && this->distanceSensor->probe()) {
+            ESP_LOGI(LOG_TAG, "VL53L0X found without the LED board");
+            _config.capabilites.tof = true;
+        }
     }
     if (!_config.capabilites.tof && _config.tankLevelPin > 0) {
         tankLevel = new DigitalInput(_config.tankLevelPin, [this](const bool) { sendTankLevel(); }, 5);

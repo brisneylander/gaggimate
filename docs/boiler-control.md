@@ -1,8 +1,16 @@
 # Boiler temperature control on this fork
 
-What this fork changes in GaggiMate's boiler control, why, and what the bench showed. Measured on a Rancilio Silvia
-230 V (1100 W) with a GaggiMate Pro, 2026-10-28/29. Every number below comes from a logged run; the raw tables are in
-[ROADMAP.md](../ROADMAP.md).
+This is the detailed version of the [front page](https://brisneylander.github.io/gaggimate/): what the fork changes in
+GaggiMate's boiler control, why, and what the measurements showed. It's on **La Simona 7** (14 November 2026), which
+also brings in everything upstream GaggiMate added up to 12 November.
+
+**In plain terms:** GaggiMate runs the boiler heater with a PID controller, which looks at a temperature sensor and
+decides how hard to heat. On a Silvia that sensor is screwed to the outside of the boiler and only notices a change
+about 20 seconds after it happens, so the controller keeps reacting to old news: it overheats after a flush, and the
+graph dips further during a shot than the water really does. Everything below is about working around that delay.
+
+Measured on one machine: a Rancilio Silvia V4, 230 V (1100 W), with Rancilio's boiler insulation added and a GaggiMate
+Pro. Every number comes from a logged run; the raw tables are in [ROADMAP.md](../ROADMAP.md).
 
 ## Goal
 
@@ -154,11 +162,49 @@ off during the flush.
 
 ![Flush to target from 100, 105, 110 and 114 °C on La Simona 4: every run levels out at 92.75-92.95 °C and is settled at 93 °C within about two minutes](assets/flush-to-target-range.svg)
 
+**Re-checked on La Simona 7** (2026-11-14, after the upstream merge, same routine):
+
+| Flushed from | Water  | Lowest   | Peak after | Settled ±0.3 °C |
+| ------------ | ------ | -------- | ---------- | --------------- |
+| 100 °C       | 29 ml  | 92.76 °C | 93.0 °C    | 82 s            |
+| 105 °C       | 55 ml  | 91.29 °C | 93.75 °C   | 282 s           |
+| 110 °C       | 80 ml  | 92.76 °C | 93.24 °C   | 72 s            |
+| 114.4 °C     | 103 ml | 92.86 °C | 92.99 °C   | 88 s            |
+
+The three runs on a warm machine match La Simona 4's lows and settle faster. The 105 °C run came first, about 13 minutes
+after the machine was switched on from cold: the flush was sized the same (55 against 54 ml), but the cold group head kept
+pulling heat and the boiler cooled on past 93 °C (see the next section). It wasn't repeated warm.
+
 The fork no longer peaks lower after steaming (105.7-106.7 °C on 2026-10-30): since then the heat-up boost runs the
 heater flat out while steaming, so it climbs as fast as the stock setups and carries as much heat past the switch back
 to Brew. The evening runs also showed La Simona 3's fix: switching from the stock settings back to the fork's settled
 at 93.0-93.2 °C within a minute, where in the afternoon (La Simona 2) the heater ran flat out for 20 s and the boiler
 reached 101.9 °C.
+
+### The dip on a shot graph is mostly the sensor
+
+Over 30 real shots (6-13 November, Kf 0.7) the reading bottomed out at 88-90 °C. But once the pump stops it climbs back
+3-4 °C in under a minute with the heater at 0-12 %: the heat was already in the boiler and the sensor hadn't caught up.
+During the shot the heater averaged 76 % and was at full power only a quarter of the time, so the predictor holds it back
+for heat it knows is on its way. A GaggiMate user who measured inside the basket saw it stay within about 1.2 °C of
+target while the graph dipped 5 °C.
+
+A synthetic-shot bench on 2026-11-13 (a draw shaped like a Silvia Daily shot: 8 s at full flow, then 1.8 ml/s for 18 s,
+about 80 ml, through an empty portafilter) compared Kf 0.7 and 1.0:
+
+| Draw                   | Kf  | Dip     | Lowest  | Heater during the draw |
+| ---------------------- | --- | ------- | ------- | ---------------------- |
+| 12 min after switch-on | 0.7 | −6.5 °C | 86.5 °C | 89 %                   |
+| 18 min after switch-on | 1.0 | −5.1 °C | 87.8 °C | 91 %                   |
+| warm                   | 0.7 | −3.2 °C | 89.9 °C | 56 %                   |
+| warm                   | 1.0 | −2.6 °C | 90.5 °C | 63 %                   |
+| warm                   | 0.7 | −3.3 °C | 89.7 °C | 57 %                   |
+| warm                   | 1.0 | −3.2 °C | 89.9 °C | 67 %                   |
+
+Kf 1.0 made no reliable difference (about 0.3 °C, less than the spread between runs) and overshot a little more after, so
+0.7 stays. The bigger finding is the first two rows: even after the reading had held 93 °C for 90 s, a draw 12-18 minutes
+after switch-on dipped about twice as far, with the heater flat out, because the group head was still soaking up heat.
+About 30 minutes after switch-on, shots are unaffected.
 
 ### The tank warms up
 
@@ -216,6 +262,7 @@ All of the above is off or neutral until configured, so a machine that isn't set
 | Heater switching on mains half-cycles                          | Not built                                                     | ~0.02 °C of ripple at holding power, which the sensor can't see                                                                                                                  |
 | Holding a shot at the setpoint                                 | Simulated and measured                                        | A shot's fill draws ~2 kW, twice the element's 1100 W: some sag is the boiler's limit. The feedforward (above) recovers part of it; set the profile a little hotter for the rest |
 | Higher Kp or Ki, or a top-up, for the last degree after a shot | Simulated (2026-11-03)                                        | Each saved under 10 s of a ~90 s recovery and added 0.25-0.5 °C of overshoot after flushes and shots                                                                             |
+| Thermal feedforward above 0.7                                  | Synthetic shots, 1.0 against 0.7 (2026-11-13)                 | About 0.3 °C less dip, inside the run-to-run spread, and a little more overshoot after                                                                                           |
 
 ## Simulator
 
@@ -224,11 +271,21 @@ fitted to the Silvia's logs. On flushes left out of the fit it tracks the sensor
 1.09 °C). The tests check every change to the controller against it, including the bench configurations, a replayed
 shot and model errors of ±25 %. Bench runs remain the final word on timing.
 
+## La Simona 7: the upstream merge
+
+La Simona 7 brings in upstream GaggiMate's master branch up to 12 November 2026 (44 commits): the setup wizard, machine
+hardware settings, a separate steam-boiler PID for dual-boiler machines, the hardware-scale tare split, profile list
+fixes and Smart Dose, among others. The boiler control above is unchanged. Upstream had taken some of the protocol field
+numbers the fork used between the display and the controller, so the fork's heater settings moved to numbers 30-42 and
+its valve report to 30; both boards update together, so nothing is lost. Flush to target keeps upstream's new check that
+the controller has confirmed its hardware settings before a flush starts.
+
 ## Still open
 
-See [ROADMAP.md](../ROADMAP.md): tank estimate calibration, the
-Silvia's steam switch wiring, and combining with upstream's setup wizard and its machine presets when that is merged.
+See [ROADMAP.md](../ROADMAP.md): tank estimate calibration, the Silvia's steam switch wiring, fitting the fork's machine
+profiles into upstream's new setup wizard, and a fix for shots that skip their fill phase when pressure is still trapped
+in the boiler from the shot before.
 
 ---
 
-_Last updated 4 November 2026._
+_Last updated 14 November 2026._

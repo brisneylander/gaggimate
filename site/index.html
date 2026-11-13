@@ -3,10 +3,10 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>GaggiMate Silvia fork</title>
+    <title>La Simona: a steadier Silvia</title>
     <meta
       name="description"
-      content="A GaggiMate fork with boiler control tuned on a Rancilio Silvia: lag compensation, flush to target, tank estimate and a heater safety layer."
+      content="La Simona, a GaggiMate fork tuned on a Rancilio Silvia: steadier boiler temperature, flush to target after steaming, and a heater safety cut-out, with the measurements to back it up."
     />
     <style>
       :root {
@@ -317,15 +317,14 @@
     <div class="wrap">
       <header class="hero">
         <p class="eyebrow">
-          A GaggiMate fork · tested on a Rancilio Silvia 230 V
+          A GaggiMate fork · La Simona 7 · tested on a Rancilio Silvia V4
         </p>
-        <h1>Boiler control that knows its sensor is late</h1>
+        <h1>A steadier Silvia</h1>
         <p class="lede">
-          The Silvia's thermocouple sits on the outside of the boiler and sees
-          heat about 20 seconds after it happens. This fork teaches GaggiMate's
-          controller to account for that, then builds tools around it: flushing
-          a hot boiler straight down to brew temperature, estimating the tank's
-          temperature, and a safety layer for the heater.
+          This is my fork of GaggiMate, tuned on my own Rancilio Silvia. It's
+          all about one thing: keeping the boiler at the temperature you asked
+          for, before, during and after a shot. Here's the problem it fixes, how
+          it goes about it, and the measurements to back it up.
         </p>
         <div class="btns">
           <a
@@ -345,32 +344,177 @@
       </header>
 
       <section>
-        <h2>The headline result</h2>
+        <h2>First, a bit of background</h2>
         <p class="sub">
-          The same 5 second flush from 93 °C, logged on the same machine. The
-          stock loop keeps heating into a dip the sensor is still showing, then
-          overshoots. With the fork's compensation it lands close to target and
-          settles in less than half the time.
+          If you already know your way around GaggiMate and PID loops, skip
+          ahead. If not, here's what you need for the rest of the page to make
+          sense.
+        </p>
+        <div class="cards">
+          <div class="card">
+            <h3>What GaggiMate is</h3>
+            <p>
+              <a href="https://docs.gaggimate.eu">GaggiMate</a> is an
+              open-source kit that replaces the simple on/off thermostat in
+              machines like the Gaggia Classic and Rancilio Silvia. It adds a
+              touchscreen, shot profiles, pressure and flow control, and, most
+              importantly here, proper electronic control of the boiler heater.
+            </p>
+          </div>
+          <div class="card">
+            <h3>How it controls temperature</h3>
+            <p>
+              A thermocouple (a temperature sensor) is screwed to the boiler.
+              Several times a second a <b>PID controller</b> compares that
+              reading with your target and decides how hard to run the heater:
+              more when it's cold, less as it gets close. It's the same idea as
+              cruise control in a car.
+            </p>
+          </div>
+          <div class="card">
+            <h3>The catch: the sensor is late</h3>
+            <p>
+              On a Silvia the thermocouple sits on the <i>outside</i> of the
+              boiler. Heat from the element, or a rush of cold water, takes
+              about <b>20 seconds</b> to show up there. So the controller is
+              always reacting to what the boiler was doing 20 seconds ago.
+            </p>
+          </div>
+        </div>
+        <p class="note">
+          Think of a shower that takes 20 seconds to respond to the tap. You
+          turn it hotter, nothing happens, so you turn it more… and then it's
+          scalding. That's exactly what a plain PID loop does to a Silvia's
+          boiler.
+        </p>
+      </section>
+
+      <section>
+        <h2>What that looks like in real life</h2>
+        <p class="sub">
+          You've probably seen some of these on your own machine without knowing
+          why:
+        </p>
+        <div class="cards">
+          <div class="card">
+            <h3>Overshoot after a flush</h3>
+            <p>
+              Flush some water and the reading dips. The controller piles on
+              heat, but by the time the sensor notices, there's far too much on
+              the way. The boiler sails up to 95–96 °C and takes 5 minutes to
+              settle back.
+            </p>
+          </div>
+          <div class="card">
+            <h3>The scary dip on your shot graph</h3>
+            <p>
+              During a shot the graph often falls 3–5 °C. Some of that is real,
+              because cold tank water is coming in, but a lot of it is just the
+              slow sensor. More on that below.
+            </p>
+          </div>
+          <div class="card">
+            <h3>Waiting ages after steaming</h3>
+            <p>
+              Steaming leaves the boiler at 110–120 °C. Getting back to brew
+              temperature means guessing how much to flush, or waiting a long
+              time for it to cool.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <h2>What the fork does about it</h2>
+        <p class="sub">
+          Everything below is off until you turn it on, so an unconfigured
+          machine behaves like normal GaggiMate.
+        </p>
+        <div class="cards">
+          <div class="card">
+            <h3>Accounts for the slow sensor</h3>
+            <p>
+              The fork keeps track of the heat it has already put in and the
+              cold water that's gone through, but which the sensor hasn't
+              noticed yet. The PID works on where the temperature is heading,
+              not where the sensor says it is, so it eases off before it
+              overshoots.
+            </p>
+            <span class="result">Overshoot +2.9 → +0.6 °C</span>
+          </div>
+          <div class="card">
+            <h3>Heats for the water during a shot</h3>
+            <p>
+              While water is flowing, the heater adds power for the cold water
+              coming in straight away, instead of waiting for the reading to
+              drop. GaggiMate calls this <b>feedforward</b> (the "Kf" setting).
+            </p>
+            <span class="result">Smaller dip on the same draw</span>
+          </div>
+          <div class="card">
+            <h3>Flush to target</h3>
+            <p>
+              After steaming, press flush once. The fork works out exactly how
+              much tank water will bring the boiler down to brew temperature,
+              and flushes just that.
+            </p>
+            <span class="result">From 115 °C to 93 in about 1½ min</span>
+          </div>
+          <div class="card">
+            <h3>Knows the group head is cold</h3>
+            <p>
+              The big brass group head soaks up heat for the first half hour.
+              The fork estimates how warm it is and heats a bit harder to make
+              up for it, so warm-ups sag less.
+            </p>
+            <span class="result">Warm-up sag halved</span>
+          </div>
+          <div class="card">
+            <h3>Knows the tank is warming up</h3>
+            <p>
+              The water tank sits next to the boiler and warms from about 25 °C
+              to 40 °C over a few hours. The fork estimates that, so flush to
+              target uses the right water temperature.
+            </p>
+            <span class="result">Spots a missed refill</span>
+          </div>
+          <div class="card">
+            <h3>A heater safety cut-out</h3>
+            <p>
+              If the heater runs flat out and the reading doesn't move (say the
+              thermocouple has come loose), or the reading jumps about, the
+              heater is switched off until a restart.
+            </p>
+            <span class="result">No false stops since 4 November</span>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <h2>The headline result: a 5 second flush</h2>
+        <p class="sub">
+          The simplest test there is. Hold at 93 °C, flush for 5 seconds, and
+          watch what the heater does afterwards. Normal GaggiMate keeps heating
+          into a dip that's already over, then overshoots. The fork lands close
+          to 93 and settles in well under half the time.
         </p>
         <div class="stats">
           <div class="stat">
-            <div class="k">Overshoot after a flush</div>
-            <div class="v">+0.63 °C <small>from +2.9</small></div>
+            <div class="k">Overshoot after the flush</div>
+            <div class="v">+0.63 °C <small>was +2.9</small></div>
           </div>
           <div class="stat">
-            <div class="k">Settled within ±0.3 °C</div>
-            <div class="v">126 s <small>from 318</small></div>
+            <div class="k">Back within ±0.3 °C</div>
+            <div class="v">126 s <small>was 318</small></div>
           </div>
           <div class="stat">
             <div class="k">Holding at 93 °C (90 % of the time)</div>
-            <div class="v">±0.17 °C <small>from ±0.2–0.75</small></div>
+            <div class="v">±0.17 °C <small>was ±0.2–0.75</small></div>
           </div>
         </div>
         <div class="chart">
           <div class="legend">
-            <span
-              ><i style="background: var(--stock)"></i>Stock GaggiMate
-              loop</span
+            <span><i style="background: var(--stock)"></i>Normal GaggiMate</span
             ><span><i style="background: var(--accent)"></i>This fork</span
             ><span
               ><i style="background: var(--band); height: 10px"></i>93 °C
@@ -381,12 +525,12 @@
             id="chart"
             viewBox="0 0 900 380"
             role="img"
-            aria-label="Boiler temperature after a 5 second flush: the stock loop overshoots to 95.7 °C, the fork peaks at 93.75 °C."
+            aria-label="Boiler temperature after a 5 second flush: normal GaggiMate overshoots to 95.7 °C, the fork peaks at 93.75 °C."
           ></svg>
           <p class="caption">
-            Bench logs from 2026-10-28: stock run +2.75 °C (one of three,
-            average +2.9), fork run +0.75 °C (one of two, average +0.63). Flush
-            starts at 0 s.
+            Bench logs from 28 October: normal GaggiMate overshot by +2.75 °C in
+            the run shown (+2.9 on average over three runs); the fork by +0.75
+            °C (+0.63 on average over two). The flush starts at 0 s.
           </p>
         </div>
       </section>
@@ -394,10 +538,10 @@
       <section>
         <h2>Holding steady between shots</h2>
         <p class="sub">
-          A shot starts at whatever temperature the boiler is at when you press
-          brew, so the steadier it holds, the more alike two shots on the same
-          profile are. Five minutes of idle holding at 93 °C on the same
-          machine, the same night:
+          Your shot starts at whatever temperature the boiler happens to be at
+          when you press brew. The steadier it holds, the more alike your shots
+          are. Here's five minutes of just sitting at 93 °C, same machine, same
+          night, with four different setups:
         </p>
         <div class="stats">
           <div class="stat">
@@ -405,15 +549,15 @@
             <div class="v">0.35 °C</div>
           </div>
           <div class="stat">
-            <div class="k">Autotuned PID values, no compensation</div>
+            <div class="k">Autotuned PID values on their own</div>
             <div class="v">0.4–0.7 °C</div>
           </div>
           <div class="stat">
-            <div class="k">Upstream's Silvia PID values</div>
+            <div class="k">GaggiMate's suggested Silvia values</div>
             <div class="v">0.4–0.7 °C</div>
           </div>
           <div class="stat">
-            <div class="k">GaggiMate's default PID values</div>
+            <div class="k">GaggiMate's default values</div>
             <div class="v">1.5 °C</div>
           </div>
         </div>
@@ -421,15 +565,15 @@
           <div class="legend">
             <span><i style="background: var(--accent)"></i>This fork</span>
             <span
-              ><i style="background: var(--tuned)"></i>Autotuned PID values, no
-              compensation</span
+              ><i style="background: var(--tuned)"></i>Autotuned PID values on
+              their own</span
             >
             <span
-              ><i style="background: var(--stock)"></i>Upstream's Silvia PID
-              values</span
+              ><i style="background: var(--stock)"></i>GaggiMate's suggested
+              Silvia values</span
             >
             <span
-              ><i style="background: var(--gm)"></i>GaggiMate's default PID
+              ><i style="background: var(--gm)"></i>GaggiMate's default
               values</span
             >
           </div>
@@ -437,46 +581,40 @@
             id="hold-chart"
             viewBox="0 0 900 380"
             role="img"
-            aria-label="Five minutes of holding at 93 °C: the fork stays within about 0.35 °C, the autotuned PID values alone about 0.4 to 0.7 °C, upstream's Silvia values about 0.7 °C, GaggiMate's defaults about 1.5 °C."
+            aria-label="Five minutes of holding at 93 °C: the fork stays within about 0.35 °C, the autotuned values alone about 0.4 to 0.7 °C, GaggiMate's suggested Silvia values about 0.7 °C, the defaults about 1.5 °C."
           ></svg>
           <p class="caption">
-            Hold tests from 2026-10-30, two per setup (one shown each). The
-            stock setups ran the fork's firmware with every compensation setting
-            at 0, a close stand-in for upstream rather than upstream itself. The
-            sensor sits on the boiler wall and the water swings less, so read
-            this as a comparison between setups, not the spread of the shots
-            themselves. The autotuned PID values (60 / 0.658 / 1500) hold close
-            to target without the compensation too, but less repeatably: 0.41 °C
-            in one test, 0.72 °C in the other; the compensation calms the heater
-            (0–7 % against 0–20 %) and keeps the band at 0.33–0.35 °C.
+            Hold tests from 30 October, two per setup (one shown each). The
+            "normal" setups ran this fork's firmware with all its extras
+            switched off, which is close to, but not quite, stock GaggiMate. The
+            sensor is on the boiler wall and the water itself swings less, so
+            treat this as a comparison between setups rather than your actual
+            shot temperature.
           </p>
         </div>
       </section>
 
       <section>
-        <h2>Through a shot</h2>
+        <h2>During a shot</h2>
         <p class="sub">
-          A shot pulls cold tank water through the boiler, so the reading falls.
-          Some of that is the boiler's limit: the fill draws water faster than
-          the 1100 W element can heat it. But on the fork's settings the heater
-          also answered late, at 17–21 % while the boiler sat 3 °C under.
-          Turning on upstream's thermal feedforward alongside the fork's
-          predictor, at about half the water's heat, fixed most of that. To take
-          the puck out of it, a bench profile drew the same 80 ml in 34 s nine
-          times, three with each setting:
+          A shot pulls cold tank water into the boiler, so the reading drops.
+          Some of that is unavoidable: at full flow the water comes in faster
+          than the 1100 W element can heat it. To compare settings without the
+          coffee puck getting in the way, I ran the same 80 ml water draw over
+          and over through an empty portafilter:
         </p>
         <div class="stats">
           <div class="stat">
-            <div class="k">Dip in the same draw</div>
-            <div class="v">−3.6 °C <small>from −5.2</small></div>
+            <div class="k">Dip, feedforward off</div>
+            <div class="v">−5.2 °C</div>
           </div>
           <div class="stat">
-            <div class="k">Back within ±0.3 °C</div>
-            <div class="v">~110 s <small>from ~140</small></div>
+            <div class="k">Dip, feedforward 0.45</div>
+            <div class="v">−3.6 °C</div>
           </div>
           <div class="stat">
-            <div class="k">Overshoot after</div>
-            <div class="v">+0.3 °C <small>from +0.2</small></div>
+            <div class="k">Dip, feedforward 0.7 (my setting)</div>
+            <div class="v">−2.9 °C</div>
           </div>
         </div>
         <div class="chart">
@@ -493,19 +631,15 @@
             id="shot-chart"
             viewBox="0 0 900 380"
             role="img"
-            aria-label="Boiler reading through a Silvia Daily shot: without the feedforward it falls to 89.7 °C and sits there until the shot ends; with it, it bottoms at 90.3 °C and is back up to 92.1 °C when the shot ends."
+            aria-label="Boiler reading through a real Silvia Daily shot: without feedforward it falls to 89.7 °C and stays there until the shot ends; with it, it bottoms at 90.3 °C and is back up to 92.1 °C when the shot ends."
           ></svg>
           <p class="caption">
-            The figures above: Kf 0.45 against 0 (off), three synthetic draws
-            each, within 0.6 °C of each other; Kf 0.7 dipped 2.9 °C and overshot
-            0.5 °C. The chart: two real Silvia Daily 18-36 shots from 93.0 °C on
-            2026-11-03, same grind, tank about 30 °C, both stopped at about 36 g
-            on a Bluetooth scale (35.7 s and 43.9 s). The second was the tighter
-            puck and drew about 20 % less flow, which accounts for part of the
-            difference; a third shot showed the same pattern. Straight segments
-            after the second shot are gaps in the log. Higher PID gains or a
-            top-up once the water stops recovered the last degree under 10 s
-            sooner in simulation and added overshoot, so they were left out.
+            The chart shows two real shots from 3 November (Silvia Daily 18-36
+            profile, same grind, both stopped at about 36 g). The second puck
+            was a bit tighter, which explains part of the difference. Going
+            further than 0.7, to 1.0, made no reliable difference on the bench
+            and overshot slightly more afterwards. Straight segments are short
+            gaps in the log.
           </p>
         </div>
       </section>
@@ -513,135 +647,92 @@
       <section>
         <h2>After steaming</h2>
         <p class="sub">
-          Steam, back to Brew, and once the boiler has fallen to 105 °C, what an
-          owner does: on stock settings press the flush button, then again once
-          it ends (one press isn't enough); on the fork, press it once and it
-          flushes to target. Every setup flushed from the same 105 °C, and all
-          three pumped about the same water, 54–60 ml. The difference is what
-          the heater does with it.
+          Steam, switch back to brew, and wait until the boiler has cooled to
+          105 °C. On normal GaggiMate you'd press flush, then press it again
+          because once isn't enough. On the fork you press it once and it
+          flushes to target. All three setups pushed about the same amount of
+          water (54–60 ml). The difference is what the heater does next.
         </p>
         <div class="stats">
           <div class="stat">
             <div class="k">Lowest after the flush</div>
-            <div class="v">92.95 °C <small>from 90.9–92.25</small></div>
+            <div class="v">92.95 °C <small>was 90.9–92.25</small></div>
           </div>
           <div class="stat">
-            <div class="k">Overshoot after the flush</div>
-            <div class="v">+0.25 °C <small>from +0.3 to +1.3</small></div>
+            <div class="k">Overshoot afterwards</div>
+            <div class="v">+0.25 °C <small>was +0.3 to +1.3</small></div>
           </div>
           <div class="stat">
-            <div class="k">Settled within ±0.3 °C</div>
-            <div class="v">76 s <small>from 200 to 420+</small></div>
+            <div class="k">Back within ±0.3 °C</div>
+            <div class="v">76 s <small>was 200 to 420+</small></div>
           </div>
         </div>
         <div class="chart">
           <div class="legend">
             <span
-              ><i style="background: var(--accent)"></i>This fork: one press,
-              flush to target (54 ml)</span
+              ><i style="background: var(--accent)"></i>This fork: one press (54
+              ml)</span
             >
             <span
-              ><i style="background: var(--stock)"></i>Upstream's Silvia PID
-              values: two flushes (60 ml)</span
+              ><i style="background: var(--stock)"></i>GaggiMate's suggested
+              Silvia values: two presses (60 ml)</span
             >
             <span
-              ><i style="background: var(--gm)"></i>GaggiMate's default PID
-              values: two flushes (57 ml)</span
+              ><i style="background: var(--gm)"></i>GaggiMate's default values:
+              two presses (57 ml)</span
             >
           </div>
           <svg
             id="steam-chart"
             viewBox="0 0 900 380"
             role="img"
-            aria-label="After steaming, every setup flushed from 105 °C: the fork bottoms at 92.95 °C and settles at 93 °C in 76 s; upstream's Silvia PID values dip to 90.9 °C, GaggiMate's defaults to 91.7 °C and then overshoot to 94.3 °C."
+            aria-label="After steaming, every setup flushed from 105 °C: the fork bottoms at 92.95 °C and settles at 93 °C in 76 s; GaggiMate's suggested Silvia values dip to 90.9 °C, the defaults to 91.7 °C and then overshoot to 94.3 °C."
           ></svg>
           <p class="caption">
-            The stock setups: two runs each on 2026-11-03 (one shown each). The
-            fork: one run on La Simona 4, 2026-11-04. Tank about 27–30 °C, Olab
-            pump (a 5 s press is about 29 ml). Flush starts at 0 s; the stock
-            setups' second press came 25 s later. Peaks after steaming were
-            111–117 °C for all three: the fork's heat-up boost runs flat out
-            while steaming, so it no longer peaks lower as it did on 2026-10-30.
-            Flushing from 100, 110 and 114 °C instead, flush to target sized the
-            flush at 32, 84 and 103 ml, stayed at 92.75 °C or above and settled
-            in 114–125 s. Earlier runs showed that flushing too much instead
-            undershoots, to 90.8 °C, and takes about 5 minutes to settle.
+            The normal setups ran twice each on 3 November (one shown each); the
+            fork run is from La Simona 4 on 4 November. Tank water about 27–30
+            °C. Re-checked on La Simona 7 (14 November): flushing to target from
+            100, 110 and 114 °C bottomed at 92.76–92.86 °C and was settled in
+            72–88 s. A fourth run from 105 °C undershot to 91.3 °C because it
+            came only about 13 minutes after the machine was switched on from
+            cold (see the next section).
           </p>
         </div>
       </section>
 
       <section>
-        <h2>What's in it</h2>
+        <h2>Things I learned along the way</h2>
         <p class="sub">
-          Everything is off until configured, so an unconfigured machine behaves
-          like upstream GaggiMate.
+          A few findings that are useful whichever firmware you run.
         </p>
         <div class="cards">
           <div class="card">
-            <h3>Lag compensation</h3>
+            <h3>Don't trust the shot graph's dip</h3>
             <p>
-              A heat-balance predictor counts the heater energy and flush water
-              that haven't reached the sensor yet, so the PID backs off before
-              an overshoot shows. Heat and water get separate delays.
+              When the pump stops, the reading climbs back 3–4 °C in under a
+              minute with the heater almost off. That heat was already in the
+              boiler; the sensor just hadn't caught up. Someone on the GaggiMate
+              Discord measured inside the basket and saw it stay within about
+              1.2 °C of target while the graph dipped 5 °C.
             </p>
-            <span class="result">+2.9 → +0.63 °C overshoot</span>
           </div>
           <div class="card">
-            <h3>Shot feedforward</h3>
+            <h3>Give it half an hour</h3>
             <p>
-              While a shot or flush runs near brew temperature, the heater adds
-              power for the water coming in instead of waiting for the reading
-              to fall. Off more than 1 °C over target, so flush to target is
-              unaffected.
+              Even when the screen says 93 °C, a shot 10–20 minutes after
+              switching on dips about twice as far as one later on. The group
+              head is still soaking up heat. About 30 minutes after switch-on
+              you're fine.
             </p>
-            <span class="result">Ends a shot 0.9 °C under, not 3.3</span>
           </div>
           <div class="card">
-            <h3>Flush to target</h3>
+            <h3>More isn't always better</h3>
             <p>
-              After steaming the boiler sits at 106–117 °C. The flush button
-              works out how much tank water brings it to brew temperature and
-              flushes exactly that.
+              Higher PID gains, more feedforward, or blasting full power after a
+              flush all looked good on paper, but they either didn't help or
+              caused more overshoot. The heat is still on its way when the
+              reading catches up.
             </p>
-            <span class="result">Settled in about 2 min from 100–115 °C</span>
-          </div>
-          <div class="card">
-            <h3>Tank estimate</h3>
-            <p>
-              The tank warms beside the boiler, from about 25 °C fresh to 40 °C
-              or more. The fork models that, resets on a refill, and checks
-              itself against flushes.
-            </p>
-            <span class="result">Spots a missed refill from two flushes</span>
-          </div>
-          <div class="card">
-            <h3>Heater safety layer</h3>
-            <p>
-              One gate in front of the heater pin. It latches the heater off if
-              the sensor comes loose, the reading jumps, or the boiler passes
-              170 °C.
-            </p>
-            <span class="result"
-              >No false stops: 52 bench logs, 3 milk steams</span
-            >
-          </div>
-          <div class="card">
-            <h3>Machine profiles</h3>
-            <p>
-              All machine-specific values as one set: apply the measured Silvia
-              profile, start from a Gaggia or DeLonghi preset, or import and
-              export JSON.
-            </p>
-            <span class="result">Silvia values fully measured</span>
-          </div>
-          <div class="card">
-            <h3>Tune this machine</h3>
-            <p>
-              A guided routine on the Calibration page: autotune, one weighed 5
-              s flush, and a flush to target after steam. It measures the values
-              for a machine that isn't a Silvia.
-            </p>
-            <span class="result">Three guided steps</span>
           </div>
         </div>
       </section>
@@ -649,90 +740,110 @@
       <section>
         <h2>Getting it on your machine</h2>
         <p class="sub">
-          For a GaggiMate display and controller. The fork follows upstream
-          GaggiMate closely, so the hardware and wiring are the same.
+          You need a GaggiMate display and controller already fitted. The fork
+          follows upstream GaggiMate closely (La Simona 7 includes everything up
+          to 12 November, setup wizard and all), so the hardware and wiring are
+          exactly the same.
         </p>
         <ol class="steps">
           <li>
-            <h3>Flash the fork once over USB</h3>
+            <h3>Flash it once over USB</h3>
             <p>
-              Upstream firmware only updates from upstream, so the first install
-              is by USB: flash the display and controller files from the
+              Normal GaggiMate only updates itself from GaggiMate, so the first
+              install has to be over USB: flash the display and controller files
+              from the
               <a
                 href="https://github.com/brisneylander/gaggimate/releases/latest"
                 >latest release</a
-              >. After that, updates come over the air.
+              >. After that, updates arrive over Wi-Fi like normal.
             </p>
           </li>
           <li>
             <h3>Pick an update channel</h3>
             <p>
-              In <b>Settings → System &amp; Updates</b>: <b>Stable</b> installs
-              tagged releases, <b>Nightly</b> follows the head of the fork's
-              <b>la-simona</b> branch.
+              In <b>Settings → System &amp; Updates</b>: <b>Stable</b> gets the
+              numbered La Simona releases, <b>Nightly</b> gets every change as
+              it lands.
             </p>
           </li>
           <li>
-            <h3>Apply a machine profile</h3>
+            <h3>Load the Silvia profile</h3>
             <p>
-              In <b>Settings → Machine → Machine Boiler Profile</b>, apply
-              <b>Rancilio Silvia 230 V</b>, or a Gaggia or DeLonghi starting
-              point, then save.
+              In <b>Settings → Machine → Machine Boiler Profile</b>, choose
+              <b>Rancilio Silvia 230 V</b> and save. That fills in all the
+              measured values in one go.
             </p>
           </li>
           <li>
-            <h3>Tune it</h3>
+            <h3>Turn on flush to target</h3>
             <p>
-              On another machine, run <b>Tune this machine</b> under
-              <b>Settings → Calibration</b> to measure its own values. Turn on
-              <b>Flush to brew target when hot</b> under General to make the
-              flush button use them.
+              Under <b>Settings → General</b>, switch on
+              <b>Flush to brew target when hot</b>, so the flush button does the
+              clever thing after steaming.
+            </p>
+          </li>
+          <li>
+            <h3>Not a Silvia? Tune it</h3>
+            <p>
+              Run <b>Tune this machine</b> under <b>Settings → Calibration</b>.
+              It walks you through an autotune, one weighed flush and one flush
+              after steaming, and measures your machine's own values.
             </p>
           </li>
         </ol>
         <p class="note">
-          Only the Silvia profile is measured. The Gaggia and DeLonghi entries
-          are upstream's documented PID gains as a starting point, not tested
-          here.
+          Tested on one machine: a 230 V Silvia V4 with Rancilio's boiler
+          insulation added. Insulated V5 and V6 Silvias should be close;
+          uninsulated ones will need their own tuning. The Gaggia and DeLonghi
+          entries are just GaggiMate's published starting values, untested here.
+          This isn't official GaggiMate firmware, so please don't ask the
+          GaggiMate team for help with it.
         </p>
       </section>
 
       <section>
-        <h2>What was tried and dropped</h2>
+        <h2>Tried and dropped</h2>
         <p class="sub">
-          Every idea was checked on the bench. These didn't earn their place.
+          Every idea went on the bench. These didn't earn their place.
         </p>
         <div class="dropped">
           <div class="drop">
-            <b>Full-power reheat after a flush</b
+            <b>Full power to reheat after a flush</b
             ><span
-              >Slower back to target (124–129 s against 62–100 s): heat takes
-              about 2 minutes to reach the sensor, so delivering it fast doesn't
-              help.</span
+              >Slower back to target (124–129 s against 62–100 s). Heat takes
+              about 2 minutes to reach the sensor, so delivering it faster
+              doesn't help.</span
             >
           </div>
           <div class="drop">
-            <b>Boost, then flush the surplus off</b
+            <b>Boost the heat, then flush the extra off</b
             ><span
-              >366–375 s to settle against 74–84 s. Heating up takes as long as
-              a plain recovery, then the flush starts another.</span
+              >366–375 s to settle against 74–84 s. You wait for it to heat up,
+              then the flush starts another recovery.</span
             >
           </div>
           <div class="drop">
-            <b>A thermal model steering the water estimate</b
+            <b>A detailed thermal model of the boiler</b
             ><span
               >No difference at the sensor (+0.69 against +0.66 °C). Any gain
-              would be in the water, which needs a probe inside the boiler to
-              see.</span
+              would be in the water itself, which needs a probe inside the
+              boiler to see.</span
             >
           </div>
           <div class="drop">
-            <b>More gain, or a top-up, for the last degree after a shot</b
+            <b>More gain to catch the last degree after a shot</b
             ><span
-              >A higher Kp or Ki, or full power once the water stops, recovered
-              under 10 s sooner in simulation and overshot by 0.25–0.5 °C more:
-              the heat is still on its way when the reading catches up. The
-              feedforward during the shot does the useful part.</span
+              >A higher Kp or Ki, or full power once the water stops, got there
+              under 10 s sooner in simulation but overshot by 0.25–0.5 °C more.
+              The feedforward during the shot does the useful part.</span
+            >
+          </div>
+          <div class="drop">
+            <b>Feedforward higher than 0.7</b
+            ><span
+              >At 1.0 the dip was about 0.3 °C smaller on average, which is less
+              than the run-to-run variation, and it overshot slightly more
+              afterwards.</span
             >
           </div>
         </div>
@@ -745,7 +856,9 @@
         <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/"
           >CC BY-NC-SA 4.0</a
         >
-        like upstream. Bench data and open items:
+        like upstream. Built with a lot of help from Claude (AI); every number
+        on this page comes from my own machine's logs. Bench data and open
+        items:
         <a
           href="https://github.com/brisneylander/gaggimate/blob/la-simona/ROADMAP.md"
           >ROADMAP.md</a

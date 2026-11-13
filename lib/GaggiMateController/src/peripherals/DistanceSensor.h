@@ -11,8 +11,6 @@ class DistanceSensor {
   public:
     DistanceSensor(SoftWireBus *bus, distance_callback_t callback);
     void setup();
-    // True if a VL53L0X answers on the bus, on its own or on the LED board (moves a fresh one to TOF_ADDRESS).
-    bool probe();
     bool isHealthy() const { return healthy; }
 
   private:

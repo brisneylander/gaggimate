@@ -2,7 +2,9 @@
 // the open group, no basket), from a settled 93 °C, alternating the thermal feedforward (Kf) to compare it without
 // puck-to-puck variation. Logs each shot from 20 s before to 180 s after to <out dir>/synth-<n>-kf<kf>.csv.
 // usage: node synthetic_shot.mjs <out dir> [rounds=3] [kf values=0,0.45,0.7]
-import { writeFileSync, appendFileSync } from "node:fs";
+//   env DRAW=daily: shaped like a Silvia Daily 18-36 shot instead (8 s fill at full flow, then 1.8 ml/s for 18 s: ~70 ml
+//   in 26 s, 38 ml of it in the first 10 s). env START_FILE: wait, warmed and settled, until that file exists.
+import { writeFileSync, appendFileSync, existsSync } from "node:fs";
 
 const [, , outDir, roundsArg, kfArg] = process.argv;
 const host = process.env.GM_HOST || "192.168.20.34";
@@ -13,6 +15,8 @@ const TARGET = 93;
 const SETTLE_BAND = 0.3;
 const SETTLE_S = 90;
 const AFTER_S = 180;
+const DAILY = process.env.DRAW === "daily";
+const START_FILE = process.env.START_FILE;
 const PROFILE_ID = "bench-synthetic-shot";
 const PROFILE = {
   id: PROFILE_ID,
@@ -26,7 +30,7 @@ const PROFILE = {
       name: "Fill",
       phase: "preinfusion",
       valve: 1,
-      duration: 5,
+      duration: DAILY ? 8 : 5,
       temperature: 0,
       transition: { type: "instant", duration: 0, adaptive: true },
       pump: { target: "flow", pressure: 9, flow: 8 },
@@ -35,7 +39,7 @@ const PROFILE = {
       name: "Draw",
       phase: "brew",
       valve: 1,
-      duration: 28,
+      duration: DAILY ? 18 : 28,
       temperature: 0,
       transition: { type: "instant", duration: 0, adaptive: true },
       pump: { target: "flow", pressure: 9, flow: 1.8 },
@@ -170,6 +174,14 @@ for (let i = 0; i < 15 && mode !== 1; i++) {
   await sleep(2000);
 }
 if (mode !== 1) await bail(`not in Brew (mode ${mode})`);
+
+if (START_FILE) {
+  log(`waiting for ${START_FILE}`);
+  while (!existsSync(START_FILE)) {
+    await sleep(5000);
+  }
+  log("go");
+}
 
 let n = 0;
 for (let round = 1; round <= ROUNDS; round++) {

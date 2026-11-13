@@ -10,6 +10,7 @@
 #include <atomic>
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
+#include <memory>
 #include <mutex>
 
 constexpr float MAX_AUTOTUNE_TEMP = 125.0f;
@@ -85,8 +86,8 @@ class Heater {
     TemperatureSensor *sensor;
     uint8_t heaterPin;
     xTaskHandle taskHandle;
-    SimplePID *simplePid = nullptr;
-    Autotune *autotuner = nullptr;
+    std::unique_ptr<SimplePID> simplePid;
+    std::unique_ptr<Autotune> autotuner;
 
     heater_error_callback_t error_callback;
     pid_result_callback_t pid_callback;

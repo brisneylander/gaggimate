@@ -60,7 +60,8 @@ gm::Payload GaggiMateClient::buildRelayControl(uint8_t index, bool open) {
     p.relay = {index, open};
     return p;
 }
-gm::Payload GaggiMateClient::buildHeaterSettings(float, float, float, float, bool, uint32_t, const HeaterLagCompensation &) {
+gm::Payload GaggiMateClient::buildHeaterSettings(float, float, float, float, bool, uint32_t, float, float, float,
+                                                 const HeaterLagCompensation &) {
     return {gm::Payload::Heater};
 }
 gm::Payload GaggiMateClient::buildPumpSettings(float, float, float, float, float, float, float, float) {
@@ -69,6 +70,7 @@ gm::Payload GaggiMateClient::buildPumpSettings(float, float, float, float, float
 gm::Payload GaggiMateClient::buildAutotune(uint32_t, uint32_t, uint32_t) { return {gm::Payload::Autotune}; }
 gm::Payload GaggiMateClient::buildPressureScale(float) { return {gm::Payload::PressureScale}; }
 gm::Payload GaggiMateClient::buildTare() { return {gm::Payload::Tare}; }
+gm::Payload GaggiMateClient::buildHardwareScaleTare() { return {gm::Payload::HardwareScaleTare}; }
 gm::Payload GaggiMateClient::buildLedControl(const LedChannelCommand *, size_t) { return {gm::Payload::Led}; }
 
 void GaggiMateClient::send(const gm::Payload &payload) {
@@ -103,7 +105,8 @@ void GaggiMateClient::sendPumpControl(uint8_t index, PumpControlMode mode, float
     send(buildPumpControl(index, mode, power, pressure, flow));
 }
 void GaggiMateClient::sendRelayControl(uint8_t index, bool open) { send(buildRelayControl(index, open)); }
-void GaggiMateClient::sendHeaterSettings(float, float, float, float, bool, uint32_t, const HeaterLagCompensation &) {}
+void GaggiMateClient::sendHeaterSettings(float, float, float, float, bool, uint32_t, float, float, float,
+                                         const HeaterLagCompensation &) {}
 void GaggiMateClient::sendPumpSettings(float, float, float, float, float, float, float, float, float, float, float, float) {}
 void GaggiMateClient::sendAutotune(uint32_t, uint32_t, uint32_t) {
     _autotunePending = true;
@@ -111,4 +114,5 @@ void GaggiMateClient::sendAutotune(uint32_t, uint32_t, uint32_t) {
 }
 void GaggiMateClient::sendPressureScale(float) {}
 void GaggiMateClient::tare() { _mock.tareScale(); }
+void GaggiMateClient::tareHardwareScale() {} // The simulator has no hardware-scale model.
 void GaggiMateClient::sendLedControl(const LedChannelCommand *, size_t) {}

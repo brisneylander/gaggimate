@@ -1,6 +1,7 @@
 #ifndef GAGGIMATE_COMM_H
 #define GAGGIMATE_COMM_H
 
+#include "LedEffect.h"
 #include <cstdint>
 
 // Public protocol vocabulary shared by GaggiMateClient and GaggiMateServer; firmware never sees the nanopb structs.
@@ -35,6 +36,13 @@ struct HeaterLagCompensation {
     float groupCoupling = 0.0f;     // group head estimate: water to group head coupling (W/°C)
 };
 
+// Physical link carrying the controller session.
+enum class LinkType : uint8_t {
+    None = 0,
+    Ble = 1,
+    Uart = 2,
+};
+
 // Per-component commands: drive several components atomically in one frame, comparable so callers send only deltas.
 struct BoilerCommand {
     uint8_t index = 0;
@@ -67,7 +75,13 @@ struct RelayCommand {
 struct LedChannelCommand {
     uint8_t channel = 0;
     uint8_t brightness = 0;
-    bool operator==(const LedChannelCommand &o) const { return channel == o.channel && brightness == o.brightness; }
+    LedEffect effect = LedEffect::Off;
+    uint8_t minBrightness = 0;
+    uint16_t cycleTimeMs = 0; // Alba ignores animation fields.
+    bool operator==(const LedChannelCommand &o) const {
+        return channel == o.channel && brightness == o.brightness && effect == o.effect && minBrightness == o.minBrightness &&
+               cycleTimeMs == o.cycleTimeMs;
+    }
     bool operator!=(const LedChannelCommand &o) const { return !(*this == o); }
 };
 

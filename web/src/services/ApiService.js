@@ -26,8 +26,6 @@ export default class ApiService {
     this.socketUrl = socketUrl;
     this.state = state;
     this.closed = false;
-    console.log('Established websocket connection');
-    this.connect();
   }
 
   // Disconnects without scheduling reconnects until reopen().
@@ -203,10 +201,17 @@ export default class ApiService {
     map('tt', 'targetTemperature');
     map('cst', 'currentSteamTemperature');
     map('tst', 'targetSteamTemperature');
+    map('sa', 'steamActive');
+    map('sca', 'steamControlsAvailable');
     map('pr', 'currentPressure');
     map('pt', 'targetPressure');
     map('tw', 'targetWeight', v => v || 0);
     map('fl', 'currentFlow');
+    map('awl', 'albaWaterLevelAvailable');
+    map('htl', 'hasTankLevel');
+    map('tlo', 'tankLevelOK', v => v ?? null);
+    map('hsl', 'hasSteamLevel');
+    map('sbl', 'steamBoilerLow', v => v ?? null);
     map('tf', 'targetFlow', v => v || 0);
     map('m', 'mode');
     map('p', 'selectedProfile');
@@ -219,12 +224,14 @@ export default class ApiService {
     map('gt', 'grindTarget', v => v || 0);
     map('gact', 'grindActive', v => v || false);
     map('cw', 'currentWeight', v => v || 0);
+    map('smartDose', 'smartDose');
     map('bc', 'bluetoothConnected', v => v || false);
     map('bw', 'bluetoothWeight', v => v || 0); // raw Bluetooth scale weight (g), also outside a shot
     map('scaleSource', 'activeScaleSource', v => v || 'inactive');
     map('sbat', 'scaleBattery', v => v ?? null);
     map('process', 'process', v => v || null);
     map('rssi', 'rssi', v => v || 0);
+    map('lnk', 'controllerLink', v => v || 'none');
     map('lat', 'lat', v => v || 0);
     map('rtx', 'rtx', v => v || 0);
     map('tof', 'tofDistance', v => v || 0);

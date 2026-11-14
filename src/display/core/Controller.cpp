@@ -1786,9 +1786,9 @@ bool Controller::isHardwareScaleHealthy() const {
     return lastMeasurement != 0 && millis() - lastMeasurement < HARDWARE_GRACE_PERIOD_MS;
 }
 
-void Controller::onFlush() {
+void Controller::onFlush(bool toTargetWhenHot) {
     // Well over the target (after steaming, say) the flush button takes the surplus off instead of a fixed flush.
-    if (settings.isFlushButtonToTarget() && mode == MODE_BREW &&
+    if (toTargetWhenHot && settings.isFlushButtonToTarget() && mode == MODE_BREW &&
         getCurrentTemp() >= profileManager->getSelectedProfile().temperature + flush_to_target::BUTTON_SURPLUS_C &&
         flushToTarget().reason == nullptr)
         return;
@@ -1874,6 +1874,15 @@ void Controller::onVolumetricDelete() {
     if (profileManager->getSelectedProfile().isVolumetric()) {
         profileManager->getSelectedProfile().removeVolumetricTarget();
     }
+}
+
+// A double tap on the touchscreen start button flushes to target, whatever the Flush to brew target setting says. Not
+// hot enough for one (it refuses at or below the target), it flushes as normal, so the tap always does something.
+void Controller::onFlushToTarget() {
+    if (mode != MODE_BREW || isActive())
+        return;
+    if (flushToTarget().reason != nullptr && !isActive())
+        onFlush(false);
 }
 
 // A long press on a momentary button that starts a shot (brew or a profile) flushes instead.

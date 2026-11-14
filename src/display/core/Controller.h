@@ -155,7 +155,8 @@ class Controller {
     float getHardwareScaleCell2Weight() const { return hardwareScaleCell2Weight.load(); }
     bool isHardwareScaleCell1Valid() const { return hardwareScaleCell1Valid.load(); }
     bool isHardwareScaleCell2Valid() const { return hardwareScaleCell2Valid.load(); }
-    void onFlush();
+    void onFlush(bool toTargetWhenHot = true); // false: upstream's plain flush (the touch start button's long press)
+    void onFlushToTarget();                    // double tap on the touch start button, see the definition
     // Flush just enough tank water to bring the boiler back to its target; reason is set if it didn't start.
     flush_to_target::Plan flushToTarget();
     // Tank water temperature for the heater and flush to target: the estimate (TankTemperature.h) when a fill

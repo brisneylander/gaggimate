@@ -53,10 +53,29 @@ void action_on_grind_screen(lv_event_t *e) {
     controller.deactivate();
 };
 
-void action_on_brew_start(lv_event_t *e) { controller.activate(); }; // SHORT_CLICKED in EEZ: never fires after a long press
+// The start button: a single tap starts the shot, a double tap flushes to target (after steaming), a long press flushes
+// as upstream does. A single tap waits out the double-tap window so the two can't be confused.
+static constexpr uint32_t DOUBLE_TAP_MS = 350;
+static lv_timer_t *pendingStart = nullptr;
+
+static void start_after_window(lv_timer_t *timer) {
+    lv_timer_del(timer);
+    pendingStart = nullptr;
+    controller.activate();
+}
+
+void action_on_brew_start(lv_event_t *e) { // SHORT_CLICKED in EEZ: never fires after a long press
+    if (pendingStart != nullptr) {
+        lv_timer_del(pendingStart);
+        pendingStart = nullptr;
+        controller.onFlushToTarget();
+        return;
+    }
+    pendingStart = lv_timer_create(start_after_window, DOUBLE_TAP_MS, nullptr);
+};
 
 void action_on_flush(lv_event_t *e) {
-    controller.onFlush();
+    controller.onFlush(false); // upstream's plain flush, even when hot
     controller.getUI()->onTouchFlushStart();
 };
 

@@ -54,9 +54,13 @@ void action_on_grind_screen(lv_event_t *e) {
 };
 
 // The start button: a single tap starts the shot, a double tap flushes to target (after steaming), a long press flushes
-// as upstream does. A single tap waits out the double-tap window so the two can't be confused.
-static constexpr uint32_t DOUBLE_TAP_MS = 350;
+// as upstream does. A single tap waits out the double-tap window so the two can't be confused. The window runs from the
+// first tap's release to the second tap's *press* (SHORT_CLICKED only arrives on release, which made a quick double tap
+// easy to miss when the window ended there).
+static constexpr uint32_t DOUBLE_TAP_MS = 500;
 static lv_timer_t *pendingStart = nullptr;
+static bool secondTapPressed = false;
+static lv_obj_t *pressWatched = nullptr;
 
 static void start_after_window(lv_timer_t *timer) {
     lv_timer_del(timer);
@@ -64,10 +68,24 @@ static void start_after_window(lv_timer_t *timer) {
     controller.activate();
 }
 
+static void on_start_button_pressed(lv_event_t *e) {
+    if (pendingStart == nullptr) {
+        secondTapPressed = false; // a fresh press: forget a second press that slid off the button without a release
+        return;
+    }
+    lv_timer_del(pendingStart); // a second press inside the window: no shot, whatever the release turns out to be
+    pendingStart = nullptr;
+    secondTapPressed = true;
+}
+
 void action_on_brew_start(lv_event_t *e) { // SHORT_CLICKED in EEZ: never fires after a long press
-    if (pendingStart != nullptr) {
-        lv_timer_del(pendingStart);
-        pendingStart = nullptr;
+    lv_obj_t *button = lv_event_get_current_target(e);
+    if (button != pressWatched) {
+        lv_obj_add_event_cb(button, on_start_button_pressed, LV_EVENT_PRESSED, nullptr);
+        pressWatched = button;
+    }
+    if (secondTapPressed) {
+        secondTapPressed = false;
         controller.onFlushToTarget();
         return;
     }
@@ -75,6 +93,7 @@ void action_on_brew_start(lv_event_t *e) { // SHORT_CLICKED in EEZ: never fires 
 };
 
 void action_on_flush(lv_event_t *e) {
+    secondTapPressed = false;  // tap then long press: the long press wins
     controller.onFlush(false); // upstream's plain flush, even when hot
     controller.getUI()->onTouchFlushStart();
 };

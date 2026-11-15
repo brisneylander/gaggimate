@@ -8,7 +8,7 @@ import { writeFileSync, appendFileSync, existsSync } from "node:fs";
 
 // Optional run names after the out dir pick runs (e.g. A3-silvia-doc-flush-twice); otherwise all except A3.
 const [, , outDir, ...only] = process.argv;
-const host = process.env.GM_HOST || "192.168.20.34"; // GM_HOST=<display address> to point elsewhere
+const host = process.env.GM_HOST || "gaggimate.local"; // GM_HOST=<display address> to point elsewhere
 const base = `http://${host}`;
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const T0 = Date.now();

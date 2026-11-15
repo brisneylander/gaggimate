@@ -24,7 +24,7 @@ import {
 } from "node:fs";
 
 const [, , outDir = "."] = process.argv;
-const HOST = process.env.GM_HOST || "192.168.20.34";
+const HOST = process.env.GM_HOST || "gaggimate.local";
 const BASE = `http://${HOST}`;
 const HOURS = Number(process.env.HOURS || 24);
 const RUN_MIN = Number(process.env.RUN_MIN || 25);

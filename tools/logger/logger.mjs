@@ -26,7 +26,7 @@ import { createGzip } from "node:zlib";
 import { pipeline } from "node:stream/promises";
 import { join } from "node:path";
 
-const HOST = process.env.GM_HOST || "192.168.20.34";
+const HOST = process.env.GM_HOST || "gaggimate.local";
 const DIR = process.env.LOG_DIR || "/logs";
 const TZ = process.env.TZ || "Australia/Brisbane";
 const STANDBY_EVERY_MS = 60000;

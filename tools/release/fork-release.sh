@@ -5,7 +5,7 @@
 # Needs curl, jq and node 22. No GitHub login: the fork's releases are public.
 set -euo pipefail
 TAG=${1:?usage: fork-release.sh <tag> [host]}
-HOST=${2:-${GM_HOST:-192.168.20.34}}
+HOST=${2:-${GM_HOST:-gaggimate.local}}
 REPO=brisneylander/gaggimate
 DIR=$(cd "$(dirname "$0")" && pwd)
 t() { date +%H:%M:%S; }

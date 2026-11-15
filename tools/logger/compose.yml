@@ -1,6 +1,7 @@
 # GaggiMate telemetry logger (logger.mjs). On the NAS: compose/appdata/gaggimate-logger/, started with
-# `docker compose up -d`; daily CSV files land in ./logs. Needs the UDR7 policy "OMV -> GaggiMate logger"
-# (192.168.0.5 -> 192.168.20.34, TCP 80): the coffee machine is on the isolated IoT LAN.
+# `docker compose up -d`; daily CSV files land in ./logs. The display's address comes from the stack's environment
+# file (GM_HOST=<address>); if the machine is on an isolated network, the NAS needs a firewall rule to reach it on
+# TCP 80.
 services:
   gaggimate-logger:
     image: node:22-alpine
@@ -10,7 +11,7 @@ services:
     working_dir: /app
     command: ["node", "/app/logger.mjs"]
     environment:
-      GM_HOST: 192.168.20.34
+      GM_HOST: ${GM_HOST:?set GM_HOST in the stack's environment file to the GaggiMate display's address}
       LOG_DIR: /logs
       TZ: Australia/Brisbane
     volumes:

@@ -1,6 +1,6 @@
 // Start a GaggiMate OTA update and follow it, then wait for the device to report the expected versions.
-// usage: node tools/release/gmota.mjs <display|controller> <expected version e.g. v1.9.0-simon002> [host]
-const [, , component, expected, host = '192.168.20.34'] = process.argv;
+// usage: node tools/release/gmota.mjs <display|controller> <expected version e.g. v1.9.0-lasimona009> [host, default $GM_HOST or gaggimate.local]
+const [, , component, expected, host = process.env.GM_HOST || 'gaggimate.local'] = process.argv;
 if (!['display', 'controller'].includes(component) || !expected) {
   console.error('usage: node gmota.mjs <display|controller> <expected version> [host]');
   process.exit(2);

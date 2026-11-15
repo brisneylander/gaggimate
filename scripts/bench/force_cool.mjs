@@ -6,7 +6,7 @@
 import { appendFileSync, writeFileSync } from "node:fs";
 
 const [, , outDir = "."] = process.argv;
-const HOST = process.env.GM_HOST || "192.168.20.34";
+const HOST = process.env.GM_HOST || "gaggimate.local";
 const MAX_ML = 1200;
 const REST_S = 60;
 const WARM_MIN = 25;

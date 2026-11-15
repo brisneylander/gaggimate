@@ -7,7 +7,7 @@
 import { writeFileSync, appendFileSync, existsSync } from "node:fs";
 
 const [, , outDir, roundsArg, kfArg] = process.argv;
-const host = process.env.GM_HOST || "192.168.20.34";
+const host = process.env.GM_HOST || "gaggimate.local";
 const base = `http://${host}`;
 const ROUNDS = Number(roundsArg || 3);
 const KFS = (kfArg || "0,0.45,0.7").split(",").map(Number);

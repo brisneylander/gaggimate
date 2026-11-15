@@ -5,12 +5,12 @@ against weeks of normal use. Runs as a container on the NAS.
 
 ## Where it runs
 
-- **OMV** (`192.168.0.5`): `compose/appdata/gaggimate-logger/` — the compose file in OMV's Compose UI, and
-  `logger.mjs` from this folder beside it.
+- **OMV**: `compose/appdata/gaggimate-logger/` — the compose file in OMV's Compose UI, and `logger.mjs` from this
+  folder beside it. The display's address goes in the stack's environment file as `GM_HOST=<address>`.
 - **Files**: `compose/appdata/gaggimate-logger/logs/` — `YYYY-MM-DD.csv` per Brisbane day, and
   `settings-YYYY-MM-DD.json` (the settings each time they change). Files older than 2 days are gzipped.
-- **Network**: the coffee machine is on the isolated IoT LAN (`192.168.20.34`, a fixed reservation). The UDR7 policy
-  **"OMV -> GaggiMate logger"** (index 10005) allows `192.168.0.5` → `192.168.20.34` TCP 80 only, added 2026-11-01.
+- **Network**: the coffee machine is on an isolated IoT network with a fixed address; a firewall rule lets the NAS
+  reach it on TCP 80 only.
 
 ## What's in a log
 

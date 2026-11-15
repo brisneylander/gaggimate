@@ -16,7 +16,8 @@ builds, unit tests, releases with OTA updates to the machine, benches, and readi
 
 Stacks on the NAS are made in OMV's web UI, not over SSH:
 
-1. **Services → Compose → Files → Add.** Name `claude-code`, and paste [`compose.yml`](compose.yml) as the file. Save.
+1. **Services → Compose → Files → Add.** Name `claude-code`, paste [`compose.yml`](compose.yml) as the file, and put
+   `GM_HOST=<the GaggiMate display's address>` in the Environment field. Save.
 2. Select it and press **Up**. The first time, this builds the image from the fork's Dockerfile on GitHub (a few
    minutes), then starts the container, which installs Claude Code into `appdata/claude-code/home` and clones the fork.
 3. **Once, by you** (it asks for sign-ins), from a terminal on the NAS or `ssh -t omv`:
@@ -43,8 +44,8 @@ volume.
 
 ## Notes
 
-- The coffee machine is on the isolated IoT LAN; the UDR7 policy "OMV -> GaggiMate logger" (NAS → 192.168.20.34,
-  TCP 80) covers this container too, since its traffic leaves with the NAS's address.
+- If the coffee machine is on an isolated network, the firewall rule that lets the NAS reach it (TCP 80) covers this
+  container too, since its traffic leaves with the NAS's address.
 - The server exits after about 10 minutes without internet (the overnight Wi-Fi drops are the machine's, not the
   NAS's, but a NAS outage would do it); the restart policy brings it back, and sessions can be resumed for about four
   hours after it stopped.

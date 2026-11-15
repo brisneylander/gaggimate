@@ -2,7 +2,8 @@
 # claude-code, with this file as its contents; OMV keeps it in compose/appdata/claude-code/. "Up" builds the image
 # from the fork's Dockerfile on GitHub (no git or checkout needed on the NAS). The start scripts run from the fork
 # cloned into ./home, so they update with a git pull there; only a Dockerfile change needs the stack's Build, then Up.
-# Reaches the coffee machine through the same UDR7 policy as the logger (traffic leaves as the NAS's own address).
+# Set GM_HOST=<display address> in the stack's environment file (OMV: the stack's Environment field). The container
+# reaches the machine with the NAS's own address, so the firewall rule that lets the logger through covers it too.
 # No Docker socket: the container can't touch the NAS's other stacks.
 services:
   claude-code:
@@ -15,7 +16,7 @@ services:
     tty: true
     stdin_open: true
     environment:
-      GM_HOST: 192.168.20.34
+      GM_HOST: ${GM_HOST:?set GM_HOST in the stack's environment file to the GaggiMate display's address}
       GM_LOGS: /logs
       TZ: Australia/Brisbane
     volumes:

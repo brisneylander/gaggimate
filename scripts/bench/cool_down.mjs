@@ -5,7 +5,7 @@ import { writeFileSync, appendFileSync } from 'node:fs';
 
 const [, , out, targetArg] = process.argv;
 const target = Number(targetArg) || 74;
-const host = process.env.GM_HOST || '192.168.20.34';
+const host = process.env.GM_HOST || 'gaggimate.local';
 const MAX_FLUSHES = 25;
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 const log = msg => console.log(`${new Date().toISOString().slice(11, 19)} ${msg}`);

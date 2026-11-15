@@ -14,34 +14,30 @@ builds, unit tests, releases with OTA updates to the machine, benches, and readi
 
 ## Install
 
-On the NAS, as `claude`:
+Stacks on the NAS are made in OMV's web UI, not over SSH:
 
-```bash
-A=/srv/dev-disk-by-uuid-ede720f0-2423-4796-b76c-473aa9f581ae/compose/appdata
-git clone -b la-simona https://github.com/brisneylander/gaggimate.git /tmp/gm-src
-docker build -t gaggimate-claude:latest /tmp/gm-src/tools/claude-host
-mkdir -p $A/claude-code/home/.claude && cp /tmp/gm-src/tools/claude-host/compose.yml $A/claude-code/
-cp /tmp/gm-src/tools/claude-host/CLAUDE.home.md $A/claude-code/home/.claude/CLAUDE.md
-cd $A/claude-code && docker compose up -d
-```
+1. **Services → Compose → Files → Add.** Name `claude-code`, and paste [`compose.yml`](compose.yml) as the file. Save.
+2. Select it and press **Up**. The first time, this builds the image from the fork's Dockerfile on GitHub (a few
+   minutes), then starts the container, which installs Claude Code into `appdata/claude-code/home` and clones the fork.
+3. **Once, by you** (it asks for sign-ins), from a terminal on the NAS or `ssh -t omv`:
 
-Then, once, by you (it asks for sign-ins):
+   ```bash
+   docker exec -it claude-code setup.sh
+   ```
 
-```bash
-docker exec -it claude-code setup.sh
-```
+   1. **Claude:** opens a sign-in link for your claude.ai account.
+   2. **GitHub:** paste a fine-grained token limited to `brisneylander/gaggimate` with Contents and Workflows
+      read/write and Actions read (github.com → Settings → Developer settings → Fine-grained tokens).
+   3. **Remote Control:** answer `y` to trust the folder and to enable Remote Control, wait for the session URL, then
+      Ctrl+C.
 
-1. **Claude:** opens a sign-in link for your claude.ai account.
-2. **GitHub:** paste a fine-grained token limited to `brisneylander/gaggimate` with Contents and Workflows read/write
-   and Actions read (create it at github.com → Settings → Developer settings → Fine-grained tokens).
-3. **Remote Control:** answer `y` to trust the folder and to enable Remote Control, wait for the session URL, then
-   Ctrl+C.
+4. Restart the stack (**Down**, then **Up**). From then on the server comes up by itself after every restart; sessions
+   show up in the Claude app and at claude.ai/code under Remote Control.
 
-Finally `docker restart claude-code`. The server comes up by itself after every restart; sessions show up in the
-Claude app and at claude.ai/code under Remote Control.
+`setup.sh` also installs [`CLAUDE.home.md`](CLAUDE.home.md) as `~/.claude/CLAUDE.md` if there isn't one yet.
 
-To update the image after changing these files: rebuild with `docker build`, then `docker compose up -d`. Claude Code
-itself updates in place in the home volume.
+To update the image after changing the Dockerfile or its scripts: push to `la-simona`, then the stack's **Build** and
+**Up** in OMV. Claude Code itself updates in place in the home volume.
 
 ## Notes
 
@@ -50,4 +46,3 @@ itself updates in place in the home volume.
 - The server exits after about 10 minutes without internet (the overnight Wi-Fi drops are the machine's, not the
   NAS's, but a NAS outage would do it); the restart policy brings it back, and sessions can be resumed for about four
   hours after it stopped.
-- Register the stack in OMV's Compose page like the logger, using the same compose file, so OMV knows about it.

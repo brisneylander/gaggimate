@@ -26,8 +26,11 @@ RUN useradd -m -u ${UID} -g ${GID} -s /bin/bash claude \
  && echo 'case ":$PATH:" in *":$HOME/.local/bin:"*) ;; *) PATH="$HOME/.local/bin:$PATH" ;; esac' > /etc/profile.d/local-bin.sh
 # (the home volume hides /etc/skel's .profile, which would normally add ~/.local/bin for login shells)
 
-COPY entrypoint.sh setup.sh /usr/local/bin/
-RUN chmod 755 /usr/local/bin/entrypoint.sh /usr/local/bin/setup.sh
+# Fetched by URL rather than COPY, so the image builds from this Dockerfile's URL alone (OMV's Compose UI, no git or
+# checkout on the NAS). BRANCH picks which branch's scripts.
+ARG BRANCH=la-simona
+ADD --chmod=755 https://raw.githubusercontent.com/brisneylander/gaggimate/${BRANCH}/tools/claude-host/entrypoint.sh /usr/local/bin/entrypoint.sh
+ADD --chmod=755 https://raw.githubusercontent.com/brisneylander/gaggimate/${BRANCH}/tools/claude-host/setup.sh /usr/local/bin/setup.sh
 
 USER claude
 ENV HOME=/home/claude \

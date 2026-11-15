@@ -4,6 +4,8 @@
 # 3. Accept Remote Control's prompts once.  Then the container serves sessions by itself after every restart.
 set -e
 cd "$HOME/gaggimate"
+mkdir -p "$HOME/.claude"
+[ -f "$HOME/.claude/CLAUDE.md" ] || cp tools/claude-host/CLAUDE.home.md "$HOME/.claude/CLAUDE.md"
 
 echo "== 1/3 Claude sign-in"
 claude auth status >/dev/null 2>&1 || claude auth login

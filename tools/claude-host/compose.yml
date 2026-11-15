@@ -1,0 +1,26 @@
+# Claude Code host for the La Simona fork. On the NAS: compose/appdata/claude-code/, next to gaggimate-logger.
+# Build the image from this folder of the repo (docker build -t gaggimate-claude:latest tools/claude-host), then
+# `docker compose up -d`. Reaches the coffee machine through the same UDR7 policy as the logger (traffic leaves as
+# the NAS's own address). No Docker socket: the container can't touch the NAS's other stacks.
+services:
+  claude-code:
+    image: gaggimate-claude:latest
+    pull_policy: never
+    container_name: claude-code
+    hostname: claude-code
+    restart: unless-stopped
+    tty: true
+    stdin_open: true
+    environment:
+      GM_HOST: 192.168.20.34
+      GM_LOGS: /logs
+      TZ: Australia/Brisbane
+    volumes:
+      - ./home:/home/claude # sign-ins, Claude Code itself, PlatformIO toolchains, the repo
+      - ../gaggimate-logger/logs:/logs:ro # the logger's daily CSVs and valve-timing.csv
+    mem_limit: 6g
+    logging:
+      driver: json-file
+      options:
+        max-size: 5m
+        max-file: "3"

@@ -1,7 +1,7 @@
 # Claude Code host for the La Simona fork. Create it in OMV's web UI (Services > Compose > Files > Add), named
 # claude-code, with this file as its contents; OMV keeps it in compose/appdata/claude-code/. "Up" builds the image
-# from the fork's Dockerfile on GitHub (no git or checkout needed on the NAS); after the Dockerfile or its scripts
-# change, use the stack's Build button, then Up. ("Pull" does nothing here: the image is built locally.)
+# from the fork's Dockerfile on GitHub (no git or checkout needed on the NAS). The start scripts run from the fork
+# cloned into ./home, so they update with a git pull there; only a Dockerfile change needs the stack's Build, then Up.
 # Reaches the coffee machine through the same UDR7 policy as the logger (traffic leaves as the NAS's own address).
 # No Docker socket: the container can't touch the NAS's other stacks.
 services:

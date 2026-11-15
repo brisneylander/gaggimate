@@ -4,13 +4,13 @@ An always-on container on the OMV NAS that runs Claude Code in Remote Control se
 on from the Claude app, claude.ai/code or the laptop without the laptop being on. Everything runs on the NAS: firmware
 builds, unit tests, releases with OTA updates to the machine, benches, and reading the logger's CSVs.
 
-| File             | What it is                                                                                          |
-| ---------------- | --------------------------------------------------------------------------------------------------- |
-| `Dockerfile`     | Node 22 on Debian trixie, PlatformIO, build tools, clang-format, git, GitHub CLI                    |
-| `compose.yml`    | The stack: home volume, the logger's logs read-only, 6 GB memory cap, no Docker socket              |
-| `entrypoint.sh`  | Installs Claude Code on first start, clones the fork, then `claude remote-control --spawn worktree` |
-| `setup.sh`       | One-time interactive sign-in (Claude, GitHub) and Remote Control's prompts                          |
-| `CLAUDE.home.md` | Installed as `~/.claude/CLAUDE.md`: what the container can reach, commands, standing rules          |
+| File             | What it is                                                                                             |
+| ---------------- | ------------------------------------------------------------------------------------------------------ |
+| `Dockerfile`     | Node 22 on Debian trixie, PlatformIO, build tools, clang-format, git, GitHub CLI                       |
+| `compose.yml`    | The stack: home volume, the logger's logs read-only, 6 GB memory cap, no Docker socket                 |
+| `entrypoint.sh`  | Run from the clone: installs Claude Code on first start, then `claude remote-control --spawn worktree` |
+| `setup.sh`       | One-time interactive sign-in (Claude, GitHub) and Remote Control's prompts                             |
+| `CLAUDE.home.md` | Installed as `~/.claude/CLAUDE.md`: what the container can reach, commands, standing rules             |
 
 ## Install
 
@@ -36,8 +36,10 @@ Stacks on the NAS are made in OMV's web UI, not over SSH:
 
 `setup.sh` also installs [`CLAUDE.home.md`](CLAUDE.home.md) as `~/.claude/CLAUDE.md` if there isn't one yet.
 
-To update the image after changing the Dockerfile or its scripts: push to `la-simona`, then the stack's **Build** and
-**Up** in OMV. Claude Code itself updates in place in the home volume.
+The image holds only a small bootstrap that clones the fork into `home/gaggimate` on first start and runs
+`entrypoint.sh` from there, so changes to the scripts arrive with a `git pull` in the container and a restart. Only a
+Dockerfile change needs the stack's **Build**, then **Up**, in OMV. Claude Code itself updates in place in the home
+volume.
 
 ## Notes
 

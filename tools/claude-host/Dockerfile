@@ -26,11 +26,16 @@ RUN useradd -m -u ${UID} -g ${GID} -s /bin/bash claude \
  && echo 'case ":$PATH:" in *":$HOME/.local/bin:"*) ;; *) PATH="$HOME/.local/bin:$PATH" ;; esac' > /etc/profile.d/local-bin.sh
 # (the home volume hides /etc/skel's .profile, which would normally add ~/.local/bin for login shells)
 
-# Fetched by URL rather than COPY, so the image builds from this Dockerfile's URL alone (OMV's Compose UI, no git or
-# checkout on the NAS). BRANCH picks which branch's scripts.
-ARG BRANCH=la-simona
-ADD --chmod=755 https://raw.githubusercontent.com/brisneylander/gaggimate/${BRANCH}/tools/claude-host/entrypoint.sh /usr/local/bin/entrypoint.sh
-ADD --chmod=755 https://raw.githubusercontent.com/brisneylander/gaggimate/${BRANCH}/tools/claude-host/setup.sh /usr/local/bin/setup.sh
+# The image carries only this bootstrap: clone the fork into the home volume on first start, then run the start
+# script from the clone. So the image builds from this Dockerfile's URL alone (OMV's Compose UI, no git or checkout on
+# the NAS), and the scripts update with a git pull instead of an image rebuild.
+RUN printf '%s\n' '#!/bin/bash' 'R=$HOME/gaggimate' \
+      'if [ ! -d "$R/.git" ]; then' \
+      '  git clone -q -b la-simona https://github.com/brisneylander/gaggimate.git "$R" || { sleep 60; exit 1; }' \
+      '  git -C "$R" remote rename origin fork && git -C "$R" remote add origin https://github.com/jniebuhr/gaggimate.git' \
+      'fi' \
+      'exec "$R/tools/claude-host/entrypoint.sh"' > /usr/local/bin/bootstrap.sh \
+ && chmod 755 /usr/local/bin/bootstrap.sh
 
 USER claude
 ENV HOME=/home/claude \
@@ -38,4 +43,4 @@ ENV HOME=/home/claude \
     TZ=Australia/Brisbane \
     LANG=C.UTF-8
 WORKDIR /home/claude
-ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
+ENTRYPOINT ["/usr/local/bin/bootstrap.sh"]

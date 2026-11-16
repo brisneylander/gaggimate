@@ -750,12 +750,20 @@
             <h3>Flash it once over USB</h3>
             <p>
               Normal GaggiMate only updates itself from GaggiMate, so the first
-              install has to be over USB: flash the display and controller files
-              from the
+              install has to be over USB. Export your profiles, install Python,
+              save
+              <a
+                href="https://raw.githubusercontent.com/brisneylander/gaggimate/la-simona/scripts/flash.py"
+                >flash.py</a
+              >
+              and run <code>pip install esptool</code> then
+              <code>python3 flash.py</code>. It fetches the
               <a
                 href="https://github.com/brisneylander/gaggimate/releases/latest"
                 >latest release</a
-              >. After that, updates arrive over Wi-Fi like normal.
+              >
+              and flashes the display, then asks you to plug in the controller.
+              After that, updates arrive over Wi-Fi like normal.
             </p>
           </li>
           <li>

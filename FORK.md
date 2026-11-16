@@ -13,10 +13,33 @@ firmware over Wi-Fi while staying in sync with upstream.
 | `.github/workflows/fork-nightly.yml`        | Same build once a day if `master` has moved (3 am Brisbane), published as the `nightly` pre-release for the Nightly update channel.                                                                                                                                                             |
 | `site/`, `.github/workflows/fork-pages.yml` | The fork's front page, published to GitHub Pages at https://brisneylander.github.io/gaggimate/ on pushes that change it.                                                                                                                                                                        |
 | Boiler control                              | Lag compensation, flush to target, tank estimate, heater safety layer, machine profiles and the Tune this machine routine: goal, bench observations and how the code addresses them in [docs/boiler-control.md](docs/boiler-control.md); bench data and open items in [ROADMAP.md](ROADMAP.md). |
+| `scripts/flash.py`                          | First install of this fork on a machine over USB: downloads a release and flashes the display and controller with esptool. See [Installing on a machine](#installing-on-a-machine).                                                                                                             |
 | `FORK.md`                                   | This file.                                                                                                                                                                                                                                                                                      |
 
 Upstream's own `Build`, `Build Nightly` and `Deploy PR Preview` workflows are
 **disabled** in this fork's Actions settings, because they need upstream's secrets.
+
+## Installing on a machine
+
+A machine running official GaggiMate only takes Wi-Fi updates from upstream, so the first install of this fork is over
+USB. Export profiles first: flashing the display replaces its filesystem.
+
+```sh
+pip install esptool
+python3 scripts/flash.py            # latest La Simona release: display, then the controller
+python3 scripts/flash.py --nightly  # the nightly pre-release instead
+```
+
+Without a checkout, save
+[`flash.py`](https://raw.githubusercontent.com/brisneylander/gaggimate/la-simona/scripts/flash.py) on its own; it only
+needs Python and esptool. It downloads the release's `.bin` files, reads each board's flash layout from its
+`partitions.bin`, blanks `otadata` (so a board that last booted its second app slot after an OTA update starts the new
+firmware) and runs esptool, pausing for you to swap the USB cable from the display to the controller. Other options:
+name the boards (`display`, `headless`, `controller`), `--tag v1.9.0-lasimona009`, `--port COM3`, `--dir <folder>` for
+files already downloaded and `--dry-run` to print the esptool commands. If a board won't connect, hold BOOT while
+plugging it in.
+
+After that, pick **Stable** or **Nightly** under **Settings → System & Updates** and updates arrive over Wi-Fi.
 
 ## Releasing a build
 
@@ -74,7 +97,8 @@ normally be clean. After syncing, tag a new `-lasimonaNNN` build to install it.
   the machine follows upstream's releases. Coming back to this fork afterwards needs a USB flash.
 - **Over USB (always works):** flash upstream's release `.bin` files (bootloader, partitions,
   firmware and filesystem for both the display and the controller board) with esptool or
-  the official web flasher. Export profiles first.
+  the official web flasher. Export profiles first. `scripts/flash.py --dir <folder>` flashes upstream's files too, once
+  they're downloaded into one folder.
 
 ## Licence
 

@@ -308,6 +308,8 @@
             <p>
               For a display already running GaggiMate. Writes only the firmware,
               so your Wi-Fi, settings, profiles and shot history stay put.
+              <b>When it asks "Erase device?", leave the box unticked</b> and
+              press Next: ticking it wipes everything.
             </p>
             <esp-web-install-button manifest="flash/display-keep.json">
               <button slot="activate" class="btn primary">
@@ -366,8 +368,9 @@
             <h3>Over USB, if the controller won't update</h3>
             <p>
               <b>Unplug the machine from the wall first</b>, then connect the
-              controller's USB-C port to your computer. Nothing on it is lost:
-              your settings live on the display.
+              controller's USB-C port to your computer. When it asks "Erase
+              device?", either answer is fine: your settings live on the
+              display.
             </p>
             <p style="margin-top: 12px">
               <esp-web-install-button manifest="flash/controller.json">

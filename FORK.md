@@ -37,6 +37,10 @@ reset `otadata`), so settings, profiles and shot history stay; the controller th
 From the command line, `scripts/flash.py` does a full install of both boards. Export profiles first: flashing the
 display replaces its filesystem.
 
+After the setup wizard, choose the Silvia profile in the configuration screen: **Settings → Machine → Machine Boiler
+Profile → Rancilio Silvia 230 V**, then save. The wizard's own **Rancilio Silvia** choice is upstream's basic preset
+and leaves this fork's boiler control switched off.
+
 ```sh
 pip install esptool
 python3 scripts/flash.py            # latest La Simona release: display, then the controller

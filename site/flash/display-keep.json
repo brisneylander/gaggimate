@@ -1,0 +1,14 @@
+{
+  "name": "La Simona display (firmware only, keeps settings)",
+  "version": "FIRMWARE_VERSION",
+  "new_install_prompt_erase": false,
+  "builds": [
+    {
+      "chipFamily": "ESP32-S3",
+      "parts": [
+        { "path": "boot_app0.bin", "offset": 57344 },
+        { "path": "firmware/display-firmware.bin", "offset": 65536 }
+      ]
+    }
+  ]
+}

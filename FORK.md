@@ -22,7 +22,15 @@ Upstream's own `Build`, `Build Nightly` and `Deploy PR Preview` workflows are
 ## Installing on a machine
 
 A machine running official GaggiMate only takes Wi-Fi updates from upstream, so the first install of this fork is over
-USB. Export profiles first: flashing the display replaces its filesystem.
+USB.
+
+The easiest way is the [web installer](https://brisneylander.github.io/gaggimate/flash.html) (`site/flash.html`) in
+Chrome or Edge: ESP Web Tools, like GaggiMate's own flasher, with the latest release's files copied in by
+`fork-pages.yml` after each release. Its recommended display option writes only the firmware (plus `boot_app0.bin` to
+reset `otadata`), so settings, profiles and shot history stay; the controller then updates over Wi-Fi from the display.
+
+From the command line, `scripts/flash.py` does a full install of both boards. Export profiles first: flashing the
+display replaces its filesystem.
 
 ```sh
 pip install esptool

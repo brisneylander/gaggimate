@@ -327,8 +327,9 @@
           it goes about it, and the measurements to back it up.
         </p>
         <div class="btns">
+          <a class="btn primary" href="flash.html">Install from your browser</a>
           <a
-            class="btn primary"
+            class="btn"
             href="https://github.com/brisneylander/gaggimate/releases/latest"
             >Latest release</a
           >
@@ -751,20 +752,21 @@
             <h3>Flash it once over USB</h3>
             <p>
               Normal GaggiMate only updates itself from GaggiMate, so the first
-              install has to be over USB. Export your profiles, install Python,
-              save
+              install has to be over USB. The
+              <a href="flash.html">web installer</a> does it from Chrome or
+              Edge: plug in the display, press a button, and it keeps your
+              settings and profiles. The controller then updates over Wi-Fi, and
+              so does everything after that. Prefer the command line? Save
               <a
                 href="https://raw.githubusercontent.com/brisneylander/gaggimate/la-simona/scripts/flash.py"
                 >flash.py</a
-              >
-              and run <code>pip install esptool</code> then
-              <code>python3 flash.py</code>. It fetches the
+              >, run <code>pip install esptool</code> then
+              <code>python3 flash.py</code>: it fetches the
               <a
                 href="https://github.com/brisneylander/gaggimate/releases/latest"
                 >latest release</a
               >
-              and flashes the display, then asks you to plug in the controller.
-              After that, updates arrive over Wi-Fi like normal.
+              and flashes the display, then the controller.
             </p>
           </li>
           <li>

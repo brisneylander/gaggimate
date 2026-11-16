@@ -20,3 +20,6 @@ sim_data/
 out/
 
 web/store
+
+# Release firmware fetched into the web installer by fork-pages.yml at deploy time
+site/flash/firmware/

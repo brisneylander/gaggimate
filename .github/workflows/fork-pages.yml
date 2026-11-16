@@ -1,5 +1,7 @@
-# Fork-only: publishes site/ (the fork's front page) to GitHub Pages at https://brisneylander.github.io/gaggimate/.
-# Needs Settings > Pages > Source set to "GitHub Actions" once.
+# Fork-only: publishes site/ (the fork's front page and web installer) to GitHub Pages at
+# https://brisneylander.github.io/gaggimate/. Needs Settings > Pages > Source set to "GitHub Actions" once.
+# The installer (site/flash.html) flashes the latest release's files, which are copied in here at deploy time, so
+# this also runs after every Fork Release build.
 on:
   push:
     branches:
@@ -7,6 +9,9 @@ on:
     paths:
       - "site/**"
       - ".github/workflows/fork-pages.yml"
+  workflow_run:
+    workflows: ["Fork Release"]
+    types: [completed]
   workflow_dispatch:
 
 name: Fork Pages
@@ -22,6 +27,7 @@ concurrency:
 
 jobs:
   deploy:
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     environment:
       name: github-pages
@@ -29,14 +35,32 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          ref: la-simona
           fetch-depth: 0
+      - name: Copy the latest release's firmware into the installer
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="$(gh release view -R "$GITHUB_REPOSITORY" --json tagName -q .tagName)"
+          echo "latest release: $TAG"
+          mkdir -p site/flash/firmware
+          gh release download "$TAG" -R "$GITHUB_REPOSITORY" -D site/flash/firmware \
+            -p display-bootloader.bin -p display-partitions.bin -p display-firmware.bin -p display-filesystem.bin \
+            -p board-bootloader.bin -p board-partitions.bin -p board-firmware.bin
+          # Every file the manifests name must be there, or the installer would fail halfway through a flash.
+          for m in site/flash/*.json; do
+            for p in $(jq -r '.builds[].parts[].path' "$m"); do test -s "site/flash/$p" || { echo "$m: missing $p"; exit 1; }; done
+          done
+          sed -i "s/FIRMWARE_VERSION/${TAG}/" site/flash/*.json site/flash.html
       - name: Stamp the last updated footer
         env:
           TZ: Australia/Brisbane
         run: |
           UPDATED="$(git log -1 --date=format-local:'%-d %B %Y, %H:%M' --format=%cd -- site) Brisbane time"
-          grep -q LAST_UPDATED site/index.html
-          sed -i "s/LAST_UPDATED/${UPDATED}/" site/index.html
+          for f in site/*.html; do
+            grep -q LAST_UPDATED "$f" || { echo "$f has no LAST_UPDATED footer"; exit 1; }
+            sed -i "s/LAST_UPDATED/${UPDATED}/" "$f"
+          done
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

@@ -164,12 +164,13 @@ About 30 minutes after switch-on, it's fine. This one applies to any Silvia, for
 ### How it compares with normal settings
 
 On 30 October I put four setups through the same routine: hold at 93 °C for 5 minutes, steam to 100 °C, switch back to
-brew, then do what an owner would at the peak. On normal settings that's pressing flush twice; on the fork it's pressing
-it once, which flushes to target. The "normal" setups ran the fork's firmware with all its extras switched off.
+brew, then do what an owner would at the peak. On normal settings that's pressing flush twice; on the fork it's a
+double-tap of Start, which flushes to target. The "normal" setups ran the fork's firmware with all its extras switched
+off.
 
 | Setup (2 runs each)                                                                           | Holding at 93 °C: 90 % band (peak to peak) | Peak after steam   | Lowest after flush  | Overshoot after  | Settled ±0.3 °C after the flush |
 | --------------------------------------------------------------------------------------------- | ------------------------------------------ | ------------------ | ------------------- | ---------------- | ------------------------------- |
-| **Fork profile, one press (flush to target)**                                                 | **0.33–0.35 °C (0.43–0.45)**               | **105.7–106.7 °C** | 92.25–92.5 °C       | **0 to +0.2 °C** | 203–272 s                       |
+| **Fork profile, double-tap (flush to target)**                                                | **0.33–0.35 °C (0.43–0.45)**               | **105.7–106.7 °C** | 92.25–92.5 °C       | **0 to +0.2 °C** | 203–272 s                       |
 | Autotuned PID 60 / 0.658 / 1500, extras off, two flushes                                      | 0.41–0.72 °C (0.47–0.75)                   | 110.5–111.5 °C     | 92.75–93.06 °C      | 0 to +0.25 °C    | 265–348 s                       |
 | GaggiMate's suggested Silvia PID 112.315 / 0.658 / 1436.887, extras off, two flushes          | 0.41–0.67 °C (0.71–0.74)                   | 111.5–112.2 °C     | 92.25 °C            | +0.75 to +0.8 °C | 236–375 s                       |
 | GaggiMate's default PID 58.397 / 1.027 / 249.055 (the Gaggia values), extras off, two flushes | 1.5 °C (1.54–1.69)                         | 112.0–112.5 °C     | 91.9–92.2 °C        | +1.6 to +1.75 °C | not within 7½ min               |
@@ -184,12 +185,12 @@ less, so treat these numbers as a comparison between setups, not as your actual 
 
 **Same starting point (3 November).** Same routine, but every setup waited until the reading had cooled to 105 °C before
 flushing. Two runs each, afternoon and evening, tank 27-30 °C, no portafilter, Olab pump (so a 5 s press is about
-29 ml). With this pump, the normal two presses and the fork's single flush to target pushed about the same amount of
+29 ml). With this pump, the normal two presses and the fork's double-tap flush to target pushed about the same amount of
 water, so the difference is purely what the heater does afterwards:
 
 | Setup, flushing from 105 °C (2 runs)                      | Steam peak     | Water    | Lowest            | Peak after         | Settled ±0.3 °C         |
 | --------------------------------------------------------- | -------------- | -------- | ----------------- | ------------------ | ----------------------- |
-| **Fork, one press (flush to target)**                     | 111.2-111.3 °C | 56-59 ml | **92.5, 92.5 °C** | **93.0, 93.05 °C** | **176, 205 s**          |
+| **Fork, double-tap (flush to target)**                    | 111.2-111.3 °C | 56-59 ml | **92.5, 92.5 °C** | **93.0, 93.05 °C** | **176, 205 s**          |
 | GaggiMate's suggested Silvia PID, extras off, two presses | 113.0-116.6 °C | 60 ml    | 90.9, 92.25 °C    | 93.3, 93.3 °C      | 200 s; not within 7 min |
 | GaggiMate's default PID, extras off, two presses          | 111.3-112.0 °C | 57-60 ml | 91.7, 92.0 °C     | 94.3, 94.2 °C      | 291 s; not within 7 min |
 

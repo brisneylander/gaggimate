@@ -14,6 +14,10 @@ esptool. It also blanks the otadata partition, so a board that last booted from 
 update starts the newly flashed firmware instead of the old one.
 
 Flashing the display replaces its filesystem, which can hold your profiles: export them first.
+
+Use at your own risk: unofficial, experimental firmware, provided as is with no warranty of any kind. The author takes
+no responsibility for any damage to your machine, its boards or anything else, for injury, or for any other loss.
+Unplug the machine from the wall before opening it or connecting anything inside it.
 """
 
 import argparse

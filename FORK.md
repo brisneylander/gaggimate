@@ -21,6 +21,11 @@ Upstream's own `Build`, `Build Nightly` and `Deploy PR Preview` workflows are
 
 ## Installing on a machine
 
+> **At your own risk.** This fork is unofficial, experimental firmware, provided as is with no warranty of any kind.
+> Installing and using it is entirely at your own risk: I take no responsibility for any damage to your machine, your
+> GaggiMate boards or anything else, for injury, or for any other loss that results. Espresso machines run on mains
+> electricity and get very hot; always unplug the machine before opening it or connecting anything inside it.
+
 A machine running official GaggiMate only takes Wi-Fi updates from upstream, so the first install of this fork is over
 USB.
 

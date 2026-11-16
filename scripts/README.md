@@ -116,3 +116,20 @@ server or the gh-pages flasher directory; those remain CI-only.
 ```
 
 Run `./scripts/release.sh --help` for all options (`--skip-web`, `--allow-dirty`, `--no-prerelease`, `--repo`, `--notes-file`).
+
+## Installing the Fork Over USB
+
+### `flash.py`
+
+Installs a release of this fork on a GaggiMate over USB, for the first install on a machine that runs official
+firmware. Needs Python and `pip install esptool`; it downloads the release from GitHub, reads the flash offsets from each
+board's `partitions.bin`, blanks `otadata` and runs esptool for the display and then the controller.
+
+```bash
+python3 scripts/flash.py                       # latest release, display then controller
+python3 scripts/flash.py --nightly             # nightly pre-release
+python3 scripts/flash.py controller --port COM3
+python3 scripts/flash.py --dry-run             # print the esptool commands only
+```
+
+See [FORK.md](../FORK.md#installing-on-a-machine) for the full steps.

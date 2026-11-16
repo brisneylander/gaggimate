@@ -68,7 +68,7 @@ feedforward (Kf) was 0. At Kf 0.45 the heater ran 78-87 % through the fill; lowe
 of 89.7 °C when the shot ended, back at 93 °C ~90 s after the pump stopped (from ~110 s), no overshoot (shots 60 and 62,
 same grind, the second ~20 % less flow). The simulator (`test_daily_shot_feedforward`) put Kf 0.45 as the best
 recovery for +0.25 °C overshoot; `test_kp_sweep` found a higher Kp or Ki saves under 10 s of the remaining ~0.75 °C
-tail and adds overshoot. The Silvia profile's Kf is now 0.45. The simulator overstates this shot's drop (6 vs 3.3 °C):
+tail and adds overshoot. The Silvia profile's Kf was set to 0.45 here (0.7 since 2026-11-16, after the evening bench below). The simulator overstates this shot's drop (6 vs 3.3 °C):
 its plant was fitted to Ulka-era flushes, so refit it to logged shots before trusting absolute numbers.
 
 **Startup sag and the group head estimate** (2026-11-02, logger on OMV, `tools/logger`). Both warm-ups that morning

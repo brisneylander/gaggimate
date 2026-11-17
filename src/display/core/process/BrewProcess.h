@@ -2,6 +2,7 @@
 #define BREWPROCESS_H
 
 #include <algorithm>
+#include <cmath>
 #include <display/core/constants.h>
 #include <display/core/predictive.h>
 #include <display/core/process/Process.h>
@@ -26,6 +27,7 @@ class BrewProcess : public Process {
     double currentVolume = 0; // most recent volume pushed
     float currentFlow = 0.0f;
     float currentPressure = 0.0f;
+    float lowestPressure = INFINITY; // lowest pressure reading since the shot started (pressure_exit.h)
     float waterPumped = 0.0f;
     float phaseStartedPumped = 0.0f;
     VolumetricRateCalculator volumetricRateCalculator{PREDICTIVE_TIME};
@@ -47,7 +49,10 @@ class BrewProcess : public Process {
         }
     }
 
-    void updatePressure(float pressure) { currentPressure = pressure; }
+    void updatePressure(float pressure) {
+        currentPressure = pressure;
+        lowestPressure = std::min(lowestPressure, pressure);
+    }
 
     void updateFlow(float flow) { currentFlow = flow; }
 
@@ -80,7 +85,7 @@ class BrewProcess : public Process {
         }
         float timeInPhase = static_cast<float>(millis() - currentPhaseStarted) / 1000.0f;
         return currentPhase.isFinished(target == ProcessTarget::VOLUMETRIC, volume, timeInPhase, currentFlow, currentPressure,
-                                       waterPumped - phaseStartedPumped, profile.type, profile.dose);
+                                       waterPumped - phaseStartedPumped, profile.type, profile.dose, lowestPressure);
     }
 
     bool isCurrentPhaseFinished() { return currentPhaseExitReason() != PhaseExitReason::NONE; }

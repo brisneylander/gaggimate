@@ -101,6 +101,11 @@ msgstr "{diffYears, plural, one {# anno fa} other {# anni fa}}"
 msgid "{host} isn't answering. Make sure the machine is on and your phone is on the same Wi-Fi network."
 msgstr "{host} non risponde. Assicurati che la macchina sia accesa e che il telefono sia sulla stessa rete Wi-Fi."
 
+#. placeholder {0}: formData.temperatureOffset
+#: src/pages/Settings/tabs/MachineProfilePicker.jsx
+msgid "{label} applied to the machine profile, keeping your temperature offset ({0}): review, then Save."
+msgstr ""
+
 #: src/pages/Settings/tabs/MachineProfilePicker.jsx
 msgid "{label} applied to the machine profile: review, then Save."
 msgstr ""
@@ -198,7 +203,7 @@ msgid "a result is showing: empty the cup and tray, then Run again"
 msgstr ""
 
 #: src/pages/Settings/tabs/MachineProfilePicker.jsx
-msgid "A starting point from the GaggiMate documentation: it sets only the PID gains and temperature offset. Run Tune this machine (Calibration) to measure the rest, then Export JSON to keep the result."
+msgid "A starting point from the GaggiMate documentation: it sets only the PID gains, and the temperature offset if you haven't set one. Run Tune this machine (Calibration) to measure the rest, then Export JSON to keep the result."
 msgstr ""
 
 #: src/pages/Settings/tune/TuneMachine.jsx

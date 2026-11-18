@@ -28,6 +28,23 @@ export const PROFILE_FIELDS = {
   pumpModelCoeffs: { csv: 2 },
 };
 
+// Calibration of the individual machine rather than the model: the temperature offset depends on the thermocouple and
+// how it's mounted, and is measured with a Scace or a basket probe. A profile only fills it in while it's unset (empty or
+// 0), so loading one never overwrites a calibrated offset (a 110 V Silvia owner lost theirs that way, 2026-11-18), and
+// it doesn't count when telling which built-in profile is in use.
+export const CALIBRATION_KEYS = ['temperatureOffset'];
+
+const isUnset = v => v === undefined || v === null || String(v).trim() === '' || Number(v) === 0;
+
+// The part of a profile's values to write into the form: everything except calibration already set.
+export function valuesToApply(values, formData) {
+  return Object.fromEntries(
+    Object.entries(values).filter(
+      ([key]) => !CALIBRATION_KEYS.includes(key) || isUnset(formData[key]),
+    ),
+  );
+}
+
 // Measured on a Rancilio Silvia 230 V with a GaggiMate Pro, 2026-10-28/29 (ROADMAP.md, bench results); group head fitted
 // to logged warm-ups, 2026-11-02 (scripts/fit_warmup.py).
 export const BUILT_IN_PROFILES = [
@@ -120,7 +137,9 @@ export function profileInUse(formData) {
 export function matchingProfile(formData) {
   return (
     BUILT_IN_PROFILES.find(p =>
-      Object.entries(p.values).every(([key, value]) => sameValue(formData[key], value)),
+      Object.entries(p.values).every(
+        ([key, value]) => CALIBRATION_KEYS.includes(key) || sameValue(formData[key], value),
+      ),
     ) || null
   );
 }

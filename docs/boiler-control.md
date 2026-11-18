@@ -282,7 +282,8 @@ GaggiMate.
   Gaggia Classic family and two DeLonghis. You can also import a profile from JSON, or export yours. Choosing
   **Rancilio Silvia** in upstream's setup wizard is not the same thing: it loads upstream's basic preset (PID 112.3 /
   0.658 / 1436.9, no feedforward) and leaves everything above switched off. On a Silvia, choose **Rancilio Silvia
-  230 V** here after the wizard.
+  230 V** here after the wizard. A profile never overwrites a temperature offset you've already set: that belongs to
+  your own thermocouple, so it's only filled in while it's empty or 0.
 - **Tune this machine** (Settings → Calibration) measures the values for a machine that isn't a Silvia: an autotune
   from cold gives the heat-up rate and delay; a logged and weighed 5 second flush gives the water delay, the valve dump
   and a pump check; and a flush to target after steaming sets the correction factor.
@@ -329,4 +330,4 @@ trapped in the boiler from the shot before.
 
 ---
 
-_Last updated 16 November 2026._
+_Last updated 18 November 2026._

@@ -6,6 +6,7 @@ import {
   profileHash,
   profileInUse,
   validateProfile,
+  valuesToApply,
 } from './machineProfiles.js';
 
 // Pick a built-in machine profile, or import / export one as JSON. Applying fills the form; Save stores it.
@@ -23,11 +24,17 @@ export function MachineProfilePicker({ formData, setField }) {
   }, [inUse.name, selected]);
 
   const apply = (values, label) => {
-    for (const [key, value] of Object.entries(values)) setField(key, value);
+    const applied = valuesToApply(values, formData);
+    for (const [key, value] of Object.entries(applied)) setField(key, value);
     // Remember which profile this is (saved with the settings), so the page can name it later.
     setField('machineProfileName', label);
-    setField('machineProfileHash', profileHash({ ...formData, ...values }));
-    setNote(t`${label} applied to the machine profile: review, then Save.`);
+    setField('machineProfileHash', profileHash({ ...formData, ...applied }));
+    const keptOffset = 'temperatureOffset' in values && !('temperatureOffset' in applied);
+    setNote(
+      keptOffset
+        ? t`${label} applied to the machine profile, keeping your temperature offset (${formData.temperatureOffset}): review, then Save.`
+        : t`${label} applied to the machine profile: review, then Save.`,
+    );
   };
 
   const onApply = () => {
@@ -129,9 +136,9 @@ export function MachineProfilePicker({ formData, setField }) {
       {BUILT_IN_PROFILES.find(p => p.name === selected)?.startingPoint && (
         <p className='text-sm'>
           <Trans>
-            A starting point from the GaggiMate documentation: it sets only the PID gains and
-            temperature offset. Run Tune this machine (Calibration) to measure the rest, then Export
-            JSON to keep the result.
+            A starting point from the GaggiMate documentation: it sets only the PID gains, and the
+            temperature offset if you haven't set one. Run Tune this machine (Calibration) to
+            measure the rest, then Export JSON to keep the result.
           </Trans>
         </p>
       )}

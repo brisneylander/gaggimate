@@ -3,6 +3,7 @@
 
 #include <Arduino.h>
 #include <ArduinoJson.h>
+#include <display/models/pressure_exit.h>
 
 enum class TargetType { TARGET_TYPE_VOLUMETRIC, TARGET_TYPE_PRESSURE, TARGET_TYPE_FLOW, TARGET_TYPE_PUMPED, TARGET_TYPE_RATIO };
 enum class TargetOperator { LTE, GTE };
@@ -131,8 +132,11 @@ struct Phase {
     }
 
     // Returns the reason the phase finished, or PhaseExitReason::NONE if it is still running.
+    // lowest_pressure: the lowest pressure since the shot started, so pressure trapped in the boiler from the last shot
+    // doesn't meet a "pressure >= X" target at once (pressure_exit.h). 0 = not tracked.
     PhaseExitReason isFinished(bool enableVolumetric, float volume, float time_in_phase, float current_flow,
-                               float current_pressure, float water_pumped, String type, float dose) const {
+                               float current_pressure, float water_pumped, String type, float dose,
+                               float lowest_pressure = 0.0f) const {
         bool volumetricTested = false;
         for (const auto &target : targets) {
             switch (target.type) {
@@ -155,7 +159,9 @@ struct Phase {
                 }
                 break;
             case TargetType::TARGET_TYPE_PRESSURE:
-                if (target.isReached(current_pressure)) {
+                if (target.operator_ == TargetOperator::GTE
+                        ? pressureRiseReached(target.value, current_pressure, lowest_pressure)
+                        : target.isReached(current_pressure)) {
                     return PhaseExitReason::TARGET_PRESSURE;
                 }
                 break;

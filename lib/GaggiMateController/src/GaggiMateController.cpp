@@ -1,4 +1,5 @@
 #include "GaggiMateController.h"
+#include "LagCompensationLimits.h"
 #include "MachineHardwareSettings.h"
 #include "utilities.h"
 #include <Arduino.h>
@@ -341,8 +342,19 @@ void GaggiMateController::setup() {
         }
         heater->setFeedforwardScale(settings.kf);
         heater->setTunings(settings.kp, settings.ki, settings.kd);
+        // Clamp here as well as on the display: the controller drives the heater and shouldn't trust the link.
+        using namespace lag_limits;
+        const float derivativeFilterS = clampOrOff(settings.derivative_filter_s, DERIVATIVE_FILTER_S);
+        const float integralZone = clampOrOff(settings.integral_zone, INTEGRAL_ZONE_C);
+        heater->setLagCompensation(
+            derivativeFilterS, integralZone, clampOrOff(settings.sensor_dead_time_s, SENSOR_DEAD_TIME_S),
+            clampOrOff(settings.model_heater_w, HEATER_W), clampOrOff(settings.model_heat_rate, HEAT_RATE_C_PER_S),
+            clampOrOff(settings.model_loss_w, STANDING_LOSS_W), clampOrOff(settings.water_dead_time_s, WATER_DEAD_TIME_S),
+            clampOrOff(settings.valve_dump_ml, VALVE_DUMP_ML));
         if (heater2 != nullptr) {
             heater2->setTunings(settings.steam_kp, settings.steam_ki, settings.steam_kd);
+            // The heat-balance model describes the brew boiler only; the steam boiler keeps the plain loop.
+            heater2->setLagCompensation(derivativeFilterS, integralZone, 0.0f, 0.0f, 0.0f);
         }
     });
     _comms.onPumpSettings([this](gm::PumpSettings settings) {
@@ -633,6 +645,7 @@ void GaggiMateController::sendSensorData() {
     p.content.sensor.boilers[0].temperature = this->brewTemperature->read();
     p.content.sensor.boilers[0].pressure = pressure;
     p.content.sensor.boilers[0].power = heaterPower;
+    p.content.sensor.boilers[0].standing_loss_w = heater ? heater->getLearnedLossWatts() : 0.0f;
     if (_config.capabilites.dualBoiler) {
         p.content.sensor.boilers[1].index = 1;
         p.content.sensor.boilers[1].temperature = this->steamTemperature->read();

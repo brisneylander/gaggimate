@@ -1,4 +1,5 @@
 #include "Heater.h"
+#include "HeatUpBoost.h"
 #include "HeaterCoordinator.h"
 #include <Arduino.h>
 #include <algorithm>
@@ -9,7 +10,8 @@ Heater::Heater(TemperatureSensor *sensor, uint8_t heaterPin, const heater_error_
     : sensor(sensor), heaterPin(heaterPin), taskHandle(nullptr), error_callback(error_callback), pid_callback(pid_callback),
       autotune_fail_callback(autotune_fail_callback) {
 
-    simplePid = std::make_unique<SimplePID>(&output, &temperature, &setpoint);
+    simplePid = std::make_unique<SimplePID>(&output, &controlTemperature, &setpoint);
+    simplePid->setDerivativeInput(&temperature); // D damps the measured temperature, P/I act on the prediction
     autotuner = std::make_unique<Autotune>();
 }
 
@@ -47,7 +49,12 @@ void Heater::loop() {
     if (sensor->isErrorState() || setpoint <= 0.0f) {
         simplePid->setMode(SimplePID::Control::manual);
         requestOutput(false);
+        output = 0.0f; // the PID no longer writes it: left alone, the next wake-up and the display see the old duty
         temperature = sensor->read();
+        controlTemperature = temperature;
+        std::lock_guard<std::mutex> lock(lagMutex);
+        predictor.reset(); // heat in flight is no longer tracked while off; start clean on re-enable
+        predictorPrimed = false;
         return;
     }
     simplePid->setMode(SimplePID::Control::automatic);
@@ -92,6 +99,66 @@ void Heater::setFeedforwardScale(float combinedKff) {
     ESP_LOGI(LOG_TAG, "Combined feedforward gain (Kff) set to: %.3f output units per watt", combinedKff);
 }
 
+void Heater::setLagCompensation(float derivativeFilterS, float integralZoneC, float sensorDeadTimeS, float modelHeaterW,
+                                float modelHeatRate, float modelLossW, float waterDeadTimeS, float valveDumpMl) {
+    std::lock_guard<std::mutex> lock(lagMutex);
+    simplePid->setDerivativeFilterTime(derivativeFilterS);
+    simplePid->setIntegralZone(integralZoneC);
+    integralZoneActive = integralZoneC > 0.0f;
+    integralHoldTailMs = sensorDeadTimeS > 0.0f ? static_cast<uint32_t>(sensorDeadTimeS * 1000.0f) : 0;
+    if (!integralZoneActive)
+        simplePid->setIntegralHold(false);
+    predictor.configure(modelHeaterW, modelHeatRate, sensorDeadTimeS, incomingWaterTemp, waterDeadTimeS);
+    predictor.seedLoss(modelLossW);
+    predictor.setValveDump(valveDumpMl);
+    ESP_LOGI(LOG_TAG,
+             "Lag compensation: D filter %.1fs, I zone %.2f°C, dead time %.1fs, predictor %s (%.0fW, %.3f°C/s, water %.1fs)",
+             derivativeFilterS, integralZoneC, sensorDeadTimeS, predictor.isEnabled() ? "on" : "off", modelHeaterW, modelHeatRate,
+             predictor.getWaterDeadTime());
+}
+
+float Heater::getLearnedLossWatts() {
+    std::lock_guard<std::mutex> lock(lagMutex);
+    return predictor.isEnabled() ? predictor.getLossWatts() : 0.0f;
+}
+
+void Heater::updateLagCompensation() {
+    const uint32_t now = millis();
+    const float flow = pumpFlowRate != nullptr ? *pumpFlowRate : 0.0f;
+    const bool flowing = flow > 0.01f;
+
+    std::lock_guard<std::mutex> lock(lagMutex);
+    if (flowing) {
+        lastFlowMs = now;
+        flowSeen = true;
+    }
+    if (flow > HeatUpBoost::FLUSH_FLOW) {
+        lastFlushMs = now;
+        flushSeen = true;
+    }
+    if (integralZoneActive) {
+        // Pause the integral while fresh water flows and until its effect has reached the sensor: the error in
+        // that window is the (stale) flush, not a steady-state offset the integral should learn.
+        simplePid->setIntegralHold(flowing || (flowSeen && now - lastFlowMs < integralHoldTailMs));
+    }
+
+    if (!predictor.isEnabled()) {
+        controlTemperature = temperature;
+        predictorPrimed = false; // switched back on later: time its first step from then, not from before
+        return;
+    }
+    if (!predictorPrimed) {
+        predictorPrimed = true;
+        lastPredictorMs = now;
+    } else if (now - lastPredictorMs >= static_cast<uint32_t>(TUNER_OUTPUT_SPAN)) {
+        // One step per PWM window; `output` is the duty that was applied over it.
+        const float dt = static_cast<float>(now - lastPredictorMs) / 1000.0f;
+        lastPredictorMs = now;
+        predictor.update(dt, output / TUNER_OUTPUT_SPAN, flowing ? flow : 0.0f, temperature, setpoint);
+    }
+    controlTemperature = temperature + predictor.getCorrection();
+}
+
 void Heater::autotune(int testTimeSec, int windowSize, int heaterWattage) {
     setupAutotune(testTimeSec, windowSize, heaterWattage);
     autotuning = true;
@@ -100,6 +167,7 @@ void Heater::autotune(int testTimeSec, int windowSize, int heaterWattage) {
 void Heater::loopPid() {
     softPwm(TUNER_OUTPUT_SPAN);
     temperature = sensor->read();
+    updateLagCompensation();
 
     // Calculate and set disturbance feedforward BEFORE PID update
     // Only apply thermal feedforward when Kf>0, valve is open, and water is flowing
@@ -127,6 +195,12 @@ void Heater::loopPid() {
 
     // Now run PID with proper feedforward integrated
     bool pidUpdated = simplePid->update();
+    if (pidUpdated) {
+        // Far below the setpoint with no water about: full power (HeatUpBoost.h).
+        std::lock_guard<std::mutex> lock(lagMutex);
+        if (HeatUpBoost::active(predictor.isEnabled(), setpoint, controlTemperature, flushSeen, millis() - lastFlushMs))
+            output = TUNER_OUTPUT_SPAN;
+    }
 
     if (pidUpdated) {
         plot(output, 1.0f, 1);

@@ -3,25 +3,27 @@
 #include <cmath>
 #include <numeric>
 
-void HeatBalancePredictor::configure(float heaterWatts, float fullPowerRate, float deadTimeSeconds, float inletTemp,
+void HeatBalancePredictor::configure(float watts, float fullPowerRate, float deadTimeSeconds, float inletTempC,
                                      float waterDeadTimeSeconds) {
-    const bool valid = std::isfinite(heaterWatts) && std::isfinite(fullPowerRate) && std::isfinite(deadTimeSeconds) &&
-                       heaterWatts > 0.0f && fullPowerRate > 0.0f && deadTimeSeconds > 0.0f;
-    const float capacity = valid ? heaterWatts / fullPowerRate : 0.0f;
+    const bool valid = std::isfinite(watts) && std::isfinite(fullPowerRate) && std::isfinite(deadTimeSeconds) && watts > 0.0f &&
+                       fullPowerRate > 0.0f && deadTimeSeconds > 0.0f;
+    const float capacity = valid ? watts / fullPowerRate : 0.0f;
     const float delay = valid ? deadTimeSeconds : 0.0f;
-    const float waterDelay =
-        valid ? (std::isfinite(waterDeadTimeSeconds) && waterDeadTimeSeconds > 0.0f ? waterDeadTimeSeconds : delay) : 0.0f;
-    if (capacity == heatCapacity && delay == deadTime && waterDelay == waterDeadTime && heaterWatts == this->heaterWatts) {
+    // Water's own delay when one is given, else the heater's.
+    float waterDelay = delay;
+    if (valid && std::isfinite(waterDeadTimeSeconds) && waterDeadTimeSeconds > 0.0f)
+        waterDelay = waterDeadTimeSeconds;
+    if (capacity == heatCapacity && delay == deadTime && waterDelay == waterDeadTime && watts == heaterWatts) {
         // Unchanged re-send keeps the in-flight window; so does a new inlet water temperature: it only changes how
         // future water is counted.
-        this->inletTemp = inletTemp;
+        inletTemp = inletTempC;
         return;
     }
-    this->heaterWatts = valid ? heaterWatts : 0.0f;
+    heaterWatts = valid ? watts : 0.0f;
     heatCapacity = capacity;
     deadTime = delay;
     waterDeadTime = waterDelay;
-    this->inletTemp = inletTemp;
+    inletTemp = inletTempC;
     // The standing loss is a property of the boiler, not of these parameters, so it survives a reconfigure.
     reset();
 }

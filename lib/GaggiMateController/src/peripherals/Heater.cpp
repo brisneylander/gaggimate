@@ -99,22 +99,21 @@ void Heater::setFeedforwardScale(float combinedKff) {
     ESP_LOGI(LOG_TAG, "Combined feedforward gain (Kff) set to: %.3f output units per watt", combinedKff);
 }
 
-void Heater::setLagCompensation(float derivativeFilterS, float integralZoneC, float sensorDeadTimeS, float modelHeaterW,
-                                float modelHeatRate, float modelLossW, float waterDeadTimeS, float valveDumpMl) {
+void Heater::setLagCompensation(const HeaterLagSettings &lag) {
     std::lock_guard<std::mutex> lock(lagMutex);
-    simplePid->setDerivativeFilterTime(derivativeFilterS);
-    simplePid->setIntegralZone(integralZoneC);
-    integralZoneActive = integralZoneC > 0.0f;
-    integralHoldTailMs = sensorDeadTimeS > 0.0f ? static_cast<uint32_t>(sensorDeadTimeS * 1000.0f) : 0;
+    simplePid->setDerivativeFilterTime(lag.derivativeFilterS);
+    simplePid->setIntegralZone(lag.integralZoneC);
+    integralZoneActive = lag.integralZoneC > 0.0f;
+    integralHoldTailMs = lag.sensorDeadTimeS > 0.0f ? static_cast<uint32_t>(lag.sensorDeadTimeS * 1000.0f) : 0;
     if (!integralZoneActive)
         simplePid->setIntegralHold(false);
-    predictor.configure(modelHeaterW, modelHeatRate, sensorDeadTimeS, incomingWaterTemp, waterDeadTimeS);
-    predictor.seedLoss(modelLossW);
-    predictor.setValveDump(valveDumpMl);
+    predictor.configure(lag.modelHeaterW, lag.modelHeatRate, lag.sensorDeadTimeS, incomingWaterTemp, lag.waterDeadTimeS);
+    predictor.seedLoss(lag.modelLossW);
+    predictor.setValveDump(lag.valveDumpMl);
     ESP_LOGI(LOG_TAG,
              "Lag compensation: D filter %.1fs, I zone %.2f°C, dead time %.1fs, predictor %s (%.0fW, %.3f°C/s, water %.1fs)",
-             derivativeFilterS, integralZoneC, sensorDeadTimeS, predictor.isEnabled() ? "on" : "off", modelHeaterW, modelHeatRate,
-             predictor.getWaterDeadTime());
+             lag.derivativeFilterS, lag.integralZoneC, lag.sensorDeadTimeS, predictor.isEnabled() ? "on" : "off",
+             lag.modelHeaterW, lag.modelHeatRate, predictor.getWaterDeadTime());
 }
 
 float Heater::getLearnedLossWatts() {

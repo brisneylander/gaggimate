@@ -344,17 +344,23 @@ void GaggiMateController::setup() {
         heater->setTunings(settings.kp, settings.ki, settings.kd);
         // Clamp here as well as on the display: the controller drives the heater and shouldn't trust the link.
         using namespace lag_limits;
-        const float derivativeFilterS = clampOrOff(settings.derivative_filter_s, DERIVATIVE_FILTER_S);
-        const float integralZone = clampOrOff(settings.integral_zone, INTEGRAL_ZONE_C);
-        heater->setLagCompensation(
-            derivativeFilterS, integralZone, clampOrOff(settings.sensor_dead_time_s, SENSOR_DEAD_TIME_S),
-            clampOrOff(settings.model_heater_w, HEATER_W), clampOrOff(settings.model_heat_rate, HEAT_RATE_C_PER_S),
-            clampOrOff(settings.model_loss_w, STANDING_LOSS_W), clampOrOff(settings.water_dead_time_s, WATER_DEAD_TIME_S),
-            clampOrOff(settings.valve_dump_ml, VALVE_DUMP_ML));
+        HeaterLagSettings lag;
+        lag.derivativeFilterS = clampOrOff(settings.derivative_filter_s, DERIVATIVE_FILTER_S);
+        lag.integralZoneC = clampOrOff(settings.integral_zone, INTEGRAL_ZONE_C);
+        lag.sensorDeadTimeS = clampOrOff(settings.sensor_dead_time_s, SENSOR_DEAD_TIME_S);
+        lag.modelHeaterW = clampOrOff(settings.model_heater_w, HEATER_W);
+        lag.modelHeatRate = clampOrOff(settings.model_heat_rate, HEAT_RATE_C_PER_S);
+        lag.modelLossW = clampOrOff(settings.model_loss_w, STANDING_LOSS_W);
+        lag.waterDeadTimeS = clampOrOff(settings.water_dead_time_s, WATER_DEAD_TIME_S);
+        lag.valveDumpMl = clampOrOff(settings.valve_dump_ml, VALVE_DUMP_ML);
+        heater->setLagCompensation(lag);
         if (heater2 != nullptr) {
             heater2->setTunings(settings.steam_kp, settings.steam_ki, settings.steam_kd);
             // The heat-balance model describes the brew boiler only; the steam boiler keeps the plain loop.
-            heater2->setLagCompensation(derivativeFilterS, integralZone, 0.0f, 0.0f, 0.0f);
+            HeaterLagSettings steamLag;
+            steamLag.derivativeFilterS = lag.derivativeFilterS;
+            steamLag.integralZoneC = lag.integralZoneC;
+            heater2->setLagCompensation(steamLag);
         }
     });
     _comms.onPumpSettings([this](gm::PumpSettings settings) {

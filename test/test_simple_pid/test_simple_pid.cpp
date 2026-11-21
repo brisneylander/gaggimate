@@ -39,8 +39,8 @@ struct Rig {
     }
 };
 
-void setUp() {}
-void tearDown() {}
+void setUp() { /* no shared fixture state */ }
+void tearDown() { /* no shared fixture state */ }
 
 // The first sample after (re)initialisation must not see a derivative kick from a zero previous value.
 void test_no_derivative_kick_on_first_sample() {

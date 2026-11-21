@@ -15,7 +15,7 @@ const FIELDS = [
   { key: 'valveDumpMl', unit: 'ml', min: 0.5, max: 30 },
 ];
 // Always shown: the heat-balance model. The PID refinements and the valve dump sit under Advanced.
-const MAIN_KEYS = ['modelHeaterW', 'modelHeatRate', 'sensorDeadTimeS', 'waterDeadTimeS'];
+const MAIN_KEYS = new Set(['modelHeaterW', 'modelHeatRate', 'sensorDeadTimeS', 'waterDeadTimeS']);
 
 const inRangeOrOff = (value, min, max) => {
   const v = Number(value);
@@ -44,13 +44,14 @@ export function LagCompensationSection({ formData, onChange }) {
   };
   const renderField = ({ key, unit, min, max }) => {
     const range = t`0 (off) or ${min}–${max} ${unit}`;
+    const allowed = t`Allowed: ${range}.`;
     return (
       <InputGroupField
         key={key}
         label={labels[key]}
         htmlFor={key}
         unit={unit}
-        helpText={`${help[key]} ${t`Allowed: ${range}.`}`}
+        helpText={`${help[key]} ${allowed}`}
         noMargin
       >
         <input
@@ -86,14 +87,14 @@ export function LagCompensationSection({ formData, onChange }) {
         </Trans>
       </p>
       <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
-        {FIELDS.filter(f => MAIN_KEYS.includes(f.key)).map(renderField)}
+        {FIELDS.filter(f => MAIN_KEYS.has(f.key)).map(renderField)}
       </div>
       <details className='border-base-content/10 mt-4 rounded-lg border p-3'>
         <summary className='cursor-pointer text-sm font-medium'>
           <Trans>Advanced</Trans>
         </summary>
         <div className='mt-4 grid grid-cols-1 gap-4 md:grid-cols-2'>
-          {FIELDS.filter(f => !MAIN_KEYS.includes(f.key)).map(renderField)}
+          {FIELDS.filter(f => !MAIN_KEYS.has(f.key)).map(renderField)}
         </div>
       </details>
       {learnedLoss > 0 && (

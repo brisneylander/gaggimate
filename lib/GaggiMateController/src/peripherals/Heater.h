@@ -21,6 +21,21 @@ using heater_autotune_fail_callback_t = std::function<void()>;
 // caller didn't supply a wattage.
 using pid_result_callback_t = std::function<void(float Kp, float Ki, float Kd, float Kff)>;
 
+// Lag compensation for boilers whose sensor reacts long after the heater; every value <= 0 keeps the legacy behaviour
+// for that part.
+struct HeaterLagSettings {
+    float derivativeFilterS = 0.0f; // low-pass time constant on the D term
+    float integralZoneC = 0.0f;     // integrate only within this |error| band, and pause the integral while water flows
+                                    // and for sensorDeadTimeS afterwards
+    float sensorDeadTimeS = 0.0f;   // delay from heater power to the sensor reacting
+    // Heat-balance predictor, with sensorDeadTimeS: the PID then runs on measured + not-yet-seen temperature change.
+    float modelHeaterW = 0.0f;
+    float modelHeatRate = 0.0f;  // degC/s at full power
+    float modelLossW = 0.0f;     // standing loss saved from an earlier run to start from (<= 0: default guess)
+    float waterDeadTimeS = 0.0f; // delay from water flowing to the sensor reacting (<= 0: same as sensorDeadTimeS)
+    float valveDumpMl = 0.0f;    // water a 3-way valve dumps when a flush or shot ends (<= 0: none)
+};
+
 class HeaterCoordinator;
 
 class Heater {
@@ -45,19 +60,7 @@ class Heater {
     void setThermalFeedforward(float *pumpFlowPtr = nullptr, float incomingWaterTemp = 23.0f, int *valveStatusPtr = nullptr);
     void setFeedforwardScale(float combinedKff); // Set combined Kff value (output units per watt)
 
-    // Lag compensation for boilers whose sensor reacts long after the heater; every value <= 0 keeps the legacy
-    // behaviour for that part.
-    //   derivativeFilterS: low-pass time constant on the D term
-    //   integralZoneC: integrate only within this |error| band, and pause the integral while water flows
-    //                  and for sensorDeadTimeS afterwards
-    //   sensorDeadTimeS: delay from heater power to the sensor reacting
-    //   modelHeaterW / modelHeatRate (°C/s at full power), with sensorDeadTimeS: heat-balance predictor;
-    //                  the PID then runs on measured + not-yet-seen temperature change
-    //   modelLossW: standing loss saved from an earlier run to start the predictor from (<= 0: default guess)
-    //   waterDeadTimeS: delay from water flowing to the sensor reacting (<= 0: same as sensorDeadTimeS)
-    //   valveDumpMl: water a 3-way valve dumps when a flush or shot ends (<= 0: none)
-    void setLagCompensation(float derivativeFilterS, float integralZoneC, float sensorDeadTimeS, float modelHeaterW,
-                            float modelHeatRate, float modelLossW = 0.0f, float waterDeadTimeS = 0.0f, float valveDumpMl = 0.0f);
+    void setLagCompensation(const HeaterLagSettings &lag);
     float getControlTemperature() const { return controlTemperature; }
     // Predictor's learned standing loss (W), 0 while the predictor is off.
     float getLearnedLossWatts();

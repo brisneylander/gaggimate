@@ -3,6 +3,7 @@
 
 #include <unity.h>
 
+#include <array>
 #include <cmath>
 #include <limits>
 
@@ -10,8 +11,8 @@
 
 using namespace lag_limits;
 
-void setUp() {}
-void tearDown() {}
+void setUp() { /* no shared fixture state */ }
+void tearDown() { /* no shared fixture state */ }
 
 void test_off_values_become_zero() {
     TEST_ASSERT_EQUAL_FLOAT(0.0f, clampOrOff(0.0f, SENSOR_DEAD_TIME_S));
@@ -31,8 +32,8 @@ void test_values_clamp_into_range() {
 
 // The ranges must stay usable for a Rancilio Silvia (the values on the bench) and internally consistent.
 void test_ranges_are_sane() {
-    const Range ranges[] = {DERIVATIVE_FILTER_S, INTEGRAL_ZONE_C, SENSOR_DEAD_TIME_S, WATER_DEAD_TIME_S, HEATER_W,
-                            HEAT_RATE_C_PER_S,   VALVE_DUMP_ML};
+    const std::array<Range, 7> ranges = {DERIVATIVE_FILTER_S, INTEGRAL_ZONE_C, SENSOR_DEAD_TIME_S, WATER_DEAD_TIME_S, HEATER_W,
+                                         HEAT_RATE_C_PER_S,   VALVE_DUMP_ML};
     for (const Range &r : ranges) {
         TEST_ASSERT_TRUE(r.min > 0.0f);
         TEST_ASSERT_TRUE(r.max > r.min);

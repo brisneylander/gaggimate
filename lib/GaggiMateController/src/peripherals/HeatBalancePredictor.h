@@ -35,7 +35,7 @@ class HeatBalancePredictor {
 
     // Any parameter <= 0 disables the predictor (correction stays 0).
     // waterDeadTimeSeconds <= 0 uses deadTimeSeconds for water too (the original single-delay model).
-    void configure(float heaterWatts, float fullPowerRate, float deadTimeSeconds, float inletTemp = 23.0f,
+    void configure(float watts, float fullPowerRate, float deadTimeSeconds, float inletTempC = 23.0f,
                    float waterDeadTimeSeconds = 0.0f);
     bool isEnabled() const { return heatCapacity > 0.0f; }
     float getDeadTime() const { return deadTime; }

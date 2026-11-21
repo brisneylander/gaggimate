@@ -5,11 +5,14 @@
 #include <unity.h>
 
 #include <algorithm>
+#include <array>
 #include <cmath>
 #include <cstdint>
 #include <cstdio>
 #include <deque>
 #include <vector>
+
+#include "peripherals/HeatUpBoost.h"
 
 static uint32_t fakeNow = 0;
 static uint32_t millis() { return fakeNow; }
@@ -21,10 +24,9 @@ static uint32_t millis() { return fakeNow; }
 
 #include "SimplePID/SimplePID.cpp"
 #include "peripherals/HeatBalancePredictor.cpp"
-#include "peripherals/HeatUpBoost.h"
 
-void setUp() {}
-void tearDown() {}
+void setUp() { /* no shared fixture state */ }
+void tearDown() { /* no shared fixture state */ }
 
 // ---------------------------------------------------------------------------
 // Predictor unit tests
@@ -88,7 +90,8 @@ void test_flush_gives_immediate_negative_correction() {
 // With its own, shorter delay a flush stops counting once the sensor has seen it (5 s), instead of after the heater's
 // dead time (20 s), so it isn't counted twice.
 void test_water_delay_drains_flush_sooner() {
-    HeatBalancePredictor shared, separate;
+    HeatBalancePredictor shared;
+    HeatBalancePredictor separate;
     shared.configure(1100.0f, 0.6f, 20.0f, 23.0f);
     separate.configure(1100.0f, 0.6f, 20.0f, 23.0f, 5.0f);
     TEST_ASSERT_EQUAL_FLOAT(20.0f, shared.getWaterDeadTime());
@@ -117,7 +120,8 @@ void test_water_delay_leaves_heater_delay_alone() {
 // Warmer tank water takes proportionally less heat per ml: a 40 °C tank (measured on a Silvia) removes
 // (98 - 40) / (98 - 23) = 77 % of what the old fixed 23 °C assumption did.
 void test_flush_correction_scales_with_inlet_temperature() {
-    HeatBalancePredictor cold, warm;
+    HeatBalancePredictor cold;
+    HeatBalancePredictor warm;
     cold.configure(1100.0f, 0.6f, 20.0f, 23.0f);
     warm.configure(1100.0f, 0.6f, 20.0f, 40.0f);
     for (int i = 0; i < 5; ++i) {
@@ -225,16 +229,21 @@ void test_seed_waits_for_enable_and_is_bounded() {
 // settle at 98 °C (93 + 5 offset), then a 5 s, 8.9 ml/s flush of 35 °C tank water (as on the bench).
 
 struct Tuning {
-    float kp = 60.0f, ki = 0.658f, kd = 2800.0f;
+    float kp = 60.0f;
+    float ki = 0.658f;
+    float kd = 2800.0f;
     float derivFilterS = 0.0f;
     float integralZone = 0.0f;
-    float modelW = 0.0f, modelRate = 0.0f, modelDeadS = 0.0f;
+    float modelW = 0.0f;
+    float modelRate = 0.0f;
+    float modelDeadS = 0.0f;
     float lossSeedW = 0.0f;       // as Heater: seedLoss(saved value, 0 = default guess); < 0 skips seeding (starts at 0)
     float waterDeadS = 0.0f;      // predictor's water delay, 0 = same as modelDeadS
     float predictorStartS = 0.0f; // switch the predictor on this long into the run, once the PID has settled
     // Tank temperature the flush water really cools like (plant) and the one the predictor is told. On the bench each ml
     // took ~20 % more heat than (boiler - tank setting) predicts: fitted sessions cool like 24-27 °C water at 35 °C.
-    float plantInletC = 35.0f, predictorInletC = 35.0f;
+    float plantInletC = 35.0f;
+    float predictorInletC = 35.0f;
     // A shot instead of the 5 s flush: pump flow (ml/s) for each second from the start; and the setpoint (98 = a 93 °C
     // profile + 5 offset).
     std::vector<float> flowProfile;
@@ -257,22 +266,46 @@ struct Result {
 
 static constexpr float SILVIA_VALVE_DUMP_ML = 5.0f; // weighed on the bench, 2026-10-29
 
+// Heater::calculateSafetyScaling without its smoothing: how much of the feedforward applies at this error.
+static float feedforwardSafety(float err) {
+    if (err > 1.0f)
+        return 0.0f;
+    if (err >= 0.0f)
+        return 0.7f + 0.3f * (1.0f - err);
+    if (err > -1.0f)
+        return 0.7f - 0.3f * err;
+    return 1.0f;
+}
+
 static Result simulate(const Tuning &tu) {
-    const float dt = 0.25f, setpoint = tu.setpointC, room = 22.0f, lossPerK = 0.59f; // ~45 W at 98 °C
-    const float plantW = 1100.0f, wallC = 200.0f, waterC = 1296.0f, wallToWater = 9.6f;
-    const float groupC = 819.0f, waterToGroup = 5.7f;
-    const float inletC = tu.plantInletC, flushFlow = 8.9f;
-    const float delayS = 4.6f, lagS = 15.0f;
-    const int delaySteps = static_cast<int>(delayS / dt);
+    const float dt = 0.25f;
+    const float setpoint = tu.setpointC;
+    const float room = 22.0f;
+    const float lossPerK = 0.59f; // ~45 W at 98 °C
+    const float plantW = 1100.0f;
+    const float wallC = 200.0f;
+    const float waterC = 1296.0f;
+    const float wallToWater = 9.6f;
+    const float groupC = 819.0f;
+    const float waterToGroup = 5.7f;
+    const float inletC = tu.plantInletC;
+    const float flushFlow = 8.9f;
+    const float delayS = 4.6f;
+    const float lagS = 15.0f;
+    const auto delaySteps = static_cast<int>(delayS / dt);
 
     const float holdW = lossPerK * (setpoint - room);
     float boiler = setpoint;
     float wall = setpoint + holdW / wallToWater;   // carrying the holding power
     float group = setpoint - holdW / waterToGroup; // the standing loss leaves through the group
     std::deque<float> pipe(delaySteps, boiler);
-    float lagged = boiler, ema = boiler;
+    float lagged = boiler;
+    float ema = boiler;
 
-    float output = 0.0f, control = boiler, measured = boiler, sp = setpoint;
+    float output = 0.0f;
+    float control = boiler;
+    float measured = boiler;
+    float sp = setpoint;
     SimplePID pid(&output, &control, &sp);
     pid.setDerivativeInput(&measured); // as Heater: D on the sensor, P/I on the prediction
     pid.setSamplingFrequency(1.0f);
@@ -299,12 +332,16 @@ static Result simulate(const Tuning &tu) {
     uint32_t lastFlowMs = 0;
     bool flowSeen = false;
 
-    const float flushStart = 1800.0f, end = flushStart + 600.0f;
+    const float flushStart = 1800.0f;
+    const float end = flushStart + 600.0f;
     const float flushEnd = flushStart + (tu.flowProfile.empty() ? 5.0f : static_cast<float>(tu.flowProfile.size()));
     Result r{1e9f, -1e9f, 0.0f, 0.0f, 0.0f, 0.0f, -1.0f, 1e9f};
-    float swingSum = 0.0f, lastOutput = 0.0f;
+    float swingSum = 0.0f;
+    float lastOutput = 0.0f;
     int swingN = 0;
-    float idleMin = 1e9f, idleMax = -1e9f, errSum = 0.0f;
+    float idleMin = 1e9f;
+    float idleMax = -1e9f;
+    float errSum = 0.0f;
     int errN = 0;
     bool dipped = false;
     fakeNow = 1000;
@@ -334,10 +371,7 @@ static Result simulate(const Tuning &tu) {
             if (tu.kff > 0.0f && flow > 0.01f) {
                 // Heater::calculateDisturbanceFeedforwardGain + calculateSafetyScaling (without its smoothing)
                 const float err = measured - sp;
-                const float safety = err > 1.0f    ? 0.0f
-                                     : err >= 0.0f ? 0.7f + 0.3f * (1.0f - err)
-                                     : err > -1.0f ? 0.7f - 0.3f * err
-                                                   : 1.0f;
+                const float safety = feedforwardSafety(err);
                 const float perFlow = (4.18f * (sp - tu.predictorInletC) + 5.0f / flow) / 0.95f;
                 pid.setDisturbanceFeedforward(flow, perFlow * tu.kff * safety);
             } else {
@@ -449,7 +483,9 @@ void test_individual_features() {
     Tuning pred = compensated();
     pred.derivFilterS = 0.0f;
     pred.integralZone = 0.0f;
-    const Result rf = simulate(filt), rz = simulate(zone), rp = simulate(pred);
+    const Result rf = simulate(filt);
+    const Result rz = simulate(zone);
+    const Result rp = simulate(pred);
     report("D filter only", rf);
     report("integral zone + pause only", rz);
     report("predictor only", rp);
@@ -470,20 +506,20 @@ void test_individual_features() {
 // The model is rarely exact: ±25 % on heat-up rate and dead time must stay stable and still beat the legacy loop.
 void test_robust_to_model_mismatch() {
     const Result legacy = simulate(Tuning{});
-    const float rates[] = {0.45f, 0.75f};
-    const float deads[] = {15.0f, 25.0f};
+    const std::array<float, 2> rates = {0.45f, 0.75f};
+    const std::array<float, 2> deads = {15.0f, 25.0f};
     for (float rate : rates) {
         for (float dead : deads) {
             Tuning tu = compensated();
             tu.modelRate = rate;
             tu.modelDeadS = dead;
             const Result r = simulate(tu);
-            char name[64];
-            snprintf(name, sizeof(name), "mismatch rate %.2f dead %.0f", rate, dead);
-            report(name, r);
-            TEST_ASSERT_TRUE_MESSAGE(r.peak < legacy.peak, name);
-            TEST_ASSERT_TRUE_MESSAGE(r.settleErr < 0.4f, name);
-            TEST_ASSERT_TRUE_MESSAGE(r.idleP2P <= 0.75f, name);
+            std::array<char, 64> name{};
+            snprintf(name.data(), name.size(), "mismatch rate %.2f dead %.0f", rate, dead);
+            report(name.data(), r);
+            TEST_ASSERT_TRUE_MESSAGE(r.peak < legacy.peak, name.data());
+            TEST_ASSERT_TRUE_MESSAGE(r.settleErr < 0.4f, name.data());
+            TEST_ASSERT_TRUE_MESSAGE(r.idleP2P <= 0.75f, name.data());
         }
     }
 }
@@ -494,16 +530,16 @@ void test_robust_to_model_mismatch() {
 void test_separate_water_delay() {
     const Result shared = simulate(compensated());
     report("water delay = dead time (20 s)", shared);
-    const float delays[] = {5.0f, 8.0f, 12.0f};
+    const std::array<float, 3> delays = {5.0f, 8.0f, 12.0f};
     for (float d : delays) {
         Tuning tu = compensated();
         tu.waterDeadS = d;
         const Result r = simulate(tu);
-        char name[48];
-        snprintf(name, sizeof(name), "water delay %.0f s", d);
-        report(name, r);
-        TEST_ASSERT_TRUE_MESSAGE(r.settleErr < 0.3f, name);
-        TEST_ASSERT_TRUE_MESSAGE(r.idleP2P <= 0.5f, name);
+        std::array<char, 48> name{};
+        snprintf(name.data(), name.size(), "water delay %.0f s", d);
+        report(name.data(), r);
+        TEST_ASSERT_TRUE_MESSAGE(r.settleErr < 0.3f, name.data());
+        TEST_ASSERT_TRUE_MESSAGE(r.idleP2P <= 0.5f, name.data());
     }
 }
 
@@ -516,7 +552,9 @@ void test_seeded_start_avoids_sag() {
     Tuning saved = compensated();
     saved.lossSeedW = 65.0f;
     saved.predictorStartS = 600.0f;
-    const Result rz = simulate(zero), rg = simulate(guess), rs = simulate(saved);
+    const Result rz = simulate(zero);
+    const Result rg = simulate(guess);
+    const Result rs = simulate(saved);
     printf("start sag: from zero %.2f, default guess %.2f, saved value %.2f degC\n", rz.startSag, rg.startSag, rs.startSag);
     TEST_ASSERT_TRUE(rz.startSag < -0.4f);
     TEST_ASSERT_TRUE(rg.startSag > 0.5f * rz.startSag);
@@ -534,7 +572,9 @@ void test_bench_configurations() {
     shared.plantInletC = 25.0f;
     Tuning water = compensated();
     water.plantInletC = 25.0f;
-    const Result ro = simulate(off), rs = simulate(shared), rw = simulate(water);
+    const Result ro = simulate(off);
+    const Result rs = simulate(shared);
+    const Result rw = simulate(water);
     report("bench: off", ro);
     report("bench: shared 20 s delay", rs);
     report("bench: 12 s water delay", rw);
@@ -577,7 +617,7 @@ void test_shot_feedforward() {
     TEST_ASSERT_TRUE(rr.dipMin > rb.dipMin + 1.0f);       // feedforward lifts the sensor's low
     TEST_ASSERT_TRUE(rr.waterLow < rb.waterLow + 1.0f);   // ... but hardly the water's: the element can't keep up
     TEST_ASSERT_TRUE(hot3.waterLow > rb.waterLow + 2.0f); // heat put in before the shot does
-    const float gains[] = {0.45f, 0.7f, 0.909f};
+    const std::array<float, 3> gains = {0.45f, 0.7f, 0.909f};
     for (float k : gains) {
         Tuning ff = base;
         ff.kff = k;
@@ -632,7 +672,12 @@ struct HeatUp {
 // the 6:45 and 8:09 warm-ups, standing loss pinned to the 47 W holding power). It reproduces those warm-ups closed loop
 // (overshoot, then a 2-3.5 °C sag for ~10 min while the group head soaks up heat); the flush fit doesn't.
 struct Plant {
-    float wallC, waterC, wallToWater, groupC, waterToGroup, lossPerK;
+    float wallC;
+    float waterC;
+    float wallToWater;
+    float groupC;
+    float waterToGroup;
+    float lossPerK;
 };
 static constexpr Plant FLUSH_PLANT{200.0f, 1296.0f, 9.6f, 819.0f, 5.7f, 0.59f};
 static constexpr Plant WARMUP_PLANT{215.8f, 1213.9f, 9.2f, 1342.8f, 4.3f, 47.0f / 76.0f};
@@ -641,17 +686,30 @@ static float lastHeatUpSag = 0.0f; // lowest reading under the setpoint after fi
 
 static HeatUp simulateHeatUp(const Tuning &tu, float startC, float groupBelowC, float setpoint, bool afterShot = false,
                              float trickle = 0.0f, float near = 0.5f) {
-    const float dt = 0.25f, room = 22.0f, lossPerK = heatUpPlant.lossPerK;
-    const float plantW = 1100.0f, wallC = heatUpPlant.wallC, waterC = heatUpPlant.waterC, wallToWater = heatUpPlant.wallToWater;
-    const float groupC = heatUpPlant.groupC, waterToGroup = heatUpPlant.waterToGroup;
+    const float dt = 0.25f;
+    const float room = 22.0f;
+    const float lossPerK = heatUpPlant.lossPerK;
+    const float plantW = 1100.0f;
+    const float wallC = heatUpPlant.wallC;
+    const float waterC = heatUpPlant.waterC;
+    const float wallToWater = heatUpPlant.wallToWater;
+    const float groupC = heatUpPlant.groupC;
+    const float waterToGroup = heatUpPlant.waterToGroup;
     lastHeatUpSag = 0.0f;
-    const float delayS = 4.6f, lagS = 15.0f;
-    const int delaySteps = static_cast<int>(delayS / dt);
+    const float delayS = 4.6f;
+    const float lagS = 15.0f;
+    const auto delaySteps = static_cast<int>(delayS / dt);
     const float holdW = lossPerK * (startC - room);
-    float boiler = startC, wall = startC + holdW / wallToWater, group = startC - holdW / waterToGroup - groupBelowC;
+    float boiler = startC;
+    float wall = startC + holdW / wallToWater;
+    float group = startC - holdW / waterToGroup - groupBelowC;
     std::deque<float> pipe(delaySteps, boiler);
-    float lagged = boiler, ema = boiler;
-    float output = 0.0f, control = boiler, measured = boiler, sp = setpoint;
+    float lagged = boiler;
+    float ema = boiler;
+    float output = 0.0f;
+    float control = boiler;
+    float measured = boiler;
+    float sp = setpoint;
     SimplePID pid(&output, &control, &sp);
     pid.setDerivativeInput(&measured);
     pid.setSamplingFrequency(1.0f);
@@ -666,7 +724,8 @@ static HeatUp simulateHeatUp(const Tuning &tu, float startC, float groupBelowC, 
     predictor.configure(tu.modelW, tu.modelRate, tu.modelDeadS, tu.predictorInletC, tu.waterDeadS);
     predictor.seedLoss(tu.lossSeedW);
     HeatUp r{-1.0f, -1e9f, 0.0f, 0.0f};
-    float dutySum = 0.0f, lastOut = -1.0f;
+    float dutySum = 0.0f;
+    float lastOut = -1.0f;
     int dutyN = 0;
     const float end = 1500.0f;
     fakeNow = 1000;
@@ -678,7 +737,7 @@ static HeatUp simulateHeatUp(const Tuning &tu, float startC, float groupBelowC, 
             predictor.update(1.0f, output / 1000.0f, trickle, measured, sp);
             control = measured + predictor.getCorrection();
             pid.update();
-            const uint32_t sinceShot = static_cast<uint32_t>(t * 1000.0f);
+            const auto sinceShot = static_cast<uint32_t>(t * 1000.0f);
             if (tu.heatUpBoost && HeatUpBoost::active(predictor.isEnabled(), sp, control, afterShot, sinceShot))
                 output = 1000.0f;
             if (t < 120.0f) {
@@ -715,19 +774,23 @@ static HeatUp simulateHeatUp(const Tuning &tu, float startC, float groupBelowC, 
 static void test_heat_up_boost() {
     Tuning tu = compensated();
     tu.lossSeedW = 36.0f;
-    const struct {
+    struct Case {
         const char *name;
-        float start, groupBelow, sp;
+        float start;
+        float groupBelow;
+        float sp;
         bool afterShot;
-        float trickle, near;
-    } cases[] = {{"warm restart 76->98, group -15", 76.0f, 15.0f, 98.0f, false, 0.0f, 0.5f},
-                 {"warm restart 76->98, group even", 76.0f, 0.0f, 98.0f, false, 0.0f, 0.5f},
-                 {"cold start 25->98", 25.0f, 0.0f, 98.0f, false, 0.0f, 0.5f},
-                 {"steam 98->125", 98.0f, 0.0f, 125.0f, false, 0.0f, 0.5f},
-                 // The usual routine: steam straight after a shot, with pump assist trickling in (machine, 2026-10-30).
-                 // Within 1 °C: at steam the climb matters, not the last half degree (the 1.5 °C integral zone leaves
-                 // the trickle's load ~3 °C under either way).
-                 {"steam after a shot, assist 0.4 ml/s", 95.0f, 0.0f, 125.0f, true, 0.4f, 1.0f}};
+        float trickle;
+        float near;
+    };
+    const std::vector<Case> cases = {{"warm restart 76->98, group -15", 76.0f, 15.0f, 98.0f, false, 0.0f, 0.5f},
+                                     {"warm restart 76->98, group even", 76.0f, 0.0f, 98.0f, false, 0.0f, 0.5f},
+                                     {"cold start 25->98", 25.0f, 0.0f, 98.0f, false, 0.0f, 0.5f},
+                                     {"steam 98->125", 98.0f, 0.0f, 125.0f, false, 0.0f, 0.5f},
+                                     // The usual routine: steam straight after a shot, with pump assist trickling in (machine,
+                                     // 2026-10-30). Within 1 °C: at steam the climb matters, not the last half degree (the 1.5 °C
+                                     // integral zone leaves the trickle's load ~3 °C under either way).
+                                     {"steam after a shot, assist 0.4 ml/s", 95.0f, 0.0f, 125.0f, true, 0.4f, 1.0f}};
     for (const auto &c : cases) {
         Tuning off = tu;
         off.heatUpBoost = false;
@@ -748,7 +811,8 @@ static void test_heat_up_boost() {
 // The predictor already takes the sensor's lag out of the error, so the loop may carry more gain than the autotune's.
 void test_kp_sweep() {
     struct G {
-        float kp, ki;
+        float kp;
+        float ki;
     };
     for (G g : {G{60, 0.658f}, G{100, 0.658f}, G{60, 1.5f}, G{60, 3.0f}, G{60, 5.0f}, G{80, 2.0f}}) {
         const float kp = g.kp;

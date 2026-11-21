@@ -17,7 +17,8 @@ constexpr size_t UPDATE_CHECK_INTERVAL = 30 * 60 * 1000;
 constexpr size_t DNS_PERIOD = 50;
 
 const String LOCAL_URL = "http://4.4.4.1/";
-const String RELEASE_URL = "https://github.com/jniebuhr/gaggimate/releases/";
+// Test build only: update from the La Simona fork, not upstream.
+const String RELEASE_URL = "https://github.com/brisneylander/gaggimate/releases/";
 // Headless builds must pull their own release assets; the screen firmware would not boot on them.
 #ifdef GAGGIMATE_HEADLESS
 constexpr char OTA_DISPLAY_FIRMWARE[] = "display-headless-firmware.bin";

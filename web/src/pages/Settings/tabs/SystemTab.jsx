@@ -8,6 +8,7 @@ import { faCheck } from '@fortawesome/free-solid-svg-icons/faCheck';
 import { faCaretRight } from '@fortawesome/free-solid-svg-icons/faCaretRight';
 import { Spinner } from '../../../components/Spinner.jsx';
 import Section from '../../../components/Card.jsx';
+import { PatchNotes } from '../PatchNotes.jsx';
 
 const imageUrlToBase64 = async blob => {
   return new Promise((onSuccess, onError) => {
@@ -38,16 +39,16 @@ const getLinkStatusClass = (link, rssi) => {
   return link === 'ble' ? getRssiStatusClass(rssi) : 'status-success';
 };
 
-function OtaProgressView({ phase, progress }) {
+function OtaProgressView({ phase, progress, headless }) {
   const { t } = useLingui();
   const finished = phase === 4;
   const failed = phase === 5;
   const getOtaPhaseText = p => {
     switch (p) {
       case 1:
-        return t`Updating Display firmware`;
+        return headless ? t`Updating Headless firmware` : t`Updating Display firmware`;
       case 2:
-        return t`Updating Display filesystem`;
+        return headless ? t`Updating Headless filesystem` : t`Updating Display filesystem`;
       case 3:
         return t`Updating controller firmware`;
       case 5:
@@ -242,6 +243,7 @@ export function SystemTab() {
   const controllerLink = machine.value.status.controllerLink ?? 'ble';
   const lat = machine.value.status.lat;
   const rtx = machine.value.status.rtx;
+  const headless = !!machine.value.capabilities.headless;
 
   const downloadSupportData = useCallback(async () => {
     try {
@@ -349,7 +351,7 @@ export function SystemTab() {
   }, [apiService]);
 
   if (phase > 0) {
-    return <OtaProgressView phase={phase} progress={progress} />;
+    return <OtaProgressView phase={phase} progress={progress} headless={headless} />;
   }
 
   if (isLoading) {
@@ -448,19 +450,11 @@ export function SystemTab() {
                 </>
               )}
             </div>
-            <button
-              type='button'
-              className='btn btn-secondary btn-sm'
-              disabled={!formData.controllerUpdateAvailable || submitting}
-              onClick={() => onUpdate('controller')}
-            >
-              <Trans>Update Controller</Trans>
-            </button>
           </div>
 
           <div className='flex flex-col space-y-2'>
             <span className='text-base-content/70 text-sm font-medium'>
-              <Trans>Display Version</Trans>
+              {headless ? <Trans>Headless Version</Trans> : <Trans>Display Version</Trans>}
             </span>
             <div className='flex flex-wrap items-center gap-2'>
               <span className='text-base-content font-semibold break-all'>
@@ -473,15 +467,36 @@ export function SystemTab() {
                 </>
               )}
             </div>
-            <button
-              type='button'
-              className='btn btn-secondary btn-sm'
-              disabled={!formData.displayUpdateAvailable || submitting}
-              onClick={() => onUpdate('display')}
-            >
-              <Trans>Update Display</Trans>
-            </button>
           </div>
+          {/* Own grid row, so the update buttons below stay on one line */}
+          <div className='flex md:col-span-2'>
+            <PatchNotes
+              channel={formData.channel}
+              // shortcut: when both are behind, the display wins even if the controller is older; both share one build.
+              installedVersion={
+                formData.displayUpdateAvailable || !formData.controllerUpdateAvailable
+                  ? formData.displayVersion
+                  : formData.controllerVersion
+              }
+              latestVersion={formData.latestVersion}
+            />
+          </div>
+          <button
+            type='button'
+            className='btn btn-secondary btn-sm'
+            disabled={!formData.controllerUpdateAvailable || submitting}
+            onClick={() => onUpdate('controller')}
+          >
+            <Trans>Update Controller</Trans>
+          </button>
+          <button
+            type='button'
+            className='btn btn-secondary btn-sm'
+            disabled={!formData.displayUpdateAvailable || submitting}
+            onClick={() => onUpdate('display')}
+          >
+            {headless ? <Trans>Update Headless</Trans> : <Trans>Update Display</Trans>}
+          </button>
           <div className='flex flex-col space-y-2 md:col-span-2'>
             <button
               type='button'
